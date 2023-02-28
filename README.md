@@ -64,3 +64,14 @@ para detalhes sobre o nosso código de conduta, e o processo para submeter pedid
 ## Diagrama de entidades
 
 ![Diagrama de banco de dados](./docs/diagram/RiskPlaceEntityDiagram.vpd.svg)
+
+### Detalhes para cada entidade do diagrama
+
+* **Location Type**: Tipo de locais que podem ser cadastrados no sistema. Ex: `Riscos`, `Trabalho`, `Escola`, `Parque`, `Igreja`, `Hospital` etc.
+
+> Nota: O tipo de local é um campo obrigatório para o cadastro de um local. O primeiro local que vamos utilizar é o tipo `Risco`.
+
+* **Riscos**: Vão cadastrar os locais que consideram riscos. Ex: `Bairro X`, `Rua Y`, `Latitude`, `Logintude` etc.
+
+* **Tipos de um riscos**: aqui vamos cadastrar os tipos riscos que podem ser encontrados em um local. Ex: `Criminalidade`, `Vala`, `doença`.
+    * **Topicos**: aqui vamos cadastrar os tópicos de um risco. Ex: `Assalto`, `Incêndio`, `Furto`, `Assalto`, `Acidente`, `Roubo`, `Inundação` etc.
