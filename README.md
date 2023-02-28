@@ -63,4 +63,4 @@ para detalhes sobre o nosso código de conduta, e o processo para submeter pedid
 
 ## Diagrama de entidades
 
-![Diagrama de banco de dados](https://github.com/risk-place-angola/backend-risk-place/blob/develop/docs/diagram/RiskPlaceEntityDiagram.vpd.svg "Diagrama de entidades")
+![Diagrama de banco de dados](./docs/diagram/RiskPlaceEntityDiagram.vpd.svg)
