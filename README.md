@@ -61,6 +61,6 @@ go test ./...
 Por favor leia [CONTRIBUTING.md](https://github.com/risk-place-angola/backend-risk-place/blob/main/CONTRIBUTING.md) 
 para detalhes sobre o nosso código de conduta, e o processo para submeter pedidos de pull.
 
-## Diagrama de entidades
+## Diagrama de entidade
 
 ![Diagrama de banco de dados](./docs/diagram/RiskPlaceEntityDiagram.vpd.svg)
