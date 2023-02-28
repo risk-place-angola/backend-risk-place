@@ -59,3 +59,8 @@ go test ./...
 > Antes de abrir uma issue ou pull request, verifique o documentos de contribuição do projeto.
 
 Por favor leia [CONTRIBUTING.md](https://github.com/risk-place-angola/backend-risk-place/blob/main/CONTRIBUTING.md) 
+para detalhes sobre o nosso código de conduta, e o processo para submeter pedidos de pull.
+
+## Diagrama de entidades
+
+![Diagrama de banco de dados](https://github.com/risk-place-angola/backend-risk-place/blob/develop/docs/diagram/RiskPlaceEntityDiagram.vpd.svg "Diagrama de entidades")
