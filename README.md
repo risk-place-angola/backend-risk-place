@@ -58,4 +58,4 @@ go test ./...
 ## Contribuição
 > Antes de abrir uma issue ou pull request, verifique o documentos de contribuição do projeto.
 
-Por favor leia [CONTRIBUTING.md](https://github.com/risk-place-angola/backend-risk-place/CONTRIBUTING.md) 
+Por favor leia [CONTRIBUTING.md](https://github.com/risk-place-angola/backend-risk-place/blob/main/CONTRIBUTING.md) 
