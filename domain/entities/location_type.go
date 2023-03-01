@@ -12,8 +12,8 @@ func init() {
 }
 
 type LocationType struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
+	ID        string    `json:"id" valid:"uuid,required~ O ID do tipo de localização é obrigatório."`
+	Name      string    `json:"name" valid:"required~ O nome do tipo de localização é obrigatório."`
 	CreatedAt time.Time `json:"created_at" valid:"-"`
 	UpdatedAt time.Time `json:"updated_at" valid:"-"`
 }
