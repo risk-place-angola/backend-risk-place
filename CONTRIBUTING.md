@@ -46,6 +46,9 @@ Convecções de commits e mensagens de commit: [Conventional Commits](https://ww
 - `perf: melhora performance`
 - `test: adiciona ou corrige testes`
 - `chore: atualiza dependências`
+- `revert: desfaz commit anterior`
+- `build: alterações que afetam o sistema de build ou dependências externas (ex.: gulp, broccoli, npm)`
+- `ci: alterações nos arquivos e scripts de configuração de CI (ex.: Travis, Circle, BrowserStack, SauceLabs)`
 
 
 
