@@ -6,3 +6,5 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/satori/go.uuid v1.2.0
 )
+
+require github.com/bxcodec/faker/v3 v3.8.1 // indirect
