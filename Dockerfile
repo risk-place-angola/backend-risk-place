@@ -1,15 +1,20 @@
-FROM golang:1.19.2 AS builder
+FROM golang:1.19.2-alpine AS builder
 
-WORKDIR /app
+RUN apk update && apk upgrade && \
+    apk add --no-cache make bash
 
-COPY . /app/
+WORKDIR /src
 
-RUN GOOS=linux CGO_ENABLED=0 GOARCH=amd64 go build -o main
+COPY . .
 
-FROM scratch
-WORKDIR /internal
-COPY --from=builder /app/ /internal
+# Build
+RUN make build
 
-EXPOSE 50000
+# Using a distroless image from https://github.com/GoogleContainerTools/distroless
+FROM gcr.io/distroless/static-debian11
 
-ENTRYPOINT ["./main"]
+COPY --from=builder /src/bin/app /
+
+EXPOSE 8000
+
+CMD ["/app"]
