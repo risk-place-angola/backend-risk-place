@@ -28,14 +28,14 @@ func NewRiskType(name, descripition string) (*RiskType, error) {
 	riskType.ID = uuid.NewV4().String()
 	riskType.CreatedAt = time.Now()
 
-	if err := riskType.isValid(); err != nil {
+	if err := riskType.IsValid(); err != nil {
 		return nil, err
 	}
 	return &riskType, nil
 
 }
 
-func (riskType *RiskType) isValid() error {
+func (riskType *RiskType) IsValid() error {
 	_, err := govalidator.ValidateStruct(riskType)
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (riskType *RiskType) Update(name, descripition string) error {
 
 	riskType.SetUpdatedAt()
 
-	if err := riskType.isValid(); err != nil {
+	if err := riskType.IsValid(); err != nil {
 		return err
 	}
 	return nil
