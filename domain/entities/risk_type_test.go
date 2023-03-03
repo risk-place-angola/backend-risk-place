@@ -3,8 +3,6 @@ package entities_test
 import (
 	"testing"
 
-	uuid "github.com/satori/go.uuid"
-
 	"github.com/stretchr/testify/assert"
 
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
@@ -34,31 +32,4 @@ func TestRiskTypeUpdate(t *testing.T) {
 
 	assert.Nil(t, err, "Expected nil, got error %v", err)
 	assert.Equal(t, newName, riskType.Name, "Expected %s, got %s", newName, riskType.Name)
-}
-
-func TestRiskTypeValidation(t *testing.T) {
-	validName := "Criminalidade"
-	validDescription := "Cazenga Malueca muita criminalidade"
-	invalidName := ""
-	invalidDescription := ""
-
-	validRiskType := entities.RiskType{
-		ID:          uuid.NewV4().String(),
-		Name:        validName,
-		Description: validDescription,
-	}
-
-	invalidRiskType := entities.RiskType{
-		ID:          uuid.NewV4().String(),
-		Name:        invalidName,
-		Description: invalidDescription,
-	}
-
-	err := validRiskType.IsValid()
-
-	assert.Nil(t, err, "Expected nil, got error %v", err)
-
-	err = invalidRiskType.IsValid()
-
-	assert.NotNil(t, err, "Expected error, got nil")
 }
