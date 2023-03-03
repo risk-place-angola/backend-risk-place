@@ -3,46 +3,62 @@ package entities_test
 import (
 	"testing"
 
+	uuid "github.com/satori/go.uuid"
+
+	"github.com/stretchr/testify/assert"
+
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
 )
 
 func TestNewRiskType(t *testing.T) {
-	riskType, err := entities.NewRiskType("Criminalidade", "Cazenga Malueca muita criminalidade")
+	name := "Criminalidade"
+	description := "Cazenga Malueca muita criminalidade"
+	riskType, err := entities.NewRiskType(name, description)
 
-	if err != nil {
-		t.Error("Expected nil, got ", err)
-	}
+	assert.Nil(t, err, "Expected nil, got error %v", err)
+	assert.NotNil(t, riskType, "Expected riskType not to be nil")
 
-	if riskType.Name != "Criminalidade" {
-		t.Error("Expected Criminalidade, got ", riskType.Name)
-
-	}
-
-	if riskType.Description != "Cazenga Malueca muita criminalidade" {
-		t.Error("Expected Cazenga Malueca muita criminalidade, got ", riskType.Description)
-
-	}
-
+	assert.Equal(t, name, riskType.Name, "Expected %s, got %s", name, riskType.Name)
+	assert.Equal(t, description, riskType.Description, "Expected %s, got %s", description, riskType.Description)
+	assert.NotEmpty(t, riskType.ID, "Expected riskType ID to be non-empty")
 }
 
 func TestRiskTypeUpdate(t *testing.T) {
-	riskType, err := entities.NewRiskType("Criminalidade", "Cazenga Malueca muita criminalidade")
+	name := "Criminalidade"
+	description := "Cazenga Malueca muita criminalidade"
+	riskType, _ := entities.NewRiskType(name, description)
 
-	if err != nil {
-		t.Error("Expected nil, got ", err)
+	newName := "Crime"
+	newDescription := "Viana muito crime"
+	err := riskType.Update(newName, newDescription)
+
+	assert.Nil(t, err, "Expected nil, got error %v", err)
+	assert.Equal(t, newName, riskType.Name, "Expected %s, got %s", newName, riskType.Name)
+}
+
+func TestRiskTypeValidation(t *testing.T) {
+	validName := "Criminalidade"
+	validDescription := "Cazenga Malueca muita criminalidade"
+	invalidName := ""
+	invalidDescription := ""
+
+	validRiskType := entities.RiskType{
+		ID:          uuid.NewV4().String(),
+		Name:        validName,
+		Description: validDescription,
 	}
-	err = riskType.Update("Criminalidade", "Cazenga Malueca muita criminalidade")
 
-	if err != nil {
-		t.Error("Expected nil, got ", err)
+	invalidRiskType := entities.RiskType{
+		ID:          uuid.NewV4().String(),
+		Name:        invalidName,
+		Description: invalidDescription,
 	}
 
-	if riskType.Name != "Criminalidade" {
-		t.Error("Expected Criminalidade, got ", riskType.Name)
+	err := validRiskType.IsValid()
 
-	}
+	assert.Nil(t, err, "Expected nil, got error %v", err)
 
-	if riskType.Description != "Cazenga Malueca muita criminalidade" {
-		t.Error("Expected Cazenga Malueca muita criminalidade, got ", riskType.Description)
-	}
+	err = invalidRiskType.IsValid()
+
+	assert.NotNil(t, err, "Expected error, got nil")
 }
