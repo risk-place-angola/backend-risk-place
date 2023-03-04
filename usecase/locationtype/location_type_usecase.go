@@ -7,6 +7,7 @@ import (
 
 type LocationTypeUseCase interface {
 	CreateLocationType(dto CreateLocationTypeDTO) (*LocationTypeDTO, error)
+	UpdateLocationType(id string, dto UpdateLocationTypeDTO) (*LocationTypeDTO, error)
 }
 
 type LocationTypeUseCaseImpl struct {
@@ -27,6 +28,27 @@ func (l *LocationTypeUseCaseImpl) CreateLocationType(dto CreateLocationTypeDTO) 
 	}
 
 	if err := l.LocationTypeRepository.Save(locationType); err != nil {
+		return nil, err
+	}
+
+	return &LocationTypeDTO{
+		ID:   locationType.ID,
+		Name: locationType.Name,
+	}, nil
+}
+
+func (l *LocationTypeUseCaseImpl) UpdateLocationType(id string, dto UpdateLocationTypeDTO) (*LocationTypeDTO, error) {
+
+	locationType, err := l.LocationTypeRepository.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := locationType.Update(dto.Name); err != nil {
+		return nil, err
+	}
+
+	if err := l.LocationTypeRepository.Update(locationType); err != nil {
 		return nil, err
 	}
 
