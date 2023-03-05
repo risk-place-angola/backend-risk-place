@@ -27,6 +27,17 @@ type RiskDTO struct {
 	UpdatedAt      string  `json:"updated_at"`
 }
 
+func (u *UpdateRiskDTO) ToRiskUpdate() *entities.Risk {
+	return &entities.Risk{
+		RiskTypeID:     u.RiskTypeID,
+		LocationTypeID: u.LocationTypeID,
+		Name:           u.Name,
+		Latitude:       u.Latitude,
+		Longitude:      u.Longitude,
+		Description:    u.Description,
+	}
+}
+
 func (r *RiskDTO) ToRisk() *entities.Risk {
 	return &entities.Risk{
 		ID:             r.ID,
