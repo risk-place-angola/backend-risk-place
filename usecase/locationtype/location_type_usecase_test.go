@@ -19,10 +19,10 @@ func TestCreateLocationType(t *testing.T) {
 
 	locationTypeUseCase := locationtype.NewLocationTypeUseCase(mockLocationTypeRepository)
 	locationType, err := locationTypeUseCase.CreateLocationType(locationtype.CreateLocationTypeDTO{
-		Name: "Test",
+		Name: "Risco",
 	})
 	assert.Nil(t, err)
-	assert.Equal(t, "Test", locationType.Name)
+	assert.Equal(t, "Risco", locationType.Name)
 }
 
 func TestUpdateLocationType(t *testing.T) {
@@ -31,7 +31,7 @@ func TestUpdateLocationType(t *testing.T) {
 
 	data := &entities.LocationType{
 		ID:   "20dabe23-3541-455b-b64d-3191f2b2a303",
-		Name: "Test",
+		Name: "Riscos",
 	}
 
 	mockLocationTypeRepository := mocks.NewMockLocationTypeRepository(ctrl)
@@ -40,10 +40,10 @@ func TestUpdateLocationType(t *testing.T) {
 
 	locationTypeUseCase := locationtype.NewLocationTypeUseCase(mockLocationTypeRepository)
 	locationType, err := locationTypeUseCase.UpdateLocationType("20dabe23-3541-455b-b64d-3191f2b2a303", locationtype.UpdateLocationTypeDTO{
-		Name: "Test2",
+		Name: "Risco",
 	})
 	assert.Nil(t, err)
-	assert.Equal(t, "Test2", locationType.Name)
+	assert.Equal(t, "Risco", locationType.Name)
 }
 
 func TestFindAllLocationTypes(t *testing.T) {
@@ -53,7 +53,7 @@ func TestFindAllLocationTypes(t *testing.T) {
 	data := []*entities.LocationType{
 		{
 			ID:   "20dabe23-3541-455b-b64d-3191f2b2a303",
-			Name: "Test",
+			Name: "Risco",
 		},
 	}
 
@@ -63,7 +63,7 @@ func TestFindAllLocationTypes(t *testing.T) {
 	locationTypeUseCase := locationtype.NewLocationTypeUseCase(mockLocationTypeRepository)
 	locationTypes, err := locationTypeUseCase.FindAllLocationTypes()
 	assert.Nil(t, err)
-	assert.Equal(t, "Test", locationTypes[0].Name)
+	assert.Equal(t, "Risco", locationTypes[0].Name)
 }
 
 func TestFindByIdLocationType(t *testing.T) {
