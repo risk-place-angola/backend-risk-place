@@ -12,7 +12,7 @@ type CreateRiskDTO struct {
 }
 
 type UpdateRiskDTO struct {
-	*CreateRiskDTO
+	CreateRiskDTO
 }
 
 type RiskDTO struct {
@@ -25,6 +25,17 @@ type RiskDTO struct {
 	Description    string  `json:"description"`
 	CreatedAt      string  `json:"created_at"`
 	UpdatedAt      string  `json:"updated_at"`
+}
+
+func (u *UpdateRiskDTO) ToRiskUpdate() *entities.Risk {
+	return &entities.Risk{
+		RiskTypeID:     u.RiskTypeID,
+		LocationTypeID: u.LocationTypeID,
+		Name:           u.Name,
+		Latitude:       u.Latitude,
+		Longitude:      u.Longitude,
+		Description:    u.Description,
+	}
 }
 
 func (r *RiskDTO) ToRisk() *entities.Risk {
