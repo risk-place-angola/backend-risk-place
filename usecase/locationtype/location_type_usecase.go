@@ -10,6 +10,7 @@ type LocationTypeUseCase interface {
 	UpdateLocationType(id string, dto UpdateLocationTypeDTO) (*LocationTypeDTO, error)
 	FindAllLocationTypes() ([]*LocationTypeDTO, error)
 	FindByIdLocationType(id string) (*LocationTypeDTO, error)
+	DeleteLocationType(id string) error
 }
 
 type LocationTypeUseCaseImpl struct {
@@ -89,4 +90,14 @@ func (l *LocationTypeUseCaseImpl) FindByIdLocationType(id string) (*LocationType
 		ID:   locationType.ID,
 		Name: locationType.Name,
 	}, nil
+}
+
+func (l *LocationTypeUseCaseImpl) DeleteLocationType(id string) error {
+	
+	locationType, err := l.LocationTypeRepository.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	return l.LocationTypeRepository.Delete(locationType.ID)
 }
