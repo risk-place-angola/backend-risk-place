@@ -45,3 +45,23 @@ func TestUpdateLocationType(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "Test2", locationType.Name)
 }
+
+func TestFindAllLocationTypes(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	data := []*entities.LocationType{
+		{
+			ID:   "20dabe23-3541-455b-b64d-3191f2b2a303",
+			Name: "Test",
+		},
+	}
+
+	mockLocationTypeRepository := mocks.NewMockLocationTypeRepository(ctrl)
+	mockLocationTypeRepository.EXPECT().FindAll().Return(data, nil)
+
+	locationTypeUseCase := locationtype.NewLocationTypeUseCase(mockLocationTypeRepository)
+	locationTypes, err := locationTypeUseCase.FindAllLocationTypes()
+	assert.Nil(t, err)
+	assert.Equal(t, "Test", locationTypes[0].Name)
+}
