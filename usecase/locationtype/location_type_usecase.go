@@ -9,6 +9,7 @@ type LocationTypeUseCase interface {
 	CreateLocationType(dto CreateLocationTypeDTO) (*LocationTypeDTO, error)
 	UpdateLocationType(id string, dto UpdateLocationTypeDTO) (*LocationTypeDTO, error)
 	FindAllLocationTypes() ([]*LocationTypeDTO, error)
+	FindByIdLocationType(id string) (*LocationTypeDTO, error)
 }
 
 type LocationTypeUseCaseImpl struct {
@@ -75,4 +76,17 @@ func (l *LocationTypeUseCaseImpl) FindAllLocationTypes() ([]*LocationTypeDTO, er
 	}
 
 	return locationTypesDTO, nil
+}
+
+func (l *LocationTypeUseCaseImpl) FindByIdLocationType(id string) (*LocationTypeDTO, error) {
+	
+	locationType, err := l.LocationTypeRepository.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LocationTypeDTO{
+		ID:   locationType.ID,
+		Name: locationType.Name,
+	}, nil
 }
