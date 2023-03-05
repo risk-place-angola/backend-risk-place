@@ -1,5 +1,7 @@
 package risk_usecase
 
+import "github.com/risk-place-angola/backend-risk-place/domain/entities"
+
 type CreateRiskDTO struct {
 	RiskTypeID     string  `json:"risk_type_id"`
 	LocationTypeID string  `json:"location_type_id"`
@@ -23,4 +25,41 @@ type RiskDTO struct {
 	Description    string  `json:"description"`
 	CreatedAt      string  `json:"created_at"`
 	UpdatedAt      string  `json:"updated_at"`
+}
+
+func (r *RiskDTO) ToRisk() *entities.Risk {
+	return &entities.Risk{
+		ID:             r.ID,
+		RiskTypeID:     r.RiskTypeID,
+		LocationTypeID: r.LocationTypeID,
+		Name:           r.Name,
+		Latitude:       r.Latitude,
+		Longitude:      r.Longitude,
+		Description:    r.Description,
+	}
+}
+
+func (r *RiskDTO) FromRisk(risk *entities.Risk) *RiskDTO {
+	r.ID = risk.ID
+	r.RiskTypeID = risk.RiskTypeID
+	r.LocationTypeID = risk.LocationTypeID
+	r.Name = risk.Name
+	r.Latitude = risk.Latitude
+	r.Longitude = risk.Longitude
+	r.Description = risk.Description
+	r.CreatedAt = risk.CreatedAt.String()
+	r.UpdatedAt = risk.UpdatedAt.String()
+	return r
+}
+
+func (r *RiskDTO) FromRiskList(risks []*entities.Risk) []*RiskDTO {
+	var riskDTOs []*RiskDTO
+	for _, risk := range risks {
+		riskDTOs = append(riskDTOs, r.FromRisk(risk))
+	}
+	return riskDTOs
+}
+
+func NewRiskDTO() *RiskDTO {
+	return &RiskDTO{}
 }
