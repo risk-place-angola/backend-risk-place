@@ -83,3 +83,21 @@ func TestFindByIdLocationType(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "Risco", locationType.Name)
 }
+
+func TestDeleteLocationType(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	data := &entities.LocationType{
+		ID:   "20dabe23-3541-455b-b64d-3191f2b2a303",
+		Name: "Risco",
+	}
+
+	mockLocationTypeRepository := mocks.NewMockLocationTypeRepository(ctrl)
+	mockLocationTypeRepository.EXPECT().FindByID(gomock.Any()).Return(data, nil)
+	mockLocationTypeRepository.EXPECT().Delete(gomock.Any()).Return(nil)
+
+	locationTypeUseCase := locationtype.NewLocationTypeUseCase(mockLocationTypeRepository)
+	err := locationTypeUseCase.DeleteLocationType("20dabe23-3541-455b-b64d-3191f2b2a303")
+	assert.Nil(t, err)
+}
