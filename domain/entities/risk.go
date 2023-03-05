@@ -55,8 +55,6 @@ func (risk *Risk) Update(r *Risk) error {
 	risk.Latitude = r.Latitude
 	risk.Longitude = r.Longitude
 	risk.Description = r.Description
-	if err := risk.isValid(); err != nil {
-		return err
-	}
+	risk.UpdatedAt = time.Now()
 	return nil
 }
