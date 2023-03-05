@@ -12,7 +12,7 @@ type CreateRiskDTO struct {
 }
 
 type UpdateRiskDTO struct {
-	*CreateRiskDTO
+	CreateRiskDTO
 }
 
 type RiskDTO struct {
