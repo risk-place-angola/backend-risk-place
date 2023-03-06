@@ -100,4 +100,24 @@ func TestRiskType(t *testing.T) {
 		assert.Equal(t, "Assalto", riskType.Name)
 
 	})
+
+	t.Run("should delete a risk type by id", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		data := &entities.RiskType{
+			ID:          "0c1baa42-3909-4bdb-837f-a80e68232ecd",
+			Name:        "Assalto",
+			Description: "Assalto a mão armada",
+		}
+
+		mockRiskTypeRepository := mocks.NewMockRiskTypeRepository(ctrl)
+		mockRiskTypeRepository.EXPECT().FindByID(gomock.Any()).Return(data, nil)
+		mockRiskTypeRepository.EXPECT().Delete(gomock.Any()).Return(nil)
+
+		riskTypeUseCase := risktype.NewRiskTypeUseCase(mockRiskTypeRepository)
+		err := riskTypeUseCase.RemoveRiskType("0c1baa42-3909-4bdb-837f-a80e68232ecd")
+		assert.Nil(t, err)
+
+	})
 }
