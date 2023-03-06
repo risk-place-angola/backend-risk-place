@@ -10,6 +10,7 @@ type RiskTypeUseCase interface {
 	UpdateRiskType(id string, dto *UpdateRiskTypeDTO) (*RiskTypeDTO, error)
 	FindAllRiskTypes() ([]*RiskTypeDTO, error)
 	FindRiskTypeByID(id string) (*RiskTypeDTO, error)
+	RemoveRiskType(id string) error
 }
 
 type RiskTypeUseCaseImpl struct {
@@ -80,4 +81,17 @@ func (r *RiskTypeUseCaseImpl) FindRiskTypeByID(id string) (*RiskTypeDTO, error) 
 	dtoRiskType := &RiskTypeDTO{}
 
 	return dtoRiskType.FromRiskType(risktype), nil
+}
+
+func (r *RiskTypeUseCaseImpl) RemoveRiskType(id string) error {
+	risktype, err := r.RiskTypeRepository.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	if err := r.RiskTypeRepository.Delete(risktype.ID); err != nil {
+		return err
+	}
+
+	return nil
 }
