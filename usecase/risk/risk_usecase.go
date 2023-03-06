@@ -9,6 +9,7 @@ type RiskUseCase interface {
 	CreateRisk(dto CreateRiskDTO) (*RiskDTO, error)
 	UpdateRisk(id string, dto UpdateRiskDTO) (*RiskDTO, error)
 	FindAllRisk() ([]*RiskDTO, error)
+	FindRiskByID(id string) (*RiskDTO, error)
 }
 
 type RiskUseCaseImpl struct {
@@ -81,5 +82,18 @@ func (r *RiskUseCaseImpl) FindAllRisk() ([]*RiskDTO, error) {
 	dtoRisks := dtoRisk.FromRiskList(risk)
 
 	return dtoRisks, nil
+
+}
+
+func (r *RiskUseCaseImpl) FindRiskByID(id string) (*RiskDTO, error) {
+	
+	risk, err := r.RiskRepository.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	dtoRisk := &RiskDTO{}
+
+	return dtoRisk.FromRisk(risk), nil
 
 }
