@@ -79,7 +79,7 @@ func (mr *MockRiskTypeRepositoryMockRecorder) FindById(id interface{}) *gomock.C
 }
 
 // Save mocks base method.
-func (m *MockRiskTypeRepository) Save(riskType entities.RiskType) error {
+func (m *MockRiskTypeRepository) Save(riskType *entities.RiskType) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Save", riskType)
 	ret0, _ := ret[0].(error)
@@ -93,7 +93,7 @@ func (mr *MockRiskTypeRepositoryMockRecorder) Save(riskType interface{}) *gomock
 }
 
 // Update mocks base method.
-func (m *MockRiskTypeRepository) Update(riskType entities.RiskType) error {
+func (m *MockRiskTypeRepository) Update(riskType *entities.RiskType) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", riskType)
 	ret0, _ := ret[0].(error)
