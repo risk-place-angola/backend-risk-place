@@ -94,3 +94,26 @@ func TestFindAllRisk(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(risk))
 }
+
+func TestFindRiskByID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	data := &entities.Risk{
+		ID:             "93247691-5c64-4c1f-a8ca-db5d76640ca9",
+		RiskTypeID:     "99bada49-09d0-4f13-b310-6f8633b38dfe",
+		LocationTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
+		Name:           "Rangel rua da Lama",
+		Latitude:       8.825248,
+		Longitude:      13.263879,
+		Description:    "Risco de inundação",
+	}
+
+	mockRiskRepository := mocks.NewMockRiskRepository(ctrl)
+	mockRiskRepository.EXPECT().FindByID(gomock.Any()).Return(data, nil)
+
+	riskUseCase := risk_usecase.NewRiskUseCase(mockRiskRepository)
+	risk, err := riskUseCase.FindRiskByID("93247691-5c64-4c1f-a8ca-db5d76640ca9")
+	assert.Nil(t, err)
+	assert.Equal(t, "Rangel rua da Lama", risk.Name)
+}
