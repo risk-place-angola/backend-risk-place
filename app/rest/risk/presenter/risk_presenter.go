@@ -7,3 +7,7 @@ import (
 type RiskPresenterCTX interface {
 	echo.Context
 }
+
+type ErrorResponse struct {
+	Message string `json:"message"`
+}
