@@ -63,19 +63,19 @@ func (mr *MockRiskTypeRepositoryMockRecorder) FindAll() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockRiskTypeRepository)(nil).FindAll))
 }
 
-// FindById mocks base method.
-func (m *MockRiskTypeRepository) FindById(id string) (*entities.RiskType, error) {
+// FindByID mocks base method.
+func (m *MockRiskTypeRepository) FindByID(id string) (*entities.RiskType, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindById", id)
+	ret := m.ctrl.Call(m, "FindByID", id)
 	ret0, _ := ret[0].(*entities.RiskType)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// FindById indicates an expected call of FindById.
-func (mr *MockRiskTypeRepositoryMockRecorder) FindById(id interface{}) *gomock.Call {
+// FindByID indicates an expected call of FindByID.
+func (mr *MockRiskTypeRepositoryMockRecorder) FindByID(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindById", reflect.TypeOf((*MockRiskTypeRepository)(nil).FindById), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockRiskTypeRepository)(nil).FindByID), id)
 }
 
 // Save mocks base method.
