@@ -80,4 +80,24 @@ func TestRiskType(t *testing.T) {
 		assert.Equal(t, 2, len(riskTypes))
 
 	})
+
+	t.Run("should find a risk type by id", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		data := &entities.RiskType{
+			ID:          "0c1baa42-3909-4bdb-837f-a80e68232ecd",
+			Name:        "Assalto",
+			Description: "Assalto a mão armada",
+		}
+
+		mockRiskTypeRepository := mocks.NewMockRiskTypeRepository(ctrl)
+		mockRiskTypeRepository.EXPECT().FindByID(gomock.Any()).Return(data, nil)
+
+		riskTypeUseCase := risktype.NewRiskTypeUseCase(mockRiskTypeRepository)
+		riskType, err := riskTypeUseCase.FindRiskTypeByID("0c1baa42-3909-4bdb-837f-a80e68232ecd")
+		assert.Nil(t, err)
+		assert.Equal(t, "Assalto", riskType.Name)
+
+	})
 }
