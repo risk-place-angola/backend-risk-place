@@ -10,7 +10,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
-	risk_controller "github.com/risk-place-angola/backend-risk-place/app/rest/controllers"
+	risk_controller "github.com/risk-place-angola/backend-risk-place/app/rest/risk/controllers"
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
 	"github.com/risk-place-angola/backend-risk-place/domain/repository/mocks"
 	risk_usecase "github.com/risk-place-angola/backend-risk-place/usecase/risk"

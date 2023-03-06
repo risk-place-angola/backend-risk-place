@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	risk_presenter "github.com/risk-place-angola/backend-risk-place/app/rest/presenter"
+	risk_presenter "github.com/risk-place-angola/backend-risk-place/app/rest/risk/presenter"
 	risk_usecase "github.com/risk-place-angola/backend-risk-place/usecase/risk"
 	uuid "github.com/satori/go.uuid"
 )
