@@ -10,6 +10,7 @@ import (
 
 type RiskTypeController interface {
 	RiskTypeCreateController(ctx risk_presenter.RiskPresenterCTX) error
+	RiskTypeUpdateController(ctx risk_presenter.RiskPresenterCTX) error
 }
 
 type RiskTypeControllerImpl struct {
@@ -34,4 +35,20 @@ func (controller *RiskTypeControllerImpl) RiskTypeCreateController(ctx risk_pres
 	}
 
 	return ctx.JSON(http.StatusCreated, risktypeCreate)
+}
+
+func (controller *RiskTypeControllerImpl) RiskTypeUpdateController(ctx risk_presenter.RiskPresenterCTX) error {
+	id := ctx.Param("id")
+
+	var risktype risktype.UpdateRiskTypeDTO
+	if err := ctx.Bind(&risktype); err != nil {
+		return ctx.JSON(http.StatusBadRequest, rest.ErrorResponse{Message: err.Error()})
+	}
+
+	risktypeUpdate, err := controller.riskTypeUseCase.UpdateRiskType(id, &risktype)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, rest.ErrorResponse{Message: err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, risktypeUpdate)
 }
