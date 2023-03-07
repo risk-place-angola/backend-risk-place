@@ -34,8 +34,6 @@ func TestRiskTypeControllers(t *testing.T) {
 		rec := httptest.NewRecorder()
 		ctx := e.NewContext(res, rec)
 
-		t.Log(ctx)
-
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
