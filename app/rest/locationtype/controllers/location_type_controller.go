@@ -11,8 +11,9 @@ import (
 type LocationTypeController interface {
 	LocationTypeCreateController(ctx locationtype_presenter.LocationTypePresenterCTX) error
 	LocationTypeFindAllController(ctx locationtype_presenter.LocationTypePresenterCTX) error
-	LocationTypeFindByIdController(ctx locationtype_presenter.LocationTypePresenterCTX) error 
+	LocationTypeFindByIdController(ctx locationtype_presenter.LocationTypePresenterCTX) error
 	LocationTypeUpdateController(ctx locationtype_presenter.LocationTypePresenterCTX) error
+	LocationTypeDeleteController(ctx locationtype_presenter.LocationTypePresenterCTX) error
 }
 
 type LocationTypeControllerImpl struct {
@@ -73,4 +74,14 @@ func (controller *LocationTypeControllerImpl) LocationTypeUpdateController(ctx l
 	}
 
 	return ctx.JSON(http.StatusOK, locationTypeUpdate)
+}
+
+func (controller *LocationTypeControllerImpl) LocationTypeDeleteController(ctx locationtype_presenter.LocationTypePresenterCTX) error {
+	id := ctx.Param("id")
+
+	if err := controller.locationtypeUseCase.DeleteLocationType(id); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, rest.ErrorResponse{Message: err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, rest.SuccessResponse{Message: "Location Type deleted successfully"})
 }
