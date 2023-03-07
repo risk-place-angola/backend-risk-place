@@ -9,6 +9,7 @@ import (
 
 type RiskController interface {
 	RiskCreateController(ctx risk_presenter.RiskPresenterCTX) error
+	RiskFindByIdController(ctx risk_presenter.RiskPresenterCTX) error
 }
 
 type RiskControllerImpl struct {
@@ -33,4 +34,15 @@ func (controller *RiskControllerImpl) RiskCreateController(ctx risk_presenter.Ri
 	}
 
 	return ctx.JSON(http.StatusCreated, riskCreate)
+}
+
+func (controller *RiskControllerImpl) RiskFindByIdController(ctx risk_presenter.RiskPresenterCTX) error {
+	id := ctx.Param("id")
+
+	risk, err := controller.riskUseCase.FindRiskByID(id)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, risk_presenter.ErrorResponse{Message: err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, risk)
 }
