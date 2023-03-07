@@ -32,6 +32,7 @@ func (router *LocationTypeRouterImpl) Router() *echo.Echo {
 			locationType.PUT("/:id", func(c echo.Context) error { return router.locationTypeController.LocationTypeUpdateController(c) })
 			locationType.GET("", func(c echo.Context) error { return router.locationTypeController.LocationTypeFindAllController(c) })
 			locationType.GET("/:id", func(c echo.Context) error { return router.locationTypeController.LocationTypeFindByIdController(c) })
+			locationType.DELETE("/:id", func(c echo.Context) error { return router.locationTypeController.LocationTypeDeleteController(c) })
 		}
 	}
 
