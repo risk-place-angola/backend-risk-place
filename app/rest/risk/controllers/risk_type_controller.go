@@ -12,6 +12,7 @@ type RiskTypeController interface {
 	RiskTypeCreateController(ctx risk_presenter.RiskPresenterCTX) error
 	RiskTypeUpdateController(ctx risk_presenter.RiskPresenterCTX) error
 	RiskTypeFindAllController(ctx risk_presenter.RiskPresenterCTX) error
+	RiskTypeFindByIdController(ctx risk_presenter.RiskPresenterCTX) error
 }
 
 type RiskTypeControllerImpl struct {
@@ -60,4 +61,14 @@ func (controller *RiskTypeControllerImpl) RiskTypeFindAllController(ctx risk_pre
 		return ctx.JSON(http.StatusInternalServerError, rest.ErrorResponse{Message: err.Error()})
 	}
 	return ctx.JSON(http.StatusOK, riskTypes)
+}
+
+func (controller *RiskTypeControllerImpl) RiskTypeFindByIdController(ctx risk_presenter.RiskPresenterCTX) error {
+	id := ctx.Param("id")
+
+	riskTypeID, err := controller.riskTypeUseCase.FindRiskTypeByID(id)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, rest.ErrorResponse{Message: err.Error()})
+	}
+	return ctx.JSON(http.StatusOK, riskTypeID)
 }
