@@ -69,4 +69,32 @@ func TestLocationTypeController(t *testing.T) {
 			assert.Equal(t, http.StatusOK, rec.Code, "error status code != 200")
 		}
 	})
+
+	t.Run("should return 200 when find a location type by id", func(t *testing.T) {
+		e := echo.New()
+		res := httptest.NewRequest("GET", "/api/v1/locationtype/:id", nil)
+		rec := httptest.NewRecorder()
+		ctx := e.NewContext(res, rec)
+		ctx.SetParamNames("id")
+		ctx.SetParamValues("20dabe23-3541-455b-b64d-3191f2b2a303")
+		ctx.SetPath("/api/v1/locationtype/:id")
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		data := &entities.LocationType{
+			ID:   "20dabe23-3541-455b-b64d-3191f2b2a303",
+			Name: "Risco",
+		}
+
+		mockLocationTypeRepository := mocks.NewMockLocationTypeRepository(ctrl)
+		mockLocationTypeRepository.EXPECT().FindByID(gomock.Any()).Return(data, nil)
+
+		locationTypeUseCase := locationtype_usecase.NewLocationTypeUseCase(mockLocationTypeRepository)
+		locationTypeController := locationtype_controllers.NewLocationTypeController(locationTypeUseCase)
+
+		if assert.NoError(t, locationTypeController.LocationTypeFindByIdController(ctx)) {
+			assert.Equal(t, http.StatusOK, rec.Code, "error status code != 200")
+		}
+	})
 }
