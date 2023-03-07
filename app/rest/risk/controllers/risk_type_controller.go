@@ -81,5 +81,5 @@ func (controller *RiskTypeControllerImpl) RiskTypeDeleteController(ctx risk_pres
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, rest.ErrorResponse{Message: err.Error()})
 	}
-	return ctx.JSON(http.StatusNoContent, nil)
+	return ctx.JSON(http.StatusOK, rest.SuccessResponse{Message: "RiskType deleted successfully"})
 }
