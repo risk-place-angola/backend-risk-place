@@ -52,4 +52,42 @@ func TestRiskController(t *testing.T) {
 		}
 
 	})
+
+	t.Run("should find risk by id controller", func(t *testing.T) {
+
+		e := echo.New()
+
+		res := httptest.NewRequest("GET", "/api/v1/risk/:id", nil)
+		res.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+		ctx := e.NewContext(res, rec)
+
+		ctx.SetPath("/api/v1/risk/:id")
+		ctx.SetParamNames("id")
+		ctx.SetParamValues("93247691-5c64-4c1f-a8ca-db5d76640ca9")
+
+		data := &entities.Risk{
+			ID:             "93247691-5c64-4c1f-a8ca-db5d76640ca9",
+			RiskTypeID:     "99bada49-09d0-4f13-b310-6f8633b38dfe",
+			LocationTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
+			Name:           "Rangel rua da Lama",
+			Latitude:       8.825248,
+			Longitude:      13.263879,
+			Description:    "Risco de inundação",
+		}
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockRiskRepository := mocks.NewMockRiskRepository(ctrl)
+		mockRiskRepository.EXPECT().FindByID(gomock.Any()).Return(data, nil)
+
+		riskUseCase := risk_usecase.NewRiskUseCase(mockRiskRepository)
+		riskController := risk_controller.NewRiskController(riskUseCase)
+
+		if assert.NoError(t, riskController.RiskFindByIdController(ctx)) {
+			assert.Equal(t, http.StatusOK, rec.Code, "error status code != 200")
+		}
+
+	})
 }
