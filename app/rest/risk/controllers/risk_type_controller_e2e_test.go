@@ -17,7 +17,7 @@ import (
 )
 
 func TestRiskTypeControllers(t *testing.T) {
-	t.Run("should return 201 when create a location type", func(t *testing.T) {
+	t.Run("should return 201 when create a risk type", func(t *testing.T) {
 
 		e := echo.New()
 
