@@ -2,6 +2,7 @@ package locationtype_controllers_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -94,6 +95,38 @@ func TestLocationTypeController(t *testing.T) {
 		locationTypeController := locationtype_controllers.NewLocationTypeController(locationTypeUseCase)
 
 		if assert.NoError(t, locationTypeController.LocationTypeFindByIdController(ctx)) {
+			assert.Equal(t, http.StatusOK, rec.Code, "error status code != 200")
+		}
+	})
+
+	t.Run("should return 200 when update a location type", func(t *testing.T) {
+		e := echo.New()
+		data := &entities.LocationType{
+			ID:   "20dabe23-3541-455b-b64d-3191f2b2a303",
+			Name: "Risco",
+		}
+
+		jsonData, _ := json.Marshal(data)
+
+		res := httptest.NewRequest("PUT", "/api/v1/locationtype/:id", bytes.NewBuffer(jsonData))
+		res.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		ctx := e.NewContext(res, rec)
+		ctx.SetParamNames("id")
+		ctx.SetParamValues("20dabe23-3541-455b-b64d-3191f2b2a303")
+		ctx.SetPath("/api/v1/locationtype/:id")
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockLocationTypeRepository := mocks.NewMockLocationTypeRepository(ctrl)
+		mockLocationTypeRepository.EXPECT().FindByID(gomock.Any()).Return(data, nil)
+		mockLocationTypeRepository.EXPECT().Update(gomock.Any()).Return(nil)
+
+		locationTypeUseCase := locationtype_usecase.NewLocationTypeUseCase(mockLocationTypeRepository)
+		locationTypeController := locationtype_controllers.NewLocationTypeController(locationTypeUseCase)
+
+		if assert.NoError(t, locationTypeController.LocationTypeUpdateController(ctx)) {
 			assert.Equal(t, http.StatusOK, rec.Code, "error status code != 200")
 		}
 	})
