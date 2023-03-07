@@ -116,4 +116,36 @@ func TestRiskTypeControllers(t *testing.T) {
 
 	})
 
+	t.Run("should return 200 when find a risk type by id", func(t *testing.T) {
+		e := echo.New()
+
+		data := &entities.RiskType{
+			ID:          "0c1baa42-3909-4bdb-837f-a80e68232ecd",
+			Name:        "Assaltam",
+			Description: "Assalto a mão armada",
+		}
+
+		res := httptest.NewRequest("GET", "/api/v1/risk/risktype/:id", nil)
+		res.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+		ctx := e.NewContext(res, rec)
+		ctx.SetParamNames("id")
+		ctx.SetParamValues("0c1baa42-3909-4bdb-837f-a80e68232ecd")
+		ctx.SetPath("/api/v1/risk/risktype/:id")
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockRiskTypeRepository := mocks.NewMockRiskTypeRepository(ctrl)
+		mockRiskTypeRepository.EXPECT().FindByID(gomock.Any()).Return(data, nil)
+
+		riskTypeUseCase := risktype.NewRiskTypeUseCase(mockRiskTypeRepository)
+		riskTypeController := risk_controller.NewRiskTypeController(riskTypeUseCase)
+
+		if assert.NoError(t, riskTypeController.RiskTypeFindByIdController(ctx)) {
+			assert.Equal(t, http.StatusOK, rec.Code, "error status code != 200")
+		}
+
+	})
+
 }
