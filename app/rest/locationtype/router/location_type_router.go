@@ -16,9 +16,10 @@ type LocationTypeRouterImpl struct {
 	locationTypeController locationtype_controller.LocationTypeController
 }
 
-func NewLocationTypeRouter(locationTypeController locationtype_controller.LocationTypeController) LocationTypeRouter {
+func NewLocationTypeRouter(locationTypeController *LocationTypeRouterImpl) LocationTypeRouter {
 	return &LocationTypeRouterImpl{
-		locationTypeController: locationTypeController,
+		locationTypeController: locationTypeController.locationTypeController,
+		echo:                   locationTypeController.echo,
 	}
 }
 
