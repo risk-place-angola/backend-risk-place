@@ -11,6 +11,7 @@ import (
 type LocationTypeController interface {
 	LocationTypeCreateController(ctx locationtype_presenter.LocationTypePresenterCTX) error
 	LocationTypeFindAllController(ctx locationtype_presenter.LocationTypePresenterCTX) error
+	LocationTypeFindByIdController(ctx locationtype_presenter.LocationTypePresenterCTX) error
 }
 
 type LocationTypeControllerImpl struct {
@@ -44,4 +45,15 @@ func (controller *LocationTypeControllerImpl) LocationTypeFindAllController(ctx 
 	}
 
 	return ctx.JSON(http.StatusOK, locationTypeFindAll)
+}
+
+func (controller *LocationTypeControllerImpl) LocationTypeFindByIdController(ctx locationtype_presenter.LocationTypePresenterCTX) error {
+	id := ctx.Param("id")
+
+	locationTypeFindById, err := controller.locationtypeUseCase.FindByIdLocationType(id)
+	if err != nil {
+		return ctx.JSON(http.StatusFound, rest.ErrorResponse{Message: err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, locationTypeFindById)
 }
