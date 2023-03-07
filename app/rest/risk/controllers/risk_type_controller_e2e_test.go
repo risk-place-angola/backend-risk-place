@@ -46,6 +46,41 @@ func TestRiskTypeControllers(t *testing.T) {
 		if assert.NoError(t, riskTypeController.RiskTypeCreateController(ctx)) {
 			assert.Equal(t, http.StatusCreated, rec.Code, "error status code != 201")
 		}
+	})
+
+	t.Run("should return 200 when update a risk type", func(t *testing.T) {
+		e := echo.New()
+
+		data := &entities.RiskType{
+			ID:          "0c1baa42-3909-4bdb-837f-a80e68232ecd",
+			Name:        "Assaltam",
+			Description: "Assalto a mão armada",
+		}
+
+		jsonData, _ := json.Marshal(data)
+
+		res := httptest.NewRequest("PUT", "/api/v1/risk/risktype/:id", bytes.NewBuffer(jsonData))
+		res.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+		ctx := e.NewContext(res, rec)
+		ctx.SetParamNames("id")
+		ctx.SetParamValues("0c1baa42-3909-4bdb-837f-a80e68232ecd")
+		ctx.SetPath("/api/v1/risk/risktype/:id")
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockRiskTypeRepository := mocks.NewMockRiskTypeRepository(ctrl)
+		mockRiskTypeRepository.EXPECT().FindByID(gomock.Any()).Return(data, nil)
+		mockRiskTypeRepository.EXPECT().Update(gomock.Any()).Return(nil)
+
+		riskTypeUseCase := risktype.NewRiskTypeUseCase(mockRiskTypeRepository)
+		riskTypeController := risk_controller.NewRiskTypeController(riskTypeUseCase)
+
+		if assert.NoError(t, riskTypeController.RiskTypeUpdateController(ctx)) {
+			assert.Equal(t, http.StatusOK, rec.Code, "error status code != 200")
+		}
 
 	})
+
 }
