@@ -55,7 +55,7 @@ go test ./...
 * [air](https://github.com/cosmtrek/air) - Live reload
 
 
-## Contribuição
+## 🤝 Contribuição
 > Antes de abrir uma issue ou pull request, verifique o documentos de contribuição do projeto.
 
 Por favor leia [CONTRIBUTING.md](https://github.com/risk-place-angola/backend-risk-place/blob/main/CONTRIBUTING.md) 
@@ -75,3 +75,8 @@ para detalhes sobre o nosso código de conduta, e o processo para submeter pedid
 
 * **Tipos de um riscos**: aqui vamos cadastrar os tipos riscos que podem ser encontrados em um local. Ex: `Criminalidade`, `Vala`, `doença`.
     * **Topicos**: aqui vamos cadastrar os tópicos de um risco. Ex: `Assalto`, `Incêndio`, `Furto`, `Assalto`, `Acidente`, `Roubo`, `Inundação` etc.
+    
+    
+ ## 🍕 Comunidade
+ 
+ Junte-se à conversa ao nosso https://discord.gg/s2Nk4xYV
