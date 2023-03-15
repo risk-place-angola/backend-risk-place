@@ -25,12 +25,12 @@ func NewRiskUseCase(riskRepository repository.RiskRepository) RiskUseCase {
 func (r *RiskUseCaseImpl) CreateRisk(dto CreateRiskDTO) (*RiskDTO, error) {
 
 	riskEntity := &entities.Risk{
-		RiskTypeID:     dto.RiskTypeID,
-		LocationTypeID: dto.LocationTypeID,
-		Name:           dto.Name,
-		Latitude:       dto.Latitude,
-		Longitude:      dto.Longitude,
-		Description:    dto.Description,
+		RiskTypeID:  dto.RiskTypeID,
+		PlaceTypeID: dto.PlaceTypeID,
+		Name:        dto.Name,
+		Latitude:    dto.Latitude,
+		Longitude:   dto.Longitude,
+		Description: dto.Description,
 	}
 
 	risk, err := entities.NewRisk(riskEntity)
@@ -86,7 +86,7 @@ func (r *RiskUseCaseImpl) FindAllRisk() ([]*RiskDTO, error) {
 }
 
 func (r *RiskUseCaseImpl) FindRiskByID(id string) (*RiskDTO, error) {
-	
+
 	risk, err := r.RiskRepository.FindByID(id)
 	if err != nil {
 		return nil, err

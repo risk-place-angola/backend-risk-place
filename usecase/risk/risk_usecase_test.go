@@ -19,12 +19,12 @@ func TestCreateRisk(t *testing.T) {
 
 	riskUseCase := risk_usecase.NewRiskUseCase(mockRiskRepository)
 	risk, err := riskUseCase.CreateRisk(risk_usecase.CreateRiskDTO{
-		RiskTypeID:     "99bada49-09d0-4f13-b310-6f8633b38dfe",
-		LocationTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
-		Name:           "Rangel rua da Lama",
-		Latitude:       8.825248,
-		Longitude:      13.263879,
-		Description:    "Risco de inundação",
+		RiskTypeID:  "99bada49-09d0-4f13-b310-6f8633b38dfe",
+		PlaceTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
+		Name:        "Rangel rua da Lama",
+		Latitude:    8.825248,
+		Longitude:   13.263879,
+		Description: "Risco de inundação",
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, "Rangel rua da Lama", risk.Name)
@@ -35,13 +35,13 @@ func TestUpdateRisk(t *testing.T) {
 	defer ctrl.Finish()
 
 	data := &entities.Risk{
-		ID:             "93247691-5c64-4c1f-a8ca-db5d76640ca9",
-		RiskTypeID:     "99bada49-09d0-4f13-b310-6f8633b38dfe",
-		LocationTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
-		Name:           "Rangel rua da Lama",
-		Latitude:       8.825248,
-		Longitude:      13.263879,
-		Description:    "Risco de inundação",
+		ID:          "93247691-5c64-4c1f-a8ca-db5d76640ca9",
+		RiskTypeID:  "99bada49-09d0-4f13-b310-6f8633b38dfe",
+		PlaceTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
+		Name:        "Rangel rua da Lama",
+		Latitude:    8.825248,
+		Longitude:   13.263879,
+		Description: "Risco de inundação",
 	}
 
 	mockRiskRepository := mocks.NewMockRiskRepository(ctrl)
@@ -50,7 +50,7 @@ func TestUpdateRisk(t *testing.T) {
 
 	updateRiskDTO := &risk_usecase.UpdateRiskDTO{}
 	updateRiskDTO.RiskTypeID = "99bada49-09d0-4f13-b310-6f8633b38dfe"
-	updateRiskDTO.LocationTypeID = "dd3aadda-9434-4dd7-aaad-035584b8f124"
+	updateRiskDTO.PlaceTypeID = "dd3aadda-9434-4dd7-aaad-035584b8f124"
 	updateRiskDTO.Name = "Rangel rua da Lama"
 	updateRiskDTO.Latitude = 8.826595
 	updateRiskDTO.Longitude = 13.263641
@@ -67,22 +67,22 @@ func TestFindAllRisk(t *testing.T) {
 
 	data := []*entities.Risk{
 		{
-			ID:             "93247691-5c64-4c1f-a8ca-db5d76640ca9",
-			RiskTypeID:     "99bada49-09d0-4f13-b310-6f8633b38dfe",
-			LocationTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
-			Name:           "Rangel rua da Lama",
-			Latitude:       8.825248,
-			Longitude:      13.263879,
-			Description:    "Risco de inundação",
+			ID:          "93247691-5c64-4c1f-a8ca-db5d76640ca9",
+			RiskTypeID:  "99bada49-09d0-4f13-b310-6f8633b38dfe",
+			PlaceTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
+			Name:        "Rangel rua da Lama",
+			Latitude:    8.825248,
+			Longitude:   13.263879,
+			Description: "Risco de inundação",
 		},
 		{
-			ID:             "50361691-6b99-8j2u-a8ca-db5d70912837",
-			RiskTypeID:     "99bada49-09d0-4f13-b310-6f8633b38dfe",
-			LocationTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
-			Name:           "Rangel rua da Lama",
-			Latitude:       8.825248,
-			Longitude:      13.263879,
-			Description:    "Risco de inundação",
+			ID:          "50361691-6b99-8j2u-a8ca-db5d70912837",
+			RiskTypeID:  "99bada49-09d0-4f13-b310-6f8633b38dfe",
+			PlaceTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
+			Name:        "Rangel rua da Lama",
+			Latitude:    8.825248,
+			Longitude:   13.263879,
+			Description: "Risco de inundação",
 		},
 	}
 
@@ -100,13 +100,13 @@ func TestFindRiskByID(t *testing.T) {
 	defer ctrl.Finish()
 
 	data := &entities.Risk{
-		ID:             "93247691-5c64-4c1f-a8ca-db5d76640ca9",
-		RiskTypeID:     "99bada49-09d0-4f13-b310-6f8633b38dfe",
-		LocationTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
-		Name:           "Rangel rua da Lama",
-		Latitude:       8.825248,
-		Longitude:      13.263879,
-		Description:    "Risco de inundação",
+		ID:          "93247691-5c64-4c1f-a8ca-db5d76640ca9",
+		RiskTypeID:  "99bada49-09d0-4f13-b310-6f8633b38dfe",
+		PlaceTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
+		Name:        "Rangel rua da Lama",
+		Latitude:    8.825248,
+		Longitude:   13.263879,
+		Description: "Risco de inundação",
 	}
 
 	mockRiskRepository := mocks.NewMockRiskRepository(ctrl)

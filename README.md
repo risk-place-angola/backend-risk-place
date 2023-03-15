@@ -67,7 +67,7 @@ para detalhes sobre o nosso código de conduta, e o processo para submeter pedid
 
 ### Detalhes para cada entidade do diagrama
 
-* **Location Type**: Tipo de locais que podem ser cadastrados no sistema. Ex: `Riscos`, `Trabalho`, `Escola`, `Parque`, `Igreja`, `Hospital` etc.
+* **Place Type**: Tipo de locais que podem ser cadastrados no sistema. Ex: `Riscos`, `Trabalho`, `Escola`, `Parque`, `Igreja`, `Hospital` etc.
 
 > Nota: O tipo de local é um campo obrigatório para o cadastro de um local. O primeiro local que vamos utilizar é o tipo `Risco`.
 

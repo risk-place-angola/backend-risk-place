@@ -1,6 +1,6 @@
-package locationtype_presenter
+package placetype_presenter
 
-type LocationTypePresenterCTX interface {
+type PlaceTypePresenterCTX interface {
 	JSON(code int, i interface{}) error
 	Bind(i interface{}) error
 	Param(name string) string
