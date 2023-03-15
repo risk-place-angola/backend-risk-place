@@ -8,8 +8,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func TestNewRisk(t *testing.T) {
-	risk, err := entities.NewRisk(&entities.Risk{
+func TestNewPlace(t *testing.T) {
+	place, err := entities.NewPlace(&entities.Place{
 		Name:        "Viana - Estalagem",
 		RiskTypeID:  uuid.NewV4().String(),
 		PlaceTypeID: uuid.NewV4().String(),
@@ -20,7 +20,7 @@ func TestNewRisk(t *testing.T) {
 	if err != nil {
 		t.Errorf("Erro ao criar um novo risco: %v", err)
 	}
-	if risk.ID == "" {
+	if place.ID == "" {
 		t.Errorf("Erro ao criar um novo risco: %v", err)
 	}
 }

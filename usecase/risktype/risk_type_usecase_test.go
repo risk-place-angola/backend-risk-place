@@ -6,7 +6,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
 	"github.com/risk-place-angola/backend-risk-place/domain/repository/mocks"
-	"github.com/risk-place-angola/backend-risk-place/usecase/risk/risktype"
+	"github.com/risk-place-angola/backend-risk-place/usecase/risktype"
 	"github.com/stretchr/testify/assert"
 )
 

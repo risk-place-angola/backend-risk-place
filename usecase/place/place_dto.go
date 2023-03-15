@@ -1,8 +1,8 @@
-package risk_usecase
+package place_usecase
 
 import "github.com/risk-place-angola/backend-risk-place/domain/entities"
 
-type CreateRiskDTO struct {
+type CreatePlaceDTO struct {
 	RiskTypeID  string  `json:"risk_type_id"`
 	PlaceTypeID string  `json:"place_type_id"`
 	Name        string  `json:"name"`
@@ -11,11 +11,11 @@ type CreateRiskDTO struct {
 	Description string  `json:"description"`
 }
 
-type UpdateRiskDTO struct {
-	CreateRiskDTO
+type UpdatePlaceDTO struct {
+	CreatePlaceDTO
 }
 
-type RiskDTO struct {
+type PlaceDTO struct {
 	ID          string  `json:"id"`
 	RiskTypeID  string  `json:"risk_type_id"`
 	PlaceTypeID string  `json:"place_type_id"`
@@ -27,8 +27,8 @@ type RiskDTO struct {
 	UpdatedAt   string  `json:"updated_at"`
 }
 
-func (u *UpdateRiskDTO) ToRiskUpdate() *entities.Risk {
-	return &entities.Risk{
+func (u *UpdatePlaceDTO) ToPlaceUpdate() *entities.Place {
+	return &entities.Place{
 		RiskTypeID:  u.RiskTypeID,
 		PlaceTypeID: u.PlaceTypeID,
 		Name:        u.Name,
@@ -38,8 +38,8 @@ func (u *UpdateRiskDTO) ToRiskUpdate() *entities.Risk {
 	}
 }
 
-func (r *RiskDTO) ToRisk() *entities.Risk {
-	return &entities.Risk{
+func (r *PlaceDTO) ToPlace() *entities.Place {
+	return &entities.Place{
 		ID:          r.ID,
 		RiskTypeID:  r.RiskTypeID,
 		PlaceTypeID: r.PlaceTypeID,
@@ -50,27 +50,27 @@ func (r *RiskDTO) ToRisk() *entities.Risk {
 	}
 }
 
-func (r *RiskDTO) FromRisk(risk *entities.Risk) *RiskDTO {
-	r.ID = risk.ID
-	r.RiskTypeID = risk.RiskTypeID
-	r.PlaceTypeID = risk.PlaceTypeID
-	r.Name = risk.Name
-	r.Latitude = risk.Latitude
-	r.Longitude = risk.Longitude
-	r.Description = risk.Description
-	r.CreatedAt = risk.CreatedAt.String()
-	r.UpdatedAt = risk.UpdatedAt.String()
+func (r *PlaceDTO) FromPlace(place *entities.Place) *PlaceDTO {
+	r.ID = place.ID
+	r.RiskTypeID = place.RiskTypeID
+	r.PlaceTypeID = place.PlaceTypeID
+	r.Name = place.Name
+	r.Latitude = place.Latitude
+	r.Longitude = place.Longitude
+	r.Description = place.Description
+	r.CreatedAt = place.CreatedAt.String()
+	r.UpdatedAt = place.UpdatedAt.String()
 	return r
 }
 
-func (r *RiskDTO) FromRiskList(risks []*entities.Risk) []*RiskDTO {
-	var riskDTOs []*RiskDTO
-	for _, risk := range risks {
-		riskDTOs = append(riskDTOs, r.FromRisk(risk))
+func (r *PlaceDTO) FromPlaceList(places []*entities.Place) []*PlaceDTO {
+	var placeDTOs []*PlaceDTO
+	for _, place := range places {
+		placeDTOs = append(placeDTOs, r.FromPlace(place))
 	}
-	return riskDTOs
+	return placeDTOs
 }
 
-func NewRiskDTO() *RiskDTO {
-	return &RiskDTO{}
+func NewPlaceDTO() *PlaceDTO {
+	return &PlaceDTO{}
 }

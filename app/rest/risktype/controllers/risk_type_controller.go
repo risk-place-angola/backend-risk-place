@@ -1,19 +1,19 @@
-package risk_controller
+package risktype_controller
 
 import (
 	"net/http"
 
 	"github.com/risk-place-angola/backend-risk-place/app/rest"
-	risk_presenter "github.com/risk-place-angola/backend-risk-place/app/rest/risk/presenter"
-	"github.com/risk-place-angola/backend-risk-place/usecase/risk/risktype"
+	risk_type_presenter "github.com/risk-place-angola/backend-risk-place/app/rest/risktype/presenter"
+	"github.com/risk-place-angola/backend-risk-place/usecase/risktype"
 )
 
 type RiskTypeController interface {
-	RiskTypeCreateController(ctx risk_presenter.RiskPresenterCTX) error
-	RiskTypeUpdateController(ctx risk_presenter.RiskPresenterCTX) error
-	RiskTypeFindAllController(ctx risk_presenter.RiskPresenterCTX) error
-	RiskTypeFindByIdController(ctx risk_presenter.RiskPresenterCTX) error
-	RiskTypeDeleteController(ctx risk_presenter.RiskPresenterCTX) error
+	RiskTypeCreateController(ctx risk_type_presenter.RiskTypePresenterCTX) error
+	RiskTypeUpdateController(ctx risk_type_presenter.RiskTypePresenterCTX) error
+	RiskTypeFindAllController(ctx risk_type_presenter.RiskTypePresenterCTX) error
+	RiskTypeFindByIdController(ctx risk_type_presenter.RiskTypePresenterCTX) error
+	RiskTypeDeleteController(ctx risk_type_presenter.RiskTypePresenterCTX) error
 }
 
 type RiskTypeControllerImpl struct {
@@ -26,7 +26,7 @@ func NewRiskTypeController(riskTypeUseCase risktype.RiskTypeUseCase) RiskTypeCon
 	}
 }
 
-func (controller *RiskTypeControllerImpl) RiskTypeCreateController(ctx risk_presenter.RiskPresenterCTX) error {
+func (controller *RiskTypeControllerImpl) RiskTypeCreateController(ctx risk_type_presenter.RiskTypePresenterCTX) error {
 	var risktype risktype.CreateRiskTypeDTO
 	if err := ctx.Bind(&risktype); err != nil {
 		return ctx.JSON(http.StatusBadRequest, rest.ErrorResponse{Message: err.Error()})
@@ -40,7 +40,7 @@ func (controller *RiskTypeControllerImpl) RiskTypeCreateController(ctx risk_pres
 	return ctx.JSON(http.StatusCreated, risktypeCreate)
 }
 
-func (controller *RiskTypeControllerImpl) RiskTypeUpdateController(ctx risk_presenter.RiskPresenterCTX) error {
+func (controller *RiskTypeControllerImpl) RiskTypeUpdateController(ctx risk_type_presenter.RiskTypePresenterCTX) error {
 	id := ctx.Param("id")
 
 	var risktype risktype.UpdateRiskTypeDTO
@@ -56,7 +56,7 @@ func (controller *RiskTypeControllerImpl) RiskTypeUpdateController(ctx risk_pres
 	return ctx.JSON(http.StatusOK, risktypeUpdate)
 }
 
-func (controller *RiskTypeControllerImpl) RiskTypeFindAllController(ctx risk_presenter.RiskPresenterCTX) error {
+func (controller *RiskTypeControllerImpl) RiskTypeFindAllController(ctx risk_type_presenter.RiskTypePresenterCTX) error {
 	riskTypes, err := controller.riskTypeUseCase.FindAllRiskTypes()
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, rest.ErrorResponse{Message: err.Error()})
@@ -64,7 +64,7 @@ func (controller *RiskTypeControllerImpl) RiskTypeFindAllController(ctx risk_pre
 	return ctx.JSON(http.StatusOK, riskTypes)
 }
 
-func (controller *RiskTypeControllerImpl) RiskTypeFindByIdController(ctx risk_presenter.RiskPresenterCTX) error {
+func (controller *RiskTypeControllerImpl) RiskTypeFindByIdController(ctx risk_type_presenter.RiskTypePresenterCTX) error {
 	id := ctx.Param("id")
 
 	riskTypeID, err := controller.riskTypeUseCase.FindRiskTypeByID(id)
@@ -74,7 +74,7 @@ func (controller *RiskTypeControllerImpl) RiskTypeFindByIdController(ctx risk_pr
 	return ctx.JSON(http.StatusOK, riskTypeID)
 }
 
-func (controller *RiskTypeControllerImpl) RiskTypeDeleteController(ctx risk_presenter.RiskPresenterCTX) error {
+func (controller *RiskTypeControllerImpl) RiskTypeDeleteController(ctx risk_type_presenter.RiskTypePresenterCTX) error {
 	id := ctx.Param("id")
 
 	err := controller.riskTypeUseCase.RemoveRiskType(id)

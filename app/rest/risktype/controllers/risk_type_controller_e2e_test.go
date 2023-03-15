@@ -1,4 +1,4 @@
-package risk_controller_test
+package risktype_controller_test
 
 import (
 	"bytes"
@@ -9,10 +9,10 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
-	risk_controller "github.com/risk-place-angola/backend-risk-place/app/rest/risk/controllers"
+	risk_type_controller "github.com/risk-place-angola/backend-risk-place/app/rest/risktype/controllers"
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
 	"github.com/risk-place-angola/backend-risk-place/domain/repository/mocks"
-	"github.com/risk-place-angola/backend-risk-place/usecase/risk/risktype"
+	"github.com/risk-place-angola/backend-risk-place/usecase/risktype"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,7 +41,7 @@ func TestRiskTypeControllers(t *testing.T) {
 		mockRiskTypeRepository.EXPECT().Save(gomock.Any()).Return(nil)
 
 		riskTypeUseCase := risktype.NewRiskTypeUseCase(mockRiskTypeRepository)
-		riskTypeController := risk_controller.NewRiskTypeController(riskTypeUseCase)
+		riskTypeController := risk_type_controller.NewRiskTypeController(riskTypeUseCase)
 
 		if assert.NoError(t, riskTypeController.RiskTypeCreateController(ctx)) {
 			assert.Equal(t, http.StatusCreated, rec.Code, "error status code != 201")
@@ -75,7 +75,7 @@ func TestRiskTypeControllers(t *testing.T) {
 		mockRiskTypeRepository.EXPECT().Update(gomock.Any()).Return(nil)
 
 		riskTypeUseCase := risktype.NewRiskTypeUseCase(mockRiskTypeRepository)
-		riskTypeController := risk_controller.NewRiskTypeController(riskTypeUseCase)
+		riskTypeController := risk_type_controller.NewRiskTypeController(riskTypeUseCase)
 
 		if assert.NoError(t, riskTypeController.RiskTypeUpdateController(ctx)) {
 			assert.Equal(t, http.StatusOK, rec.Code, "error status code != 200")
@@ -108,7 +108,7 @@ func TestRiskTypeControllers(t *testing.T) {
 		mockRiskTypeRepository.EXPECT().Delete(gomock.Any()).Return(nil)
 
 		riskTypeUseCase := risktype.NewRiskTypeUseCase(mockRiskTypeRepository)
-		riskTypeController := risk_controller.NewRiskTypeController(riskTypeUseCase)
+		riskTypeController := risk_type_controller.NewRiskTypeController(riskTypeUseCase)
 
 		if assert.NoError(t, riskTypeController.RiskTypeDeleteController(ctx)) {
 			assert.Equal(t, http.StatusOK, rec.Code, "error status code != 200")
@@ -140,7 +140,7 @@ func TestRiskTypeControllers(t *testing.T) {
 		mockRiskTypeRepository.EXPECT().FindByID(gomock.Any()).Return(data, nil)
 
 		riskTypeUseCase := risktype.NewRiskTypeUseCase(mockRiskTypeRepository)
-		riskTypeController := risk_controller.NewRiskTypeController(riskTypeUseCase)
+		riskTypeController := risk_type_controller.NewRiskTypeController(riskTypeUseCase)
 
 		if assert.NoError(t, riskTypeController.RiskTypeFindByIdController(ctx)) {
 			assert.Equal(t, http.StatusOK, rec.Code, "error status code != 200")
@@ -177,7 +177,7 @@ func TestRiskTypeControllers(t *testing.T) {
 		mockRiskTypeRepository.EXPECT().FindAll().Return(data, nil)
 
 		riskTypeUseCase := risktype.NewRiskTypeUseCase(mockRiskTypeRepository)
-		riskTypeController := risk_controller.NewRiskTypeController(riskTypeUseCase)
+		riskTypeController := risk_type_controller.NewRiskTypeController(riskTypeUseCase)
 
 		if assert.NoError(t, riskTypeController.RiskTypeFindAllController(ctx)) {
 			assert.Equal(t, http.StatusOK, rec.Code, "error status code != 200")

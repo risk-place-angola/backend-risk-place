@@ -1,4 +1,4 @@
-package risk_controller_test
+package place_controller_test
 
 import (
 	"encoding/json"
@@ -10,10 +10,10 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
-	risk_controller "github.com/risk-place-angola/backend-risk-place/app/rest/risk/controllers"
+	place_controller "github.com/risk-place-angola/backend-risk-place/app/rest/place/controllers"
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
 	"github.com/risk-place-angola/backend-risk-place/domain/repository/mocks"
-	risk_usecase "github.com/risk-place-angola/backend-risk-place/usecase/risk"
+	place_usecase "github.com/risk-place-angola/backend-risk-place/usecase/place"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,12 +30,12 @@ func (h *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	<-forever
 }
 
-func TestRiskFindAllWebSocket(t *testing.T) {
+func TestPlaceFindAllWebSocket(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	data := []*entities.Risk{
+	data := []*entities.Place{
 		{
 			ID:          "93247691-5c64-4c1f-a8ca-db5d76640ca9",
 			RiskTypeID:  "99bada49-09d0-4f13-b310-6f8633b38dfe",
@@ -56,17 +56,17 @@ func TestRiskFindAllWebSocket(t *testing.T) {
 		},
 	}
 
-	mockRiskRepository := mocks.NewMockRiskRepository(ctrl)
-	mockRiskRepository.EXPECT().FindAll().Return(data, nil)
+	mockPlaceRepository := mocks.NewMockPlaceRepository(ctrl)
+	mockPlaceRepository.EXPECT().FindAll().Return(data, nil)
 
-	riskUseCase := risk_usecase.NewRiskUseCase(mockRiskRepository)
-	riskController := risk_controller.NewRiskClientManager(riskUseCase)
+	placeUseCase := place_usecase.NewPlaceUseCase(mockPlaceRepository)
+	placeController := place_controller.NewPlaceClientManager(placeUseCase)
 
-	go riskController.Start()
+	go placeController.Start()
 
 	h := WsHandler{
 		handler: func(c echo.Context) error {
-			return riskController.RiskHandler(c)
+			return placeController.PlaceHandler(c)
 		},
 	}
 

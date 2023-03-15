@@ -1,42 +1,42 @@
-package risk_controller
+package place_controller
 
 import (
 	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	risk_presenter "github.com/risk-place-angola/backend-risk-place/app/rest/risk/presenter"
-	risk_usecase "github.com/risk-place-angola/backend-risk-place/usecase/risk"
+	place_presenter "github.com/risk-place-angola/backend-risk-place/app/rest/place/presenter"
+	place_usecase "github.com/risk-place-angola/backend-risk-place/usecase/place"
 	uuid "github.com/satori/go.uuid"
 )
 
-type RiskClient struct {
+type PlaceClient struct {
 	ID   string
 	Conn *websocket.Conn
 
-	Send              chan []byte
-	RiskClientManager *RiskClientManager
+	Send               chan []byte
+	PlaceClientManager *PlaceClientManager
 }
 
-type RiskClientManager struct {
-	clients     map[*RiskClient]bool
-	broadcast   chan []byte
-	register    chan *RiskClient
-	unregister  chan *RiskClient
-	riskUseCase risk_usecase.RiskUseCase
+type PlaceClientManager struct {
+	clients      map[*PlaceClient]bool
+	broadcast    chan []byte
+	register     chan *PlaceClient
+	unregister   chan *PlaceClient
+	placeUseCase place_usecase.PlaceUseCase
 }
 
-func NewRiskClientManager(riskUseCase risk_usecase.RiskUseCase) *RiskClientManager {
-	return &RiskClientManager{
-		broadcast:   make(chan []byte),
-		register:    make(chan *RiskClient),
-		unregister:  make(chan *RiskClient),
-		clients:     make(map[*RiskClient]bool),
-		riskUseCase: riskUseCase,
+func NewPlaceClientManager(placeUseCase place_usecase.PlaceUseCase) *PlaceClientManager {
+	return &PlaceClientManager{
+		broadcast:    make(chan []byte),
+		register:     make(chan *PlaceClient),
+		unregister:   make(chan *PlaceClient),
+		clients:      make(map[*PlaceClient]bool),
+		placeUseCase: placeUseCase,
 	}
 }
 
-func (manager *RiskClientManager) Start() {
+func (manager *PlaceClientManager) Start() {
 	for {
 		select {
 		case conn := <-manager.register:
@@ -60,7 +60,7 @@ func (manager *RiskClientManager) Start() {
 	}
 }
 
-func (manager *RiskClientManager) Send(message []byte, ignore *RiskClient) {
+func (manager *PlaceClientManager) Send(message []byte, ignore *PlaceClient) {
 	for conn := range manager.clients {
 		if conn != ignore {
 			conn.Send <- message
@@ -74,17 +74,17 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-func (manager *RiskClientManager) RiskHandler(ctx risk_presenter.RiskPresenterCTX) error {
+func (manager *PlaceClientManager) PlaceHandler(ctx place_presenter.PlacePresenterCTX) error {
 	conn, err := upgrader.Upgrade(ctx.Response().Writer, ctx.Request(), nil)
 	if err != nil {
 		return err
 	}
 
-	client := &RiskClient{
-		ID:                uuid.NewV4().String(),
-		Conn:              conn,
-		Send:              make(chan []byte),
-		RiskClientManager: manager,
+	client := &PlaceClient{
+		ID:                 uuid.NewV4().String(),
+		Conn:               conn,
+		Send:               make(chan []byte),
+		PlaceClientManager: manager,
 	}
 
 	manager.register <- client
@@ -95,9 +95,9 @@ func (manager *RiskClientManager) RiskHandler(ctx risk_presenter.RiskPresenterCT
 	return nil
 }
 
-func (c *RiskClient) read() {
+func (c *PlaceClient) read() {
 	defer func() {
-		c.RiskClientManager.unregister <- c
+		c.PlaceClientManager.unregister <- c
 		c.Conn.Close()
 	}()
 
@@ -107,11 +107,11 @@ func (c *RiskClient) read() {
 			log.Println(err)
 			break
 		}
-		c.RiskClientManager.broadcast <- message
+		c.PlaceClientManager.broadcast <- message
 	}
 }
 
-func (c *RiskClient) write() {
+func (c *PlaceClient) write() {
 	defer func() {
 		c.Conn.Close()
 	}()
@@ -124,13 +124,13 @@ func (c *RiskClient) write() {
 				return
 			}
 
-			risks, err := c.RiskClientManager.riskUseCase.FindAllRisk()
+			places, err := c.PlaceClientManager.placeUseCase.FindAllPlace()
 			if err != nil {
 				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
-			c.Conn.WriteJSON(risks)
+			c.Conn.WriteJSON(places)
 
 		}
 	}

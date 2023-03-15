@@ -11,7 +11,7 @@ func init() {
 	govalidator.SetFieldsRequiredByDefault(true)
 }
 
-type Risk struct {
+type Place struct {
 	ID          string    `json:"id" valid:"uuid,required~ O ID do risco é obrigatório."`
 	RiskTypeID  string    `json:"risk_type_id" valid:"uuid,required~ O ID do tipo de risco é obrigatório."`
 	PlaceTypeID string    `json:"place_type_id" valid:"uuid,required~ O ID do tipo de localização é obrigatório."`
@@ -23,8 +23,8 @@ type Risk struct {
 	UpdatedAt   time.Time `json:"updated_at" valid:"-"`
 }
 
-func NewRisk(r *Risk) (*Risk, error) {
-	risk := Risk{
+func NewPlace(r *Place) (*Place, error) {
+	place := Place{
 		Name:        r.Name,
 		RiskTypeID:  r.RiskTypeID,
 		PlaceTypeID: r.PlaceTypeID,
@@ -32,15 +32,15 @@ func NewRisk(r *Risk) (*Risk, error) {
 		Longitude:   r.Longitude,
 		Description: r.Description,
 	}
-	risk.ID = uuid.NewV4().String()
-	risk.CreatedAt = time.Now()
-	if err := risk.isValid(); err != nil {
+	place.ID = uuid.NewV4().String()
+	place.CreatedAt = time.Now()
+	if err := place.isValid(); err != nil {
 		return nil, err
 	}
-	return &risk, nil
+	return &place, nil
 }
 
-func (risk *Risk) isValid() error {
+func (risk *Place) isValid() error {
 	_, err := govalidator.ValidateStruct(risk)
 	if err != nil {
 		return err
@@ -48,7 +48,7 @@ func (risk *Risk) isValid() error {
 	return nil
 }
 
-func (risk *Risk) Update(r *Risk) error {
+func (risk *Place) Update(r *Place) error {
 	risk.Name = r.Name
 	risk.RiskTypeID = r.RiskTypeID
 	risk.PlaceTypeID = r.PlaceTypeID

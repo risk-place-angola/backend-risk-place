@@ -4,7 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type RiskPresenterCTX interface {
+type PlacePresenterCTX interface {
 	echo.Context
 }
 
