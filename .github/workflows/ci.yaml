@@ -15,9 +15,9 @@ jobs:
         image: postgres:9.4
 
         env:
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: jsow92j29u8whona9
           POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
+          POSTGRES_DB: riskplace
 
         options: >-
           --health-cmd pg_isready
@@ -44,8 +44,8 @@ jobs:
           DB_HOST: localhost
           DB_PORT: 5432
           DB_USERNAME: postgres
-          DB_PASSWORD: postgres
-          DB_NAME: postgres
+          DB_PASSWORD: jsow92j29u8whona9
+          DB_NAME: riskplace
 
       - name: Test coverage
         run: go test -v ./... -coverprofile=coverage.out -covermode=atomic
