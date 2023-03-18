@@ -116,22 +116,21 @@ func (c *PlaceClient) write() {
 		c.Conn.Close()
 	}()
 
-	for {
-		select {
-		case _, ok := <-c.Send:
-			if !ok {
-				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
+	for range c.Send {
+		places, err := c.PlaceClientManager.placeUseCase.FindAllPlace()
+		if err != nil {
+			if err = c.Conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+				log.Println(err)
 			}
-
-			places, err := c.PlaceClientManager.placeUseCase.FindAllPlace()
-			if err != nil {
-				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
-			}
-
-			c.Conn.WriteJSON(places)
-
+			return
 		}
+
+		if err = c.Conn.WriteJSON(places); err != nil {
+			log.Println(err)
+		}
+	}
+
+	if err := c.Conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+		log.Println(err)
 	}
 }

@@ -50,12 +50,12 @@ func (r *PlaceUseCaseImpl) CreatePlace(dto CreatePlaceDTO) (*PlaceDTO, error) {
 
 func (r *PlaceUseCaseImpl) UpdatePlace(id string, dto UpdatePlaceDTO) (*PlaceDTO, error) {
 
-	place, err := r.PlaceRepository.FindByID(id)
+	_, err := r.PlaceRepository.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	place = dto.ToPlaceUpdate()
+	place := dto.ToPlaceUpdate()
 	if err := place.Update(place); err != nil {
 		return nil, err
 	}
