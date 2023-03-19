@@ -34,7 +34,7 @@ func (controller *RiskTypeControllerImpl) RiskTypeCreateController(ctx risk_type
 
 	risktypeCreate, err := controller.riskTypeUseCase.CreateRiskType(&risktype)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, rest.ErrorResponse{Message: err.Error()})
+		return ctx.JSON(http.StatusInternalServerError, rest.ErrorResponse{Message: err.Error()})
 	}
 
 	return ctx.JSON(http.StatusCreated, risktypeCreate)

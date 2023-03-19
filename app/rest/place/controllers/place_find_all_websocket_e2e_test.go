@@ -2,6 +2,7 @@ package place_controller_test
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -26,10 +27,14 @@ func (h *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := e.NewContext(r, w)
 
 	forever := make(chan struct{})
-	h.handler(c)
+	if err := h.handler(c); err != nil {
+		log.Println(err)
+	}
+
 	<-forever
 }
 
+//nolint:errcheck
 func TestPlaceFindAllWebSocket(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
