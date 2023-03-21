@@ -46,7 +46,7 @@ jobs:
           DB_USERNAME: postgres
           DB_PASSWORD: jsow92j29u8whona9
           DB_NAME: riskplace
-          SSL_MODE=disable
+          SSL_MODE: disable
 
       - name: Test coverage
         run: go test -v ./... -coverprofile=coverage.out -covermode=atomic
