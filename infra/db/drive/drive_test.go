@@ -2,6 +2,7 @@ package drive_test
 
 import (
 	"log"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -23,6 +24,9 @@ func init() {
 }
 
 func TestDrivePostgres(t *testing.T) {
+	
+	os.Setenv("DB_HOST", "localhost")
+
 	postgres := drive.NewPostgres()
 	driver := drive.Drive(postgres)
 
