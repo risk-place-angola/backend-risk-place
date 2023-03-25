@@ -12,30 +12,30 @@ type RiskTypeRouter interface {
 }
 
 type RiskTypeRouterImpl struct {
-	echo               *echo.Echo
-	riskTypeController risk_type_controller.RiskTypeController
+	Echo               *echo.Echo
+	RiskTypeController risk_type_controller.RiskTypeController
 }
 
 func NewRiskRouter(riskRouter *RiskTypeRouterImpl) RiskTypeRouter {
 	return &RiskTypeRouterImpl{
-		echo:               riskRouter.echo,
-		riskTypeController: riskRouter.riskTypeController,
+		Echo:               riskRouter.Echo,
+		RiskTypeController: riskRouter.RiskTypeController,
 	}
 }
 
 func (router *RiskTypeRouterImpl) Router() *echo.Echo {
 
-	v1 := router.echo.Group(os.Getenv("BASE_PATH"))
+	v1 := router.Echo.Group(os.Getenv("BASE_PATH"))
 	{
 		riskType := v1.Group("/risktype")
 		{
-			riskType.POST("", func(c echo.Context) error { return router.riskTypeController.RiskTypeCreateController(c) })
-			riskType.GET("", func(c echo.Context) error { return router.riskTypeController.RiskTypeFindAllController(c) })
-			riskType.GET("/:id", func(c echo.Context) error { return router.riskTypeController.RiskTypeFindByIdController(c) })
-			riskType.PUT("/:id", func(c echo.Context) error { return router.riskTypeController.RiskTypeUpdateController(c) })
-			riskType.DELETE("/:id", func(c echo.Context) error { return router.riskTypeController.RiskTypeDeleteController(c) })
+			riskType.POST("", func(c echo.Context) error { return router.RiskTypeController.RiskTypeCreateController(c) })
+			riskType.GET("", func(c echo.Context) error { return router.RiskTypeController.RiskTypeFindAllController(c) })
+			riskType.GET("/:id", func(c echo.Context) error { return router.RiskTypeController.RiskTypeFindByIdController(c) })
+			riskType.PUT("/:id", func(c echo.Context) error { return router.RiskTypeController.RiskTypeUpdateController(c) })
+			riskType.DELETE("/:id", func(c echo.Context) error { return router.RiskTypeController.RiskTypeDeleteController(c) })
 		}
 	}
 
-	return router.echo
+	return router.Echo
 }
