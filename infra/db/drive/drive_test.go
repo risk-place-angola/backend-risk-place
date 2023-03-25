@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/risk-place-angola/backend-risk-place/infra/db"
 	"github.com/risk-place-angola/backend-risk-place/infra/db/drive"
+	"github.com/risk-place-angola/backend-risk-place/infra/db/drive/postgres"
 )
 
 func init() {
@@ -24,10 +25,10 @@ func init() {
 }
 
 func TestDrivePostgres(t *testing.T) {
-	
+
 	os.Setenv("DB_HOST", "localhost")
 
-	postgres := drive.NewPostgres()
+	postgres := postgres.NewPostgres()
 	driver := drive.Drive(postgres)
 
 	if driver == "" {
