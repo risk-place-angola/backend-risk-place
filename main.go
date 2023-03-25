@@ -1,15 +1,16 @@
 package main
 
 import (
-	"net/http"
-
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	"github.com/risk-place-angola/backend-risk-place/app/rest/server"
 )
 
+func init() {
+	_ = godotenv.Load()
+}
+
 func main() {
-	e := echo.New()
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, Angola!")
-	})
-	e.Logger.Fatal(e.Start(":8000"))
+	Server := server.NewServer(echo.New())
+	Server.Start()
 }
