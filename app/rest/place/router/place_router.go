@@ -12,30 +12,30 @@ type PlaceRouter interface {
 }
 
 type PlaceRouterImpl struct {
-	echo                     *echo.Echo
-	placeController          place_controller.PlaceController
+	Echo                     *echo.Echo
+	PlaceController          place_controller.PlaceController
 	placeWebsocketController *place_controller.PlaceClientManager
 }
 
 func NewPlaceRouter(placeRouter *PlaceRouterImpl) PlaceRouter {
 	return &PlaceRouterImpl{
-		placeController:          placeRouter.placeController,
+		PlaceController:          placeRouter.PlaceController,
 		placeWebsocketController: placeRouter.placeWebsocketController,
-		echo:                     placeRouter.echo,
+		Echo:                     placeRouter.Echo,
 	}
 }
 
 func (router *PlaceRouterImpl) Router() *echo.Echo {
 
-	v1 := router.echo.Group(os.Getenv("BASE_PATH"))
+	v1 := router.Echo.Group(os.Getenv("BASE_PATH"))
 	{
 		place := v1.Group("/place")
 		{
-			place.POST("", func(c echo.Context) error { return router.placeController.PlaceCreateController(c) })
-			place.GET("/:id", func(c echo.Context) error { return router.placeController.PlaceFindByIdController(c) })
+			place.POST("", func(c echo.Context) error { return router.PlaceController.PlaceCreateController(c) })
+			place.GET("/:id", func(c echo.Context) error { return router.PlaceController.PlaceFindByIdController(c) })
 			place.GET("/ws", func(c echo.Context) error { return router.placeWebsocketController.PlaceHandler(c) })
 		}
 	}
 
-	return router.echo
+	return router.Echo
 }
