@@ -12,30 +12,30 @@ type PlaceTypeRouter interface {
 }
 
 type PlaceTypeRouterImpl struct {
-	echo                *echo.Echo
-	placeTypeController placetype_controller.PlaceTypeController
+	Echo                *echo.Echo
+	PlaceTypeController placetype_controller.PlaceTypeController
 }
 
 func NewPlaceTypeRouter(placeTypeController *PlaceTypeRouterImpl) PlaceTypeRouter {
 	return &PlaceTypeRouterImpl{
-		placeTypeController: placeTypeController.placeTypeController,
-		echo:                placeTypeController.echo,
+		PlaceTypeController: placeTypeController.PlaceTypeController,
+		Echo:                placeTypeController.Echo,
 	}
 }
 
 func (router *PlaceTypeRouterImpl) Router() *echo.Echo {
 
-	v1 := router.echo.Group(os.Getenv("BASE_PATH"))
+	v1 := router.Echo.Group(os.Getenv("BASE_PATH"))
 	{
 		placeType := v1.Group("/placetype")
 		{
-			placeType.POST("", func(c echo.Context) error { return router.placeTypeController.PlaceTypeCreateController(c) })
-			placeType.PUT("/:id", func(c echo.Context) error { return router.placeTypeController.PlaceTypeUpdateController(c) })
-			placeType.GET("", func(c echo.Context) error { return router.placeTypeController.PlaceTypeFindAllController(c) })
-			placeType.GET("/:id", func(c echo.Context) error { return router.placeTypeController.PlaceTypeFindByIdController(c) })
-			placeType.DELETE("/:id", func(c echo.Context) error { return router.placeTypeController.PlaceTypeDeleteController(c) })
+			placeType.POST("", func(c echo.Context) error { return router.PlaceTypeController.PlaceTypeCreateController(c) })
+			placeType.PUT("/:id", func(c echo.Context) error { return router.PlaceTypeController.PlaceTypeUpdateController(c) })
+			placeType.GET("", func(c echo.Context) error { return router.PlaceTypeController.PlaceTypeFindAllController(c) })
+			placeType.GET("/:id", func(c echo.Context) error { return router.PlaceTypeController.PlaceTypeFindByIdController(c) })
+			placeType.DELETE("/:id", func(c echo.Context) error { return router.PlaceTypeController.PlaceTypeDeleteController(c) })
 		}
 	}
 
-	return router.echo
+	return router.Echo
 }
