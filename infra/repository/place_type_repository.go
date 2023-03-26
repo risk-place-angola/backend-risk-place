@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"github.com/jinzhu/gorm"
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
-	"gorm.io/gorm"
 )
 
 type PlaceTypeRepository struct {
