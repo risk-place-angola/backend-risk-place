@@ -1,0 +1,63 @@
+package user
+
+import "github.com/risk-place-angola/backend-risk-place/domain/entities"
+
+type CreateUserDTO struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type UpadateUserDTO struct {
+	CreateUserDTO
+}
+
+type UserDTO struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+func (u *UpadateUserDTO) ToUserUpdate() *entities.User {
+	return &entities.User{
+		ID:       u.ID,
+		Name:     u.Name,
+		Email:    u.Email,
+		Password: u.Password,
+	}
+}
+
+func (u *UserDTO) ToUser() *entities.User {
+	return &entities.User{
+		ID:       u.ID,
+		Name:     u.Name,
+		Email:    u.Email,
+		Password: u.Password,
+	}
+}
+
+func (u *UserDTO) FromUser(user *entities.User) *UserDTO {
+	u.ID = user.ID
+	u.Name = user.Name
+	u.Email = user.Email
+	u.Password = user.Password
+	u.CreatedAt = user.CreatedAt.String()
+	u.UpdatedAt = user.UpdatedAt.String()
+	return u
+}
+
+func (u *UserDTO) FromUserList(users []*entities.User) []*UserDTO {
+	var userDTO []*UserDTO
+	for _, user := range users {
+		userDTO = append(userDTO, u.FromUser(user))
+	}
+	return userDTO
+}
+
+func NewUserDTO() *UserDTO {
+	return &UserDTO{}
+}
