@@ -5,5 +5,6 @@ type GenericRepository[T any] interface {
 	Update(entity *T) error
 	Delete(id string) error
 	FindByID(id string) (*T, error)
+	FindByEmail(email string) (*T, error)
 	FindAll() ([]*T, error)
 }
