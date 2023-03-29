@@ -27,6 +27,10 @@ type LoginDTO struct {
 	Password string `json:"password"`
 }
 
+type JwtResponse struct {
+	Token string `json:"token"`
+}
+
 func (u *UpadateUserDTO) ToUserUpdate() *entities.User {
 	return &entities.User{
 		ID:       u.ID,
