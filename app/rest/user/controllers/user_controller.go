@@ -14,6 +14,7 @@ type UserController interface {
 	UserFindAllController(ctx user_presenter.UserPresenterCTX) error
 	UserFindByIdController(ctx user_presenter.UserPresenterCTX) error
 	UserDeleteController(ctx user_presenter.UserPresenterCTX) error
+	UserLoginController(ctx user_presenter.UserPresenterCTX) error
 }
 
 type UserControllerImpl struct {
@@ -82,4 +83,19 @@ func (controller *UserControllerImpl) UserDeleteController(ctx user_presenter.Us
 		return ctx.JSON(http.StatusInternalServerError, rest.ErrorResponse{Message: err.Error()})
 	}
 	return ctx.JSON(http.StatusOK, rest.SuccessResponse{Message: "User deleted successfully"})
+}
+
+func (controller *UserControllerImpl) UserLoginController(ctx user_presenter.UserPresenterCTX) error {
+	var credentials account.LoginDTO
+	if err := ctx.Bind(&credentials); err != nil {
+		return ctx.JSON(http.StatusBadRequest, rest.ErrorResponse{Message: err.Error()})
+	}
+
+	data, err := controller.userUseCase.UserLogin(&credentials)
+	if err != nil {
+		return ctx.JSON(http.StatusUnauthorized, rest.ErrorResponse{Message: err.Error()})
+	}
+
+	return ctx.JSON(http.StatusOK, data)
+
 }
