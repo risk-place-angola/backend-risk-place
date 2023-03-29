@@ -1,6 +1,11 @@
 package user
 
 import (
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
 	"github.com/risk-place-angola/backend-risk-place/infra/repository"
 )
@@ -11,10 +16,18 @@ type UserUseCase interface {
 	FindAllUser() ([]*UserDTO, error)
 	FindUserByID(id string) (*UserDTO, error)
 	RemoveUser(id string) error
+	Login(data *LoginDTO) (string, error)
 }
 
 type UserUseCaseImpl struct {
 	UserRepository repository.UserRepository
+}
+
+type UserClaims struct {
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	ExpiresAt int64  `json:"exp"`
+	jwt.RegisteredClaims
 }
 
 func NewUserUseCase(userRepo repository.UserRepository) UserUseCase {
@@ -92,4 +105,38 @@ func (u *UserUseCaseImpl) RemoveUser(id string) error {
 	}
 
 	return nil
+}
+
+func (loginUseCases *UserUseCaseImpl) Login(data *LoginDTO) (string, error) {
+	user, err := loginUseCases.UserRepository.FindByEmail(data.Email)
+
+	if err != nil {
+		return "", fmt.Errorf("Email ou senha incorretos")
+	}
+
+	if !user.VerifyPassword(data.Password) {
+		return "", fmt.Errorf("Email ou senha incorretos")
+	}
+
+	expirationTime := time.Now().Add(24 * time.Hour)
+
+	claims := &UserClaims{
+		ID:        user.ID,
+		Email:     data.Email,
+		ExpiresAt: expirationTime.Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   user.ID,
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	jwtKey := os.Getenv("JWT_SECRET")
+	tokenString, err := token.SignedString([]byte(jwtKey))
+
+	if err != nil {
+		return "", fmt.Errorf("failed to generate JWT token: %v", err)
+	}
+
+	return tokenString, nil
 }
