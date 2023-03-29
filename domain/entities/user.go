@@ -21,29 +21,28 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at" valid:"-"`
 }
 
-type BcryptComparator interface {
-	CompareHashAndPassword(hashedPassword []byte, password []byte) error
-}
-
-type BcryptComparatorImpl struct{}
-
 type jwtTokenGenerator struct{}
 
 func NewUser(name, email, password string) (*User, error) {
-	user := User{
-		Name:     email,
-		Email:    password,
+	user := &User{
+		Name:     name,
+		Email:    email,
 		Password: password,
 	}
 
 	user.ID = uuid.NewV4().String()
 	user.CreatedAt = time.Now()
 
+	err := user.passwordEncrypt()
+	if err != nil {
+		return nil, err
+	}
+
 	if err := user.isValid(); err != nil {
 		return nil, err
 	}
 
-	return &user, nil
+	return user, nil
 }
 
 func (user *User) isValid() error {
@@ -52,10 +51,6 @@ func (user *User) isValid() error {
 		return err
 	}
 	return nil
-}
-
-func (bc *BcryptComparatorImpl) CompareHashAndPassword(hashedPassword []byte, password []byte) error {
-	return bcrypt.CompareHashAndPassword(hashedPassword, password)
 }
 
 func (user *User) SetUpdatedAt() {
@@ -72,4 +67,24 @@ func (user *User) Update(name, emai, password string) error {
 		return err
 	}
 	return nil
+}
+
+func (user *User) VerifyPassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func (user *User) passwordEncrypt() error {
+	password, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+
+	if err != nil {
+		return err
+	}
+
+	user.Password = string(password)
+	return nil
+
 }
