@@ -29,16 +29,16 @@ func (u *UserRepository) FindByID(id string) (*entities.User, error) {
 	return &user, err
 }
 
-func (u *UserRepository) FindByEmail(email string) (*entities.User, error) {
-	var user entities.User
-	err := u.Db.First(&user, email).Error
-	return &user, err
-}
-
 func (u *UserRepository) Update(user *entities.User) error {
 	return u.Db.Save(user).Error
 }
 
 func (u *UserRepository) Delete(id string) error {
 	return u.Db.Delete(&entities.User{}, id).Error
+}
+
+func (u *UserRepository) FindByEmail(email string) (*entities.User, error) {
+	var user entities.User
+	err := u.Db.First(&user, email).Error
+	return &user, err
 }
