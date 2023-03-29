@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
-	"github.com/risk-place-angola/backend-risk-place/infra/repository"
+	"github.com/risk-place-angola/backend-risk-place/domain/repository"
 )
 
 type UserUseCase interface {
@@ -16,7 +16,7 @@ type UserUseCase interface {
 	FindAllUser() ([]*UserDTO, error)
 	FindUserByID(id string) (*UserDTO, error)
 	RemoveUser(id string) error
-	Login(data *LoginDTO) (string, error)
+	Login(data *LoginDTO) (*JwtResponse, error)
 }
 
 type UserUseCaseImpl struct {
@@ -107,15 +107,15 @@ func (u *UserUseCaseImpl) RemoveUser(id string) error {
 	return nil
 }
 
-func (loginUseCases *UserUseCaseImpl) Login(data *LoginDTO) (string, error) {
+func (loginUseCases *UserUseCaseImpl) Login(data *LoginDTO) (*JwtResponse, error) {
 	user, err := loginUseCases.UserRepository.FindByEmail(data.Email)
 
 	if err != nil {
-		return "", fmt.Errorf("Email ou senha incorretos")
+		return nil, fmt.Errorf("Email ou senha incorretos")
 	}
 
 	if !user.VerifyPassword(data.Password) {
-		return "", fmt.Errorf("Email ou senha incorretos")
+		return nil, fmt.Errorf("Email ou senha incorretos")
 	}
 
 	expirationTime := time.Now().Add(24 * time.Hour)
@@ -135,8 +135,10 @@ func (loginUseCases *UserUseCaseImpl) Login(data *LoginDTO) (string, error) {
 	tokenString, err := token.SignedString([]byte(jwtKey))
 
 	if err != nil {
-		return "", fmt.Errorf("failed to generate JWT token: %v", err)
+		return nil, fmt.Errorf("failed to generate JWT token: %v", err)
 	}
 
-	return tokenString, nil
+	return &JwtResponse{
+		Token: tokenString,
+	}, nil
 }
