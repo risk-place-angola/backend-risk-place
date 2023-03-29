@@ -91,7 +91,7 @@ func (controller *UserControllerImpl) UserLoginController(ctx user_presenter.Use
 		return ctx.JSON(http.StatusBadRequest, rest.ErrorResponse{Message: err.Error()})
 	}
 
-	data, err := controller.userUseCase.UserLogin(&credentials)
+	data, err := controller.userUseCase.Login(&credentials)
 	if err != nil {
 		return ctx.JSON(http.StatusUnauthorized, rest.ErrorResponse{Message: err.Error()})
 	}
