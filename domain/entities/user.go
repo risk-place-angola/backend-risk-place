@@ -21,8 +21,6 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at" valid:"-"`
 }
 
-type jwtTokenGenerator struct{}
-
 func NewUser(name, email, password string) (*User, error) {
 	user := &User{
 		Name:     name,
