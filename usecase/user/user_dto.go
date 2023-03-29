@@ -22,6 +22,11 @@ type UserDTO struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
+type LoginDTO struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 func (u *UpadateUserDTO) ToUserUpdate() *entities.User {
 	return &entities.User{
 		ID:       u.ID,
@@ -47,6 +52,13 @@ func (u *UserDTO) FromUser(user *entities.User) *UserDTO {
 	u.Password = user.Password
 	u.CreatedAt = user.CreatedAt.String()
 	u.UpdatedAt = user.UpdatedAt.String()
+	return u
+}
+
+func (u *LoginDTO) FromUserLogin(user *entities.User) *LoginDTO {
+	u.Email = user.Email
+	u.Password = user.Password
+
 	return u
 }
 
