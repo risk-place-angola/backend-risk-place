@@ -51,6 +51,7 @@ func TestFindAllUser(t *testing.T) {
 	}
 
 	mockUserRepository := mocks.NewMockUserRepository(ctrl)
+
 	mockUserRepository.EXPECT().FindAll().Return(data, nil)
 
 	userUseCase := user_usecase.NewUserUseCase(mockUserRepository)
@@ -70,7 +71,7 @@ func TestUpdateUser(t *testing.T) {
 		Password: "1234",
 	}
 
-	mockUserRepository := mocks.NewMockPlaceRepository(ctrl)
+	mockUserRepository := mocks.NewMockUserRepository(ctrl)
 	mockUserRepository.EXPECT().FindByID(gomock.Any()).Return(data, nil)
 	mockUserRepository.EXPECT().Update(gomock.Any()).Return(nil)
 
