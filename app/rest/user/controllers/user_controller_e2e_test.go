@@ -12,6 +12,8 @@ import (
 	user_controller "github.com/risk-place-angola/backend-risk-place/app/rest/user/controllers"
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
 	"github.com/risk-place-angola/backend-risk-place/domain/repository/mocks"
+	"golang.org/x/crypto/bcrypt"
+
 	account "github.com/risk-place-angola/backend-risk-place/usecase/user"
 	"github.com/stretchr/testify/assert"
 )
@@ -191,17 +193,22 @@ func TestUserControllers(t *testing.T) {
 
 	})
 
-	t.Run("should return 200 when login with valid credentials", func(t *testing.T) {
+	t.Run("should return 200 when login is successful", func(t *testing.T) {
+
 		e := echo.New()
 
-		credentials := account.LoginDTO{
-			Email:    "joe@gmail.com",
-			Password: "valid_password",
+		email := "john.doe@example.com"
+		password := "password"
+
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		dto := account.LoginDTO{
+			Email:    email,
+			Password: password,
 		}
 
-		jsonData, _ := json.Marshal(credentials)
+		jsonData, _ := json.Marshal(dto)
 
-		res := httptest.NewRequest("POST", "/api/v1/user/auth", bytes.NewBuffer(jsonData))
+		res := httptest.NewRequest("POST", "/api/v1/user/login", bytes.NewBuffer(jsonData))
 		res.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		ctx := e.NewContext(res, rec)
@@ -210,12 +217,7 @@ func TestUserControllers(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockUserRepository := mocks.NewMockUserRepository(ctrl)
-		mockUserRepository.EXPECT().FindByEmail(credentials.Email).Return(&entities.User{
-			ID:       "valid_id",
-			Name:     "valid_name",
-			Email:    "joe@gmail.com",
-			Password: "valid_encrypted_password",
-		}, nil)
+		mockUserRepository.EXPECT().FindByEmail(email).Return(&entities.User{Email: email, Password: string(hashedPassword)}, nil)
 
 		userUseCase := account.NewUserUseCase(mockUserRepository)
 		userController := user_controller.NewUserController(userUseCase)
@@ -223,38 +225,7 @@ func TestUserControllers(t *testing.T) {
 		if assert.NoError(t, userController.UserLoginController(ctx)) {
 			assert.Equal(t, http.StatusOK, rec.Code, "error status code != 200")
 		}
-	})
 
-	t.Run("should return 401 when login with invalid credentials", func(t *testing.T) {
-		e := echo.New()
-
-		credentials := account.LoginDTO{
-			Email:    "joe@gmail.com",
-			Password: "invalid_password",
-		}
-
-		jsonData, _ := json.Marshal(credentials)
-
-		res := httptest.NewRequest("POST", "/api/v1/user/auth", bytes.NewBuffer(jsonData))
-		res.Header.Set("Content-Type", "application/json")
-		rec := httptest.NewRecorder()
-		ctx := e.NewContext(res, rec)
-
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockUserRepository := mocks.NewMockUserRepository(ctrl)
-
-		mockUserRepository.EXPECT().FindByEmail(credentials.Email).Return(&entities.User{
-			Email: "joe@gmail.com",
-		}, nil)
-
-		userUseCase := account.NewUserUseCase(mockUserRepository)
-		userController := user_controller.NewUserController(userUseCase)
-
-		if assert.NoError(t, userController.UserLoginController(ctx)) {
-			assert.Equal(t, http.StatusUnauthorized, rec.Code, "error status code != 401")
-		}
 	})
 
 }

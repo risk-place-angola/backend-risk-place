@@ -97,5 +97,4 @@ func (controller *UserControllerImpl) UserLoginController(ctx user_presenter.Use
 	}
 
 	return ctx.JSON(http.StatusOK, data)
-
 }
