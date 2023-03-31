@@ -69,10 +69,7 @@ func (user *User) Update(name, emai, password string) error {
 
 func (user *User) VerifyPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 func (user *User) passwordEncrypt() error {
