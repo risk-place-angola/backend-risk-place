@@ -3,8 +3,8 @@ package user_controller
 import (
 	"net/http"
 
-	"github.com/risk-place-angola/backend-risk-place/app/rest"
-	user_presenter "github.com/risk-place-angola/backend-risk-place/app/rest/user/presenter"
+	"github.com/risk-place-angola/backend-risk-place/api/rest"
+	user_presenter "github.com/risk-place-angola/backend-risk-place/api/rest/user/presenter"
 	account "github.com/risk-place-angola/backend-risk-place/usecase/user"
 )
 

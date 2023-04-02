@@ -3,8 +3,8 @@ package place
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
-	place_controller "github.com/risk-place-angola/backend-risk-place/app/rest/place/controllers"
-	place_router "github.com/risk-place-angola/backend-risk-place/app/rest/place/router"
+	place_controller "github.com/risk-place-angola/backend-risk-place/api/rest/place/controllers"
+	place_router "github.com/risk-place-angola/backend-risk-place/api/rest/place/router"
 	place_repository "github.com/risk-place-angola/backend-risk-place/infra/repository"
 	place_usecase "github.com/risk-place-angola/backend-risk-place/usecase/place"
 )

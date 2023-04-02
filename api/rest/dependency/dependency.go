@@ -3,9 +3,9 @@ package dependency
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
-	"github.com/risk-place-angola/backend-risk-place/app/rest/place"
-	"github.com/risk-place-angola/backend-risk-place/app/rest/placetype"
-	"github.com/risk-place-angola/backend-risk-place/app/rest/risktype"
+	"github.com/risk-place-angola/backend-risk-place/api/rest/place"
+	"github.com/risk-place-angola/backend-risk-place/api/rest/placetype"
+	"github.com/risk-place-angola/backend-risk-place/api/rest/risktype"
 )
 
 // inject dependency

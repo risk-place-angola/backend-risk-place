@@ -3,8 +3,8 @@ package placetype_controllers
 import (
 	"net/http"
 
-	"github.com/risk-place-angola/backend-risk-place/app/rest"
-	placetype_presenter "github.com/risk-place-angola/backend-risk-place/app/rest/placetype/presenter"
+	"github.com/risk-place-angola/backend-risk-place/api/rest"
+	placetype_presenter "github.com/risk-place-angola/backend-risk-place/api/rest/placetype/presenter"
 	"github.com/risk-place-angola/backend-risk-place/usecase/placetype"
 )
 

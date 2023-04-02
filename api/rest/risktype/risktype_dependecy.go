@@ -3,8 +3,8 @@ package risktype
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
-	risk_type_controller "github.com/risk-place-angola/backend-risk-place/app/rest/risktype/controllers"
-	risk_router "github.com/risk-place-angola/backend-risk-place/app/rest/risktype/router"
+	risk_type_controller "github.com/risk-place-angola/backend-risk-place/api/rest/risktype/controllers"
+	risk_router "github.com/risk-place-angola/backend-risk-place/api/rest/risktype/router"
 	place_repository "github.com/risk-place-angola/backend-risk-place/infra/repository"
 	"github.com/risk-place-angola/backend-risk-place/usecase/risktype"
 )

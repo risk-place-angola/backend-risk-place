@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/labstack/echo/v4"
-	placetype_controller "github.com/risk-place-angola/backend-risk-place/app/rest/placetype/controllers"
+	placetype_controller "github.com/risk-place-angola/backend-risk-place/api/rest/placetype/controllers"
 )
 
 type PlaceTypeRouter interface {

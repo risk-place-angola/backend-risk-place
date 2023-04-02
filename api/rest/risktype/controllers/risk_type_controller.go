@@ -3,8 +3,8 @@ package risktype_controller
 import (
 	"net/http"
 
-	"github.com/risk-place-angola/backend-risk-place/app/rest"
-	risk_type_presenter "github.com/risk-place-angola/backend-risk-place/app/rest/risktype/presenter"
+	"github.com/risk-place-angola/backend-risk-place/api/rest"
+	risk_type_presenter "github.com/risk-place-angola/backend-risk-place/api/rest/risktype/presenter"
 	"github.com/risk-place-angola/backend-risk-place/usecase/risktype"
 )
 

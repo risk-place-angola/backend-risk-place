@@ -3,8 +3,8 @@ package placetype
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
-	placetype_controller "github.com/risk-place-angola/backend-risk-place/app/rest/placetype/controllers"
-	placetype_router "github.com/risk-place-angola/backend-risk-place/app/rest/placetype/router"
+	placetype_controller "github.com/risk-place-angola/backend-risk-place/api/rest/placetype/controllers"
+	placetype_router "github.com/risk-place-angola/backend-risk-place/api/rest/placetype/router"
 	place_repository "github.com/risk-place-angola/backend-risk-place/infra/repository"
 	placetype_usecase "github.com/risk-place-angola/backend-risk-place/usecase/placetype"
 )

@@ -3,7 +3,7 @@ package place_controller
 import (
 	"net/http"
 
-	place_presenter "github.com/risk-place-angola/backend-risk-place/app/rest/place/presenter"
+	place_presenter "github.com/risk-place-angola/backend-risk-place/api/rest/place/presenter"
 	place_usecase "github.com/risk-place-angola/backend-risk-place/usecase/place"
 )
 

@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/labstack/echo/v4"
-	user_controller "github.com/risk-place-angola/backend-risk-place/app/rest/user/controllers"
+	user_controller "github.com/risk-place-angola/backend-risk-place/api/rest/user/controllers"
 )
 
 type UserRouter interface {

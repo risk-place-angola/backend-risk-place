@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
-	placetype_controllers "github.com/risk-place-angola/backend-risk-place/app/rest/placetype/controllers"
+	placetype_controllers "github.com/risk-place-angola/backend-risk-place/api/rest/placetype/controllers"
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
 	"github.com/risk-place-angola/backend-risk-place/domain/repository/mocks"
 	placetype_usecase "github.com/risk-place-angola/backend-risk-place/usecase/placetype"

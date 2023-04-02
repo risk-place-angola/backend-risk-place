@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/labstack/echo/v4"
-	risk_type_controller "github.com/risk-place-angola/backend-risk-place/app/rest/risktype/controllers"
+	risk_type_controller "github.com/risk-place-angola/backend-risk-place/api/rest/risktype/controllers"
 )
 
 type RiskTypeRouter interface {
