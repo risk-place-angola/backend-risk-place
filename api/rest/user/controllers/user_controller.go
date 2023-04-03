@@ -27,6 +27,15 @@ func NewUserController(userRepo account.UserUseCase) UserController {
 	}
 }
 
+// @Summary Create User
+// @Description Create User
+// @Tags User
+// @Accept  json
+// @Produce  json
+// @Param user body account.CreateUserDTO true "User"
+// @Success 201 {object} account.UserDTO
+// @Failure 500 {object} rest.ErrorResponse
+// @Router /api/v1/user [post]
 func (controller *UserControllerImpl) UserCreateController(ctx user_presenter.UserPresenterCTX) error {
 	var user account.CreateUserDTO
 	if err := ctx.Bind(&user); err != nil {
@@ -41,6 +50,14 @@ func (controller *UserControllerImpl) UserCreateController(ctx user_presenter.Us
 	return ctx.JSON(http.StatusCreated, userCreate)
 }
 
+// @Summary Find All User
+// @Description Find All User
+// @Tags User
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} []account.UserDTO
+// @Failure 500 {object} rest.ErrorResponse
+// @Router /api/v1/user [get]
 func (controller *UserControllerImpl) UserFindAllController(ctx user_presenter.UserPresenterCTX) error {
 	users, err := controller.userUseCase.FindAllUser()
 	if err != nil {
@@ -49,6 +66,15 @@ func (controller *UserControllerImpl) UserFindAllController(ctx user_presenter.U
 	return ctx.JSON(http.StatusOK, users)
 }
 
+// @Summary Find User By ID
+// @Description Find User By ID
+// @Tags User
+// @Accept  json
+// @Produce  json
+// @Param id path string true "User ID"
+// @Success 200 {object} account.UserDTO
+// @Failure 500 {object} rest.ErrorResponse
+// @Router /api/v1/user/{id} [get]
 func (controller *UserControllerImpl) UserFindByIdController(ctx user_presenter.UserPresenterCTX) error {
 	id := ctx.Param("id")
 
@@ -59,6 +85,16 @@ func (controller *UserControllerImpl) UserFindByIdController(ctx user_presenter.
 	return ctx.JSON(http.StatusOK, userId)
 }
 
+// @Summary Update User
+// @Description Update User
+// @Tags User
+// @Accept  json
+// @Produce  json
+// @Param id path string true "User ID"
+// @Param user body account.UpadateUserDTO true "User"
+// @Success 200 {object} account.UserDTO
+// @Failure 500 {object} rest.ErrorResponse
+// @Router /api/v1/user/{id} [put]
 func (controller *UserControllerImpl) UserUpdateController(ctx user_presenter.UserPresenterCTX) error {
 	id := ctx.Param("id")
 
@@ -75,6 +111,15 @@ func (controller *UserControllerImpl) UserUpdateController(ctx user_presenter.Us
 	return ctx.JSON(http.StatusOK, userUpdate)
 }
 
+// @Summary Delete User
+// @Description Delete User
+// @Tags User
+// @Accept  json
+// @Produce  json
+// @Param id path string true "User ID"
+// @Success 200 {object} rest.SuccessResponse
+// @Failure 500 {object} rest.ErrorResponse
+// @Router /api/v1/user/{id} [delete]
 func (controller *UserControllerImpl) UserDeleteController(ctx user_presenter.UserPresenterCTX) error {
 	id := ctx.Param("id")
 
@@ -85,6 +130,15 @@ func (controller *UserControllerImpl) UserDeleteController(ctx user_presenter.Us
 	return ctx.JSON(http.StatusOK, rest.SuccessResponse{Message: "User deleted successfully"})
 }
 
+// @Summary Login User
+// @Description Login User
+// @Tags User
+// @Accept  json
+// @Produce  json
+// @Param user body account.LoginDTO true "User"
+// @Success 200 {object} account.UserDTO
+// @Failure 500 {object} rest.ErrorResponse
+// @Router /api/v1/user/login [post]
 func (controller *UserControllerImpl) UserLoginController(ctx user_presenter.UserPresenterCTX) error {
 	var credentials account.LoginDTO
 	if err := ctx.Bind(&credentials); err != nil {

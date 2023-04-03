@@ -74,6 +74,15 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
+// Find all places
+// @Summary Find all places
+// @Description Find all places websocket url ws://localhost:8000/api/v1/place/ws or use authentication ssl wss://localhost:8000/api/v1/place/ws
+// @Tags Place
+// @scheme ws
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} place_usecase.PlaceDTO
+// @Router /api/v1/place/ws [get]
 func (manager *PlaceClientManager) PlaceHandler(ctx place_presenter.PlacePresenterCTX) error {
 	conn, err := upgrader.Upgrade(ctx.Response().Writer, ctx.Request(), nil)
 	if err != nil {
