@@ -22,6 +22,15 @@ func NewPlaceController(placeUseCase place_usecase.PlaceUseCase) PlaceController
 	}
 }
 
+// @Summary Create Place
+// @Description Create Place
+// @Tags Place
+// @Accept  json
+// @Produce  json
+// @Param place body place_usecase.CreatePlaceDTO true "Place"
+// @Success 201 {object} place_usecase.PlaceDTO
+// @Failure 500 {object} place_presenter.ErrorResponse
+// @Router /api/v1/place [post]
 func (controller *PlaceControllerImpl) PlaceCreateController(ctx place_presenter.PlacePresenterCTX) error {
 	var place place_usecase.CreatePlaceDTO
 	if err := ctx.Bind(&place); err != nil {
@@ -36,6 +45,15 @@ func (controller *PlaceControllerImpl) PlaceCreateController(ctx place_presenter
 	return ctx.JSON(http.StatusCreated, placeCreate)
 }
 
+// @Summary Find Place by ID
+// @Description Find Place by ID
+// @Tags Place
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Place ID"
+// @Success 200 {object} place_usecase.PlaceDTO
+// @Failure 500 {object} place_presenter.ErrorResponse
+// @Router /api/v1/place/{id} [get]
 func (controller *PlaceControllerImpl) PlaceFindByIdController(ctx place_presenter.PlacePresenterCTX) error {
 	id := ctx.Param("id")
 
