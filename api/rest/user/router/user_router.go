@@ -34,7 +34,7 @@ func (router *UserRouterImpl) Router() *echo.Echo {
 			user.GET("/:id", func(c echo.Context) error { return router.UserController.UserFindByIdController(c) })
 			user.PUT("/:id", func(c echo.Context) error { return router.UserController.UserUpdateController(c) })
 			user.DELETE("/:id", func(c echo.Context) error { return router.UserController.UserDeleteController(c) })
-			user.DELETE("/login", func(c echo.Context) error { return router.UserController.UserLoginController(c) })
+			user.POST("/login", func(c echo.Context) error { return router.UserController.UserLoginController(c) })
 		}
 	}
 
