@@ -21,7 +21,6 @@ func TestCreateUser(t *testing.T) {
 
 	userUseCase := user_usecase.NewUserUseCase(mockUserRepository)
 	user, err := userUseCase.CreateUser(&user_usecase.CreateUserDTO{
-		ID:       "99bada49-09d0-4f13-b310-6f8633b38dfe",
 		Name:     "Manuel Cunga",
 		Email:    "manuel@gmail.com",
 		Password: "909d04f13b3106f8633b38d",
@@ -76,7 +75,6 @@ func TestUpdateUser(t *testing.T) {
 	mockUserRepository.EXPECT().Update(gomock.Any()).Return(nil)
 
 	updateuserDTO := &user_usecase.UpadateUserDTO{}
-	updateuserDTO.ID = "dd3aadda-9434-4dd7-aaad-035584b8f124"
 	updateuserDTO.Name = "Omunga plataforma"
 	updateuserDTO.Email = "omunga.io@gmail.com"
 	updateuserDTO.Password = "12345"

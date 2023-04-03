@@ -3,7 +3,6 @@ package user
 import "github.com/risk-place-angola/backend-risk-place/domain/entities"
 
 type CreateUserDTO struct {
-	ID       string `json:"id"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -33,7 +32,6 @@ type JwtResponse struct {
 
 func (u *UpadateUserDTO) ToUserUpdate() *entities.User {
 	return &entities.User{
-		ID:       u.ID,
 		Name:     u.Name,
 		Email:    u.Email,
 		Password: u.Password,

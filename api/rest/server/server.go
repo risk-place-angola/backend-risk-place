@@ -2,7 +2,6 @@ package server
 
 import (
 	"log"
-	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/risk-place-angola/backend-risk-place/api/rest/dependency"
@@ -20,10 +19,6 @@ func NewServer(router *echo.Echo) *Server {
 }
 
 func (server *Server) Start() {
-
-	server.Router.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, Angola!")
-	})
 
 	db, err := postgres.ConnectionPostgres()
 	if err != nil {
