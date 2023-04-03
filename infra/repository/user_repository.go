@@ -2,7 +2,7 @@ package repository
 
 import (
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
-	"gorm.io/gorm"
+	"github.com/jinzhu/gorm"
 )
 
 type UserRepository struct {
