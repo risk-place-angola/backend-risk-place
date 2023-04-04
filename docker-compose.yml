@@ -1,7 +1,15 @@
 version: '3.7'
 
+x-services-defaults: &defaults
+  restart: unless-stopped
+  networks:
+    - vam_mos
+  extra_hosts:
+      - "host.docker.internal:172.17.0.1"
+
 services:
   db:
+    <<: *defaults
     image: postgres:9.4
     container_name: risk_place_db
     tty: true
@@ -13,28 +21,21 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
       - "${DB_PORT}:${DB_PORT}"
-    networks:
-      - vam_mos
-    extra_hosts:
-      - "host.docker.internal:172.17.0.1"
-
+   
   api:
+    <<: *defaults
     container_name: risk_place_api
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     env_file:
       - .env
     volumes:
-      - .:/go/src/
+      - .:/src/
     ports:
       - "${PORT_SERVER}:${PORT_SERVER}"
-    networks:
-      - vam_mos
     depends_on:
       - db
-    extra_hosts:
-      - "host.docker.internal:172.17.0.1"
 
 networks:
   vam_mos: {}

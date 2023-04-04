@@ -55,7 +55,7 @@ go test ./...
 * [air](https://github.com/cosmtrek/air) - Live reload
 
 
-## Contribuição
+## 🤝 Contribuição
 > Antes de abrir uma issue ou pull request, verifique o documentos de contribuição do projeto.
 
 Por favor leia [CONTRIBUTING.md](https://github.com/risk-place-angola/backend-risk-place/blob/main/CONTRIBUTING.md) 
@@ -67,7 +67,7 @@ para detalhes sobre o nosso código de conduta, e o processo para submeter pedid
 
 ### Detalhes para cada entidade do diagrama
 
-* **Location Type**: Tipo de locais que podem ser cadastrados no sistema. Ex: `Riscos`, `Trabalho`, `Escola`, `Parque`, `Igreja`, `Hospital` etc.
+* **Place Type**: Tipo de locais que podem ser cadastrados no sistema. Ex: `Riscos`, `Trabalho`, `Escola`, `Parque`, `Igreja`, `Hospital` etc.
 
 > Nota: O tipo de local é um campo obrigatório para o cadastro de um local. O primeiro local que vamos utilizar é o tipo `Risco`.
 
@@ -75,3 +75,8 @@ para detalhes sobre o nosso código de conduta, e o processo para submeter pedid
 
 * **Tipos de um riscos**: aqui vamos cadastrar os tipos riscos que podem ser encontrados em um local. Ex: `Criminalidade`, `Vala`, `doença`.
     * **Topicos**: aqui vamos cadastrar os tópicos de um risco. Ex: `Assalto`, `Incêndio`, `Furto`, `Assalto`, `Acidente`, `Roubo`, `Inundação` etc.
+    
+    
+ ## 🍕 Comunidade
+ 
+ Junte-se à conversa ao nosso https://discord.gg/s2Nk4xYV

@@ -1,0 +1,14 @@
+FROM golang:1.19.2-alpine
+
+RUN apk update && apk upgrade && \
+    apk add git make curl openssh-client
+
+# Add a work directory
+WORKDIR /src
+
+# Install air for development
+RUN curl -fLo install.sh https://raw.githubusercontent.com/cosmtrek/air/master/install.sh \
+    && chmod +x install.sh && sh install.sh && cp ./bin/air /bin/air
+
+# Start app
+CMD air start
