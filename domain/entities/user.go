@@ -14,14 +14,15 @@ func init() {
 
 type User struct {
 	ID        string    `json:"id" valid:"uuid,required~ O ID é obrigatório."`
-	Name      string    `json:"name" valid:"required~ O nome  é obrigatório."`
-	Email     string    `json:"email" valid:"required~ O E-mail  é obrigatório."`
-	Password  string    `json:"password" valid:"required~ A palavra passe  é obrigatório."`
+	Name      string    `json:"name" valid:"required~ O nome é obrigatório."`
+	Email     string    `json:"email" valid:"email,required~ O E-mail é obrigatório."`
+	Password  string    `json:"password" valid:"required~ A senha é obrigatória."`
 	CreatedAt time.Time `json:"created_at" valid:"-"`
 	UpdatedAt time.Time `json:"updated_at" valid:"-"`
 }
 
 func NewUser(name, email, password string) (*User, error) {
+
 	user := &User{
 		Name:     name,
 		Email:    email,
@@ -55,15 +56,17 @@ func (user *User) SetUpdatedAt() {
 	user.UpdatedAt = time.Now()
 }
 
-func (user *User) Update(name, emai, password string) error {
+func (user *User) Update(name, email, password string) error {
 	user.Name = name
-	user.Email = emai
+	user.Email = email
 	user.Password = password
 
 	user.SetUpdatedAt()
+
 	if err := user.isValid(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -81,5 +84,4 @@ func (user *User) passwordEncrypt() error {
 
 	user.Password = string(password)
 	return nil
-
 }

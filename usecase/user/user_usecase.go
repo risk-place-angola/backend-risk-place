@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -37,6 +38,16 @@ func NewUserUseCase(userRepo repository.UserRepository) UserUseCase {
 }
 
 func (u *UserUseCaseImpl) CreateUser(data *CreateUserDTO) (*UserDTO, error) {
+
+	alreadyExistsUser, err := u.UserRepository.FindByEmail(data.Email)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if alreadyExistsUser != nil {
+		return nil, errors.New("Ups, este usuário já existe!")
+	}
 
 	user, err := entities.NewUser(data.Name, data.Email, data.Password)
 	if err != nil {
@@ -111,6 +122,10 @@ func (loginUseCases *UserUseCaseImpl) Login(data *LoginDTO) (*JwtResponse, error
 	user, err := loginUseCases.UserRepository.FindByEmail(data.Email)
 
 	if err != nil {
+		return nil, fmt.Errorf("Erro ao buscar usuário pelo email: %v", err)
+	}
+
+	if user == nil {
 		return nil, fmt.Errorf("Email ou senha incorretos")
 	}
 
