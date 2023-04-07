@@ -1,10 +1,8 @@
 package repository
 
 import (
-	"errors"
-
-	"github.com/jinzhu/gorm"
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
+	"github.com/jinzhu/gorm"
 )
 
 type UserRepository struct {
@@ -41,11 +39,6 @@ func (u *UserRepository) Delete(id string) error {
 
 func (u *UserRepository) FindByEmail(email string) (*entities.User, error) {
 	var user entities.User
-	if err := u.Db.Where("email = ?", email).First(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &user, nil
+	err := u.Db.First(&user, email).Error
+	return &user, err
 }
