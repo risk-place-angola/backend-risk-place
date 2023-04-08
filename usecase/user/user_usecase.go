@@ -108,13 +108,10 @@ func (u *UserUseCaseImpl) RemoveUser(id string) error {
 }
 
 func (loginUseCases *UserUseCaseImpl) Login(data *LoginDTO) (*JwtResponse, error) {
+
 	user, err := loginUseCases.UserRepository.FindByEmail(data.Email)
 
 	if err != nil {
-		return nil, fmt.Errorf("Erro ao buscar usuário pelo email: %v", err)
-	}
-
-	if user == nil {
 		return nil, fmt.Errorf("Email ou senha incorretos")
 	}
 
