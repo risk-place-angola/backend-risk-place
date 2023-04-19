@@ -1,6 +1,7 @@
 package risk_router
 
 import (
+	"github.com/risk-place-angola/backend-risk-place/api/rest/middleware"
 	"os"
 
 	"github.com/labstack/echo/v4"
@@ -26,6 +27,7 @@ func NewRiskRouter(riskRouter *RiskTypeRouterImpl) RiskTypeRouter {
 func (router *RiskTypeRouterImpl) Router() *echo.Echo {
 
 	v1 := router.Echo.Group(os.Getenv("BASE_PATH"))
+	v1.Use(middleware.AuthMiddleware())
 	{
 		riskType := v1.Group("/risktype")
 		{
