@@ -21,11 +21,9 @@ var (
 	once = &sync.Once{}
 )
 
-
 func (c *connection) GetDatabaseConnection() *gorm.DB {
 	return c.db
 }
-
 
 func NewConnection(dns string) (Connection, error) {
 
@@ -36,7 +34,7 @@ func NewConnection(dns string) (Connection, error) {
 			panic(err)
 		}
 
-		db.AutoMigrate(&entities.Place{}, &entities.RiskType{}, &entities.PlaceType{}, &entities.User{})
+		db.AutoMigrate(&entities.Place{}, &entities.RiskType{}, &entities.PlaceType{}, &entities.User{}, &entities.Auth{})
 	})
 
 	return &connection{db: db}, nil
