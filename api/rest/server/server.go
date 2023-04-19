@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/jinzhu/gorm"
 	"log"
 
 	"github.com/labstack/echo/v4"
@@ -25,7 +26,12 @@ func (server *Server) Start() {
 		log.Panicln(err)
 	}
 
-	defer db.Close()
+	defer func(db *gorm.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
 
 	dependency.Dependency(db, server.Router)
 
