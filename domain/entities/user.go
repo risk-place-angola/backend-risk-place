@@ -55,9 +55,9 @@ func (user *User) SetUpdatedAt() {
 	user.UpdatedAt = time.Now()
 }
 
-func (user *User) Update(name, emai, password string) error {
+func (user *User) Update(name, email, password string) error {
 	user.Name = name
-	user.Email = emai
+	user.Email = email
 	user.Password = password
 
 	user.SetUpdatedAt()

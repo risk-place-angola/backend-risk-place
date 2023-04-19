@@ -1,6 +1,7 @@
 package place_router
 
 import (
+	"github.com/risk-place-angola/backend-risk-place/api/rest/middleware"
 	"os"
 
 	"github.com/labstack/echo/v4"
@@ -28,6 +29,7 @@ func NewPlaceRouter(placeRouter *PlaceRouterImpl) PlaceRouter {
 func (router *PlaceRouterImpl) Router() *echo.Echo {
 
 	v1 := router.Echo.Group(os.Getenv("BASE_PATH"))
+	v1.Use(middleware.AuthMiddleware())
 	{
 		place := v1.Group("/place")
 		{

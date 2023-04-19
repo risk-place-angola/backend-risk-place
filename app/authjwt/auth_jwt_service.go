@@ -19,6 +19,7 @@ func NewAuthService(auth IAuthAPI) IAuthService {
 	return &AuthService{IAuthAPI: auth}
 }
 
+
 // Auth is Authentication service
 // @Summary auth
 // @Description
