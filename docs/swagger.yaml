@@ -1,5 +1,17 @@
 basePath: /
 definitions:
+  authjwt.Data:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  authjwt.Token:
+    properties:
+      token:
+        type: string
+    type: object
   place_usecase.CreatePlaceDTO:
     properties:
       description:
@@ -603,6 +615,31 @@ paths:
       summary: Login User
       tags:
       - User
+  /auth:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Auth
+        in: body
+        name: place
+        required: true
+        schema:
+          $ref: '#/definitions/authjwt.Data'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authjwt.Token'
+        "401":
+          description: UnAuthorized
+          schema:
+            type: string
+      summary: auth
+      tags:
+      - Auth
 schemes:
 - http
 swagger: "2.0"
