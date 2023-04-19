@@ -7,6 +7,7 @@ import (
 	risk_router "github.com/risk-place-angola/backend-risk-place/api/rest/risktype/router"
 	"github.com/risk-place-angola/backend-risk-place/api/rest/router/interfaces"
 	user_router "github.com/risk-place-angola/backend-risk-place/api/rest/user/router"
+	"github.com/risk-place-angola/backend-risk-place/app/authjwt"
 	_ "github.com/risk-place-angola/backend-risk-place/docs"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
@@ -17,6 +18,7 @@ type RouterImpl struct {
 	placetype_router.PlaceTypeRouter
 	risk_router.RiskTypeRouter
 	user_router.UserRouter
+	authjwt.IAuthService
 }
 
 func NewRouter(router *RouterImpl) interfaces.IRouter {
@@ -26,6 +28,7 @@ func NewRouter(router *RouterImpl) interfaces.IRouter {
 		RiskTypeRouter:  router.RiskTypeRouter,
 		UserRouter:      router.UserRouter,
 		Echo:            router.Echo,
+		IAuthService:    router.IAuthService,
 	}
 }
 
@@ -37,6 +40,7 @@ func (router *RouterImpl) Router() *echo.Echo {
 	router.UserRouter.Router()
 
 	router.Echo.GET("/", router.home())
+	router.Echo.POST("/auth", router.Auth)
 	router.Echo.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	return router.Echo
