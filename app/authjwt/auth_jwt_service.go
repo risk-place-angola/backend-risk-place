@@ -19,6 +19,16 @@ func NewAuthService(auth IAuthAPI) IAuthService {
 	return &AuthService{IAuthAPI: auth}
 }
 
+// Auth is Authentication service
+// @Summary auth
+// @Description
+// @Tags Auth
+// @Accept  json
+// @Produce  json
+// @Param place body Data true "Auth"
+// @Success 200 {object} Token
+// @Failure 401 {object} string	"UnAuthorized"
+// @Router /auth [post]
 func (a *AuthService) Auth(ctx echo.Context) error {
 	var data Data
 	if err := ctx.Bind(&data); err != nil {
