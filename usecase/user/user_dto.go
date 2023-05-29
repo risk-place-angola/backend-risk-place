@@ -9,7 +9,7 @@ type CreateUserDTO struct {
 	Password string `json:"password"`
 }
 
-type UpadateUserDTO struct {
+type UpdateUserDTO struct {
 	CreateUserDTO
 }
 
@@ -32,7 +32,7 @@ type JwtResponse struct {
 	Token string `json:"token"`
 }
 
-func (u *UpadateUserDTO) ToUserUpdate() *entities.User {
+func (u *UpdateUserDTO) ToUserUpdate() *entities.User {
 	return &entities.User{
 		Name:     u.Name,
 		Phone:    u.Phone,

@@ -74,7 +74,7 @@ func TestUpdateUser(t *testing.T) {
 	mockUserRepository.EXPECT().FindByID(gomock.Any()).Return(data, nil)
 	mockUserRepository.EXPECT().Update(gomock.Any()).Return(nil)
 
-	updateuserDTO := &user_usecase.UpadateUserDTO{}
+	updateuserDTO := &user_usecase.UpdateUserDTO{}
 	updateuserDTO.Name = "Omunga plataforma"
 	updateuserDTO.Email = "omunga.io@gmail.com"
 	updateuserDTO.Password = "12345"
