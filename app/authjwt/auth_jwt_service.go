@@ -4,6 +4,8 @@ import "github.com/labstack/echo/v4"
 
 type IAuthService interface {
 	Auth(ctx echo.Context) error
+	Auths(ctx echo.Context) error
+	AuthGenerateApi(ctx echo.Context) error
 }
 
 type AuthService struct {
