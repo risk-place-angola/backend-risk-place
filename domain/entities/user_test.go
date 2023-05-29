@@ -1,6 +1,7 @@
 package entities_test
 
 import (
+	"github.com/bxcodec/faker/v3"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,7 +14,8 @@ func TestNewUser(t *testing.T) {
 	name := "John Doe"
 	email := "johndoe@example.com"
 	password := "secret123"
-	user, err := entities.NewUser(name, email, password)
+	phone := "912345678"
+	user, err := entities.NewUser(name, phone, email, password)
 
 	assert.Nil(t, err, "Expected nil, got error %v", err)
 	assert.NotNil(t, user, "Expected user not to be nil")
@@ -25,14 +27,14 @@ func TestNewUser(t *testing.T) {
 
 func TestUserUpdate(t *testing.T) {
 	name := "any_name"
-	email := "any_email"
 	password := "any_password"
-	user, _ := entities.NewUser(name, email, password)
+	phone := "912345678"
+	user, err := entities.NewUser(name, phone, faker.Email(), password)
+	assert.Nil(t, err, "Expected nil, got error %v", err)
 
 	newName := "newName"
-	newEmail := "newEmail"
 	newPassword := "newPassword"
-	err := user.Update(newName, newEmail, newPassword)
+	err = user.Update(newName, faker.Phonenumber(), faker.Email(), newPassword)
 
 	assert.Nil(t, err, "Expected nil, got error %v", err)
 	assert.Equal(t, newName, user.Name, "Expected %s, got %s", newName, user.Name)
