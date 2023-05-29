@@ -13,7 +13,7 @@ type UpdateUserDTO struct {
 	CreateUserDTO
 }
 
-type UserDTO struct {
+type DTO struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
 	Email     string `json:"email"`
@@ -41,7 +41,7 @@ func (u *UpdateUserDTO) ToUserUpdate() *entities.User {
 	}
 }
 
-func (u *UserDTO) ToUser() *entities.User {
+func (u *DTO) ToUser() *entities.User {
 	return &entities.User{
 		ID:       u.ID,
 		Name:     u.Name,
@@ -51,7 +51,7 @@ func (u *UserDTO) ToUser() *entities.User {
 	}
 }
 
-func (u *UserDTO) FromUser(user *entities.User) *UserDTO {
+func (u *DTO) FromUser(user *entities.User) *DTO {
 	u.ID = user.ID
 	u.Name = user.Name
 	u.Phone = user.Phone
@@ -69,14 +69,14 @@ func (u *LoginDTO) FromUserLogin(user *entities.User) *LoginDTO {
 	return u
 }
 
-func (u *UserDTO) FromUserList(users []*entities.User) []*UserDTO {
-	var userDTO []*UserDTO
+func (u *DTO) FromUserList(users []*entities.User) []*DTO {
+	var userDTO []*DTO
 	for _, user := range users {
 		userDTO = append(userDTO, u.FromUser(user))
 	}
 	return userDTO
 }
 
-func NewUserDTO() *UserDTO {
-	return &UserDTO{}
+func NewUserDTO() *DTO {
+	return &DTO{}
 }
