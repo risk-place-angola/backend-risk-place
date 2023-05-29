@@ -33,7 +33,7 @@ func NewUserController(userRepo account.UserUseCase) UserController {
 // @Accept  json
 // @Produce  json
 // @Param user body account.CreateUserDTO true "User"
-// @Success 201 {object} account.UserDTO
+// @Success 201 {object} account.DTO
 // @Failure 500 {object} rest.ErrorResponse
 // @Router /api/v1/user [post]
 func (controller *UserControllerImpl) UserCreateController(ctx user_presenter.UserPresenterCTX) error {
@@ -55,7 +55,7 @@ func (controller *UserControllerImpl) UserCreateController(ctx user_presenter.Us
 // @Tags User
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} []account.UserDTO
+// @Success 200 {object} []account.DTO
 // @Failure 500 {object} rest.ErrorResponse
 // @Router /api/v1/user [get]
 func (controller *UserControllerImpl) UserFindAllController(ctx user_presenter.UserPresenterCTX) error {
@@ -72,7 +72,7 @@ func (controller *UserControllerImpl) UserFindAllController(ctx user_presenter.U
 // @Accept  json
 // @Produce  json
 // @Param id path string true "User ID"
-// @Success 200 {object} account.UserDTO
+// @Success 200 {object} account.DTO
 // @Failure 500 {object} rest.ErrorResponse
 // @Router /api/v1/user/{id} [get]
 func (controller *UserControllerImpl) UserFindByIdController(ctx user_presenter.UserPresenterCTX) error {
@@ -92,7 +92,7 @@ func (controller *UserControllerImpl) UserFindByIdController(ctx user_presenter.
 // @Produce  json
 // @Param id path string true "User ID"
 // @Param user body account.UpdateUserDTO true "User"
-// @Success 200 {object} account.UserDTO
+// @Success 200 {object} account.DTO
 // @Failure 500 {object} rest.ErrorResponse
 // @Router /api/v1/user/{id} [put]
 func (controller *UserControllerImpl) UserUpdateController(ctx user_presenter.UserPresenterCTX) error {
@@ -136,7 +136,7 @@ func (controller *UserControllerImpl) UserDeleteController(ctx user_presenter.Us
 // @Accept  json
 // @Produce  json
 // @Param user body account.LoginDTO true "User"
-// @Success 200 {object} account.UserDTO
+// @Success 200 {object} account.DTO
 // @Failure 500 {object} rest.ErrorResponse
 // @Router /api/v1/user/login [post]
 func (controller *UserControllerImpl) UserLoginController(ctx user_presenter.UserPresenterCTX) error {

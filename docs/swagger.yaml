@@ -12,6 +12,21 @@ definitions:
       token:
         type: string
     type: object
+  entities.Auth:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      password:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
   place_usecase.CreatePlaceDTO:
     properties:
       description:
@@ -111,24 +126,10 @@ definitions:
         type: string
       password:
         type: string
-    type: object
-  user.LoginDTO:
-    properties:
-      email:
-        type: string
-      password:
+      phone:
         type: string
     type: object
-  user.UpadateUserDTO:
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-      password:
-        type: string
-    type: object
-  user.UserDTO:
+  user.DTO:
     properties:
       created_at:
         type: string
@@ -140,7 +141,27 @@ definitions:
         type: string
       password:
         type: string
+      phone:
+        type: string
       updated_at:
+        type: string
+    type: object
+  user.LoginDTO:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  user.UpdateUserDTO:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      phone:
         type: string
     type: object
 host: localhost:8000
@@ -476,7 +497,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/user.UserDTO'
+              $ref: '#/definitions/user.DTO'
             type: array
         "500":
           description: Internal Server Error
@@ -502,7 +523,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/user.UserDTO'
+            $ref: '#/definitions/user.DTO'
         "500":
           description: Internal Server Error
           schema:
@@ -551,7 +572,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/user.UserDTO'
+            $ref: '#/definitions/user.DTO'
         "500":
           description: Internal Server Error
           schema:
@@ -574,14 +595,14 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/user.UpadateUserDTO'
+          $ref: '#/definitions/user.UpdateUserDTO'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/user.UserDTO'
+            $ref: '#/definitions/user.DTO'
         "500":
           description: Internal Server Error
           schema:
@@ -607,7 +628,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/user.UserDTO'
+            $ref: '#/definitions/user.DTO'
         "500":
           description: Internal Server Error
           schema:
@@ -638,6 +659,46 @@ paths:
           schema:
             type: string
       summary: auth
+      tags:
+      - Auth
+  /authgenerateapi:
+    get:
+      consumes:
+      - application/json
+      description: generate api authentication
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: authgenerateapi
+      tags:
+      - Auth
+  /auths:
+    get:
+      consumes:
+      - application/json
+      description: return all auths
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Auth'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: auths
       tags:
       - Auth
 schemes:
