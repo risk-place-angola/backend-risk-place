@@ -3,7 +3,7 @@ version: '3.7'
 x-services-defaults: &defaults
   restart: unless-stopped
   networks:
-    - vam_mos
+    - risk-place_ntk
   extra_hosts:
       - "host.docker.internal:172.17.0.1"
 
@@ -38,7 +38,7 @@ services:
       - db
 
 networks:
-  vam_mos: {}
+  risk-place_ntk: {}
 
 volumes:
   postgres: {}
