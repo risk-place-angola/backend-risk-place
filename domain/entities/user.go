@@ -71,3 +71,15 @@ func (user *User) VerifyPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	return err == nil
 }
+
+func (user *User) passwordEncrypt() error {
+	password, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+
+	if err != nil {
+		return err
+	}
+
+	user.Password = string(password)
+	return nil
+
+}
