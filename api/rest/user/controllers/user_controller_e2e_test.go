@@ -26,6 +26,7 @@ func TestUserControllers(t *testing.T) {
 		data := entities.User{
 			ID:       "0c1baa42-3909-4bdb-837f-a80e68232ecd",
 			Name:     "any_name",
+			Phone:    "923456789",
 			Email:    "joe@gmail.com",
 			Password: "a80e68232ecd",
 		}
@@ -57,6 +58,7 @@ func TestUserControllers(t *testing.T) {
 		data := &entities.User{
 			ID:       "0c1baa42-3909-4bdb-837f-a80e68232ecd",
 			Name:     "Github",
+			Phone:    "923456789",
 			Email:    "github@gmail.com",
 			Password: "12345",
 		}
@@ -93,6 +95,7 @@ func TestUserControllers(t *testing.T) {
 		data := &entities.User{
 			ID:       "0c1baa42-3909-4bdb-837f-a80e68232ecd",
 			Name:     "Github",
+			Phone:    "923456789",
 			Email:    "github@gmail.com",
 			Password: "12345",
 		}
@@ -128,6 +131,7 @@ func TestUserControllers(t *testing.T) {
 			{
 				ID:       "0c1baa42-3909-4bdb-837f-a80e68232ecd",
 				Name:     "Github",
+				Phone:    "923456789",
 				Email:    "github@gmail.com",
 				Password: "12345",
 			},
@@ -166,6 +170,7 @@ func TestUserControllers(t *testing.T) {
 		data := &entities.User{
 			ID:       "0c1baa42-3909-4bdb-837f-a80e68232ecd",
 			Name:     "linkedin",
+			Phone:    "923456789",
 			Email:    "linkedin@gmail.com",
 			Password: "12345",
 		}
