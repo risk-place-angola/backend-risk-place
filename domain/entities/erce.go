@@ -10,18 +10,18 @@ import (
 type Erce struct {
 	ID        string    `json:"id" valid:"uuid,required~ O ID é obrigatório."`
 	Name      string    `json:"name" valid:"required~ O nome  é obrigatório."`
-	Email     string    `json:"email" valid:"required~ O E-mail  é obrigatório."`
-	Password  string    `json:"password" valid:"required~ A palavra passe  é obrigatório."`
+	Email     string    `json:"email" valid:"email,required~ O email é obrigatório."`
+	Password  string    `json:"password" valid:"required~ A senha é obrigatória."`
 	CreatedAt time.Time `json:"created_at" valid:"-"`
 	UpdatedAt time.Time `json:"updated_at" valid:"-"`
 }
 
 func NewErce(name, email, password string) (*Erce, error) {
-	erce := &Erce{
-		Name:     name,
-		Email:    email,
-		Password: password,
-	}
+	erce := &Erce{}
+
+	erce.Name = name
+	erce.Email = email
+	erce.Password = password
 
 	erce.ID = uuid.NewV4().String()
 	erce.CreatedAt = time.Now()
