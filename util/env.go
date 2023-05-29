@@ -16,6 +16,8 @@ type Env struct {
 	DBNAME  string `mapstructure:"DB_NAME"`
 	SSLMODE string `mapstructure:"SSL_MODE"`
 
+	AUTH_EMAIL string `mapstructure:"AUTH_EMAIL"`
+
 	PORTSERVER string `mapstructure:"PORT_SERVER"`
 }
 
