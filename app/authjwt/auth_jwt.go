@@ -11,6 +11,7 @@ import (
 type IAuthAPI interface {
 	CreateCredentialJwt() error
 	Auth(username, password string) (*Token, error)
+	Auths() ([]entities.Auth, error)
 }
 
 type AuthAPI struct {
@@ -23,6 +24,14 @@ type Token struct {
 
 func NewAuthJWT(repoAuth *repository.AuthJWTRepository) IAuthAPI {
 	return &AuthAPI{AuthJWTRepository: repoAuth}
+}
+
+func (a AuthAPI) Auths() ([]entities.Auth, error) {
+	auths, err := a.AuthJWTRepository.FindAll()
+	if err != nil {
+		return nil, err
+	}
+	return auths, nil
 }
 
 func (a AuthAPI) CreateCredentialJwt() error {
