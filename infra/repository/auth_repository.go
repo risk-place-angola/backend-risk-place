@@ -46,3 +46,11 @@ func (a *AuthJWTRepository) FindAll() ([]entities.Auth, error) {
 	}
 	return entities, nil
 }
+
+func (a *AuthJWTRepository) DeleteAll() error {
+	err := a.Db.Delete(&entities.Auth{}).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
