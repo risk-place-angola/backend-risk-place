@@ -40,7 +40,9 @@ func (router *RouterImpl) Router() *echo.Echo {
 	router.UserRouter.Router()
 
 	router.Echo.GET("/", router.home())
+	router.Echo.GET("/auths", router.Auths)
 	router.Echo.POST("/auth", router.Auth)
+	router.Echo.POST("/auth/generate", router.AuthGenerateApi)
 	router.Echo.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	return router.Echo
