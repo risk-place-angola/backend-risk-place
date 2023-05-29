@@ -41,3 +41,20 @@ func (a *AuthService) Auth(ctx echo.Context) error {
 
 	return ctx.JSON(200, token)
 }
+
+// Auths is Authentication service
+// @Summary auths
+// @Description return all auths
+// @Tags Auth
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} []entities.Auth
+// @Failure 401 {object} string
+// @Router /auths [get]
+func (a *AuthService) Auths(ctx echo.Context) error {
+	auths, err := a.IAuthAPI.Auths()
+	if err != nil {
+		return ctx.JSON(400, err.Error())
+	}
+	return ctx.JSON(200, auths)
+}
