@@ -91,14 +91,14 @@ func (controller *UserControllerImpl) UserFindByIdController(ctx user_presenter.
 // @Accept  json
 // @Produce  json
 // @Param id path string true "User ID"
-// @Param user body account.UpadateUserDTO true "User"
+// @Param user body account.UpdateUserDTO true "User"
 // @Success 200 {object} account.UserDTO
 // @Failure 500 {object} rest.ErrorResponse
 // @Router /api/v1/user/{id} [put]
 func (controller *UserControllerImpl) UserUpdateController(ctx user_presenter.UserPresenterCTX) error {
 	id := ctx.Param("id")
 
-	var user account.UpadateUserDTO
+	var user account.UpdateUserDTO
 	if err := ctx.Bind(&user); err != nil {
 		return ctx.JSON(http.StatusBadRequest, rest.ErrorResponse{Message: err.Error()})
 	}

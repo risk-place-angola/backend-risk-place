@@ -12,7 +12,7 @@ import (
 
 type UserUseCase interface {
 	CreateUser(dto *CreateUserDTO) (*UserDTO, error)
-	UpdateUser(id string, dto *UpadateUserDTO) (*UserDTO, error)
+	UpdateUser(id string, dto *UpdateUserDTO) (*UserDTO, error)
 	FindAllUser() ([]*UserDTO, error)
 	FindUserByID(id string) (*UserDTO, error)
 	RemoveUser(id string) error
@@ -75,7 +75,7 @@ func (u *UserUseCaseImpl) FindUserByID(id string) (*UserDTO, error) {
 	return dtoUser.FromUser(user), nil
 }
 
-func (u *UserUseCaseImpl) UpdateUser(id string, dto *UpadateUserDTO) (*UserDTO, error) {
+func (u *UserUseCaseImpl) UpdateUser(id string, dto *UpdateUserDTO) (*UserDTO, error) {
 	user, err := u.UserRepository.FindByID(id)
 	if err != nil {
 		return nil, err
