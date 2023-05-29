@@ -509,7 +509,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/user.UserDTO"
+                                "$ref": "#/definitions/user.DTO"
                             }
                         }
                     },
@@ -548,7 +548,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/user.UserDTO"
+                            "$ref": "#/definitions/user.DTO"
                         }
                     },
                     "500": {
@@ -588,7 +588,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.UserDTO"
+                            "$ref": "#/definitions/user.DTO"
                         }
                     },
                     "500": {
@@ -626,7 +626,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.UserDTO"
+                            "$ref": "#/definitions/user.DTO"
                         }
                     },
                     "500": {
@@ -663,7 +663,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.UpadateUserDTO"
+                            "$ref": "#/definitions/user.UpdateUserDTO"
                         }
                     }
                 ],
@@ -671,7 +671,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.UserDTO"
+                            "$ref": "#/definitions/user.DTO"
                         }
                     },
                     "500": {
@@ -757,6 +757,67 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/authgenerateapi": {
+            "get": {
+                "description": "generate api authentication",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "authgenerateapi",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auths": {
+            "get": {
+                "description": "return all auths",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "auths",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/entities.Auth"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -775,6 +836,29 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "entities.Auth": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }
@@ -932,35 +1016,13 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string"
-                }
-            }
-        },
-        "user.LoginDTO": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
                 },
-                "password": {
+                "phone": {
                     "type": "string"
                 }
             }
         },
-        "user.UpadateUserDTO": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.UserDTO": {
+        "user.DTO": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -978,7 +1040,38 @@ const docTemplate = `{
                 "password": {
                     "type": "string"
                 },
+                "phone": {
+                    "type": "string"
+                },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.LoginDTO": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.UpdateUserDTO": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "phone": {
                     "type": "string"
                 }
             }
