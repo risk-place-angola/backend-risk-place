@@ -4,6 +4,8 @@ import "github.com/labstack/echo/v4"
 
 type IAuthService interface {
 	Auth(ctx echo.Context) error
+	Auths(ctx echo.Context) error
+	AuthGenerateApi(ctx echo.Context) error
 }
 
 type AuthService struct {
@@ -18,7 +20,6 @@ type Data struct {
 func NewAuthService(auth IAuthAPI) IAuthService {
 	return &AuthService{IAuthAPI: auth}
 }
-
 
 // Auth is Authentication service
 // @Summary auth
@@ -41,4 +42,37 @@ func (a *AuthService) Auth(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(200, token)
+}
+
+// Auths is Authentication service
+// @Summary auths
+// @Description return all auths
+// @Tags Auth
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} []entities.Auth
+// @Failure 401 {object} string
+// @Router /auths [get]
+func (a *AuthService) Auths(ctx echo.Context) error {
+	auths, err := a.IAuthAPI.Auths()
+	if err != nil {
+		return ctx.JSON(400, err.Error())
+	}
+	return ctx.JSON(200, auths)
+}
+
+// AuthGenerateApi is Authentication service
+// @Summary authgenerateapi
+// @Description generate api authentication
+// @Tags Auth
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} string
+// @Failure 401 {object} string
+// @Router /authgenerateapi [get]
+func (a *AuthService) AuthGenerateApi(ctx echo.Context) error {
+	if err := a.IAuthAPI.AuthGenerateApi(); err != nil {
+		return ctx.JSON(400, err.Error())
+	}
+	return ctx.JSON(200, "Generate API Authentication")
 }

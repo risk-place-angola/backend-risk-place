@@ -11,6 +11,8 @@ import (
 type IAuthAPI interface {
 	CreateCredentialJwt() error
 	Auth(username, password string) (*Token, error)
+	Auths() ([]entities.Auth, error)
+	AuthGenerateApi() error
 }
 
 type AuthAPI struct {
@@ -23,6 +25,29 @@ type Token struct {
 
 func NewAuthJWT(repoAuth *repository.AuthJWTRepository) IAuthAPI {
 	return &AuthAPI{AuthJWTRepository: repoAuth}
+}
+
+func (a AuthAPI) Auths() ([]entities.Auth, error) {
+	auths, err := a.AuthJWTRepository.FindAll()
+	if err != nil {
+		return nil, err
+	}
+	return auths, nil
+}
+
+func (a AuthAPI) AuthGenerateApi() error {
+	auth := entities.NewAuthJWTAPI()
+	err := a.AuthJWTRepository.DeleteAll()
+	if err != nil {
+		return err
+	}
+	if err := a.AuthJWTRepository.FindUserIfExists(); err != nil {
+		if err := a.AuthJWTRepository.Save(auth); err != nil {
+			return err
+		}
+	}
+	log.Println("Generate API Authentication")
+	return nil
 }
 
 func (a AuthAPI) CreateCredentialJwt() error {

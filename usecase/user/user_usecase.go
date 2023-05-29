@@ -11,10 +11,10 @@ import (
 )
 
 type UserUseCase interface {
-	CreateUser(dto *CreateUserDTO) (*UserDTO, error)
-	UpdateUser(id string, dto *UpadateUserDTO) (*UserDTO, error)
-	FindAllUser() ([]*UserDTO, error)
-	FindUserByID(id string) (*UserDTO, error)
+	CreateUser(dto *CreateUserDTO) (*DTO, error)
+	UpdateUser(id string, dto *UpdateUserDTO) (*DTO, error)
+	FindAllUser() ([]*DTO, error)
+	FindUserByID(id string) (*DTO, error)
 	RemoveUser(id string) error
 	Login(data *LoginDTO) (*JwtResponse, error)
 }
@@ -36,9 +36,9 @@ func NewUserUseCase(userRepo repository.UserRepository) UserUseCase {
 	}
 }
 
-func (u *UserUseCaseImpl) CreateUser(data *CreateUserDTO) (*UserDTO, error) {
+func (u *UserUseCaseImpl) CreateUser(data *CreateUserDTO) (*DTO, error) {
 
-	user, err := entities.NewUser(data.Name, data.Email, data.Password)
+	user, err := entities.NewUser(data.Name, data.Phone, data.Email, data.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -47,41 +47,41 @@ func (u *UserUseCaseImpl) CreateUser(data *CreateUserDTO) (*UserDTO, error) {
 		return nil, err
 	}
 
-	userDto := &UserDTO{}
+	userDto := &DTO{}
 
 	return userDto.FromUser(user), nil
 }
 
-func (u *UserUseCaseImpl) FindAllUser() ([]*UserDTO, error) {
+func (u *UserUseCaseImpl) FindAllUser() ([]*DTO, error) {
 	users, err := u.UserRepository.FindAll()
 	if err != nil {
 		return nil, err
 	}
 
-	dtoUser := &UserDTO{}
+	dtoUser := &DTO{}
 	dtoUsers := dtoUser.FromUserList(users)
 
 	return dtoUsers, nil
 }
 
-func (u *UserUseCaseImpl) FindUserByID(id string) (*UserDTO, error) {
+func (u *UserUseCaseImpl) FindUserByID(id string) (*DTO, error) {
 	user, err := u.UserRepository.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	dtoUser := &UserDTO{}
+	dtoUser := &DTO{}
 
 	return dtoUser.FromUser(user), nil
 }
 
-func (u *UserUseCaseImpl) UpdateUser(id string, dto *UpadateUserDTO) (*UserDTO, error) {
+func (u *UserUseCaseImpl) UpdateUser(id string, dto *UpdateUserDTO) (*DTO, error) {
 	user, err := u.UserRepository.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := user.Update(dto.Name, dto.Email, dto.Password); err != nil {
+	if err := user.Update(dto.Name, dto.Phone, dto.Email, dto.Password); err != nil {
 		return nil, err
 	}
 
@@ -89,7 +89,7 @@ func (u *UserUseCaseImpl) UpdateUser(id string, dto *UpadateUserDTO) (*UserDTO, 
 		return nil, err
 	}
 
-	userDTO := &UserDTO{}
+	userDTO := &DTO{}
 
 	return userDTO.FromUser(user), nil
 }

@@ -2,6 +2,7 @@ package entities
 
 import (
 	"github.com/bxcodec/faker/v3"
+	"github.com/risk-place-angola/backend-risk-place/util"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 	"log"
@@ -39,9 +40,10 @@ func (auth *Auth) passwordEncrypt() error {
 }
 
 func genUserAuthCreate() *Auth {
+	env := util.LoadEnv()
 	auth := &Auth{
 		Username: faker.Username(),
-		Email:    faker.Email(),
+		Email:    env.AUTH_EMAIL,
 		Password: faker.Password(),
 	}
 	log.Printf("Password is: %s", auth.Password)

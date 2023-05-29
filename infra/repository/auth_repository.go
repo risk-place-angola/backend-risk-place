@@ -37,3 +37,20 @@ func (a *AuthJWTRepository) FindUserIfExists() error {
 	}
 	return nil
 }
+
+func (a *AuthJWTRepository) FindAll() ([]entities.Auth, error) {
+	var entities []entities.Auth
+	err := a.Db.Find(&entities).Error
+	if err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (a *AuthJWTRepository) DeleteAll() error {
+	err := a.Db.Delete(&entities.Auth{}).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
