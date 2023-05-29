@@ -58,3 +58,19 @@ func (a *AuthService) Auths(ctx echo.Context) error {
 	}
 	return ctx.JSON(200, auths)
 }
+
+// AuthGenerateApi is Authentication service
+// @Summary authgenerateapi
+// @Description generate api authentication
+// @Tags Auth
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} string
+// @Failure 401 {object} string
+// @Router /authgenerateapi [get]
+func (a *AuthService) AuthGenerateApi(ctx echo.Context) error {
+	if err := a.IAuthAPI.AuthGenerateApi(); err != nil {
+		return ctx.JSON(400, err.Error())
+	}
+	return ctx.JSON(200, "Generate API Authentication")
+}
