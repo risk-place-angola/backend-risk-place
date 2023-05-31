@@ -18,16 +18,11 @@ func TestCreatePlace(t *testing.T) {
 	mockPlaceRepository.EXPECT().Save(gomock.Any()).Return(nil)
 
 	placeUseCase := place_usecase.NewPlaceUseCase(mockPlaceRepository)
-	place, err := placeUseCase.CreatePlace(place_usecase.CreatePlaceDTO{
-		RiskTypeID:  "99bada49-09d0-4f13-b310-6f8633b38dfe",
-		PlaceTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
-		Name:        "Rangel rua da Lama",
-		Latitude:    8.825248,
-		Longitude:   13.263879,
-		Description: "Risco de inundação",
+	_, err := placeUseCase.CreatePlace(place_usecase.CreatePlaceDTO{
+		Latitude:  8.825248,
+		Longitude: 13.263879,
 	})
 	assert.Nil(t, err)
-	assert.Equal(t, "Rangel rua da Lama", place.Name)
 }
 
 func TestUpdatePlace(t *testing.T) {
@@ -35,13 +30,9 @@ func TestUpdatePlace(t *testing.T) {
 	defer ctrl.Finish()
 
 	data := &entities.Place{
-		ID:          "93247691-5c64-4c1f-a8ca-db5d76640ca9",
-		RiskTypeID:  "99bada49-09d0-4f13-b310-6f8633b38dfe",
-		PlaceTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
-		Name:        "Rangel rua da Lama",
-		Latitude:    8.825248,
-		Longitude:   13.263879,
-		Description: "Risco de inundação",
+		ID:        "93247691-5c64-4c1f-a8ca-db5d76640ca9",
+		Latitude:  8.825248,
+		Longitude: 13.263879,
 	}
 
 	mockPlaceRepository := mocks.NewMockPlaceRepository(ctrl)
@@ -49,16 +40,13 @@ func TestUpdatePlace(t *testing.T) {
 	mockPlaceRepository.EXPECT().Update(gomock.Any()).Return(nil)
 
 	updatePlaceDTO := &place_usecase.UpdatePlaceDTO{}
-	updatePlaceDTO.RiskTypeID = "99bada49-09d0-4f13-b310-6f8633b38dfe"
-	updatePlaceDTO.PlaceTypeID = "dd3aadda-9434-4dd7-aaad-035584b8f124"
-	updatePlaceDTO.Name = "Rangel rua da Lama"
 	updatePlaceDTO.Latitude = 8.826595
 	updatePlaceDTO.Longitude = 13.263641
 	updatePlaceDTO.Description = "Risco de inundação"
 	placeUseCase := place_usecase.NewPlaceUseCase(mockPlaceRepository)
-	place, err := placeUseCase.UpdatePlace("93247691-5c64-4c1f-a8ca-db5d76640ca9", *updatePlaceDTO)
+	_, err := placeUseCase.UpdatePlace("93247691-5c64-4c1f-a8ca-db5d76640ca9", *updatePlaceDTO)
 	assert.Nil(t, err)
-	assert.Equal(t, "Rangel rua da Lama", place.Name)
+
 }
 
 func TestFindAllPlace(t *testing.T) {
@@ -67,22 +55,14 @@ func TestFindAllPlace(t *testing.T) {
 
 	data := []*entities.Place{
 		{
-			ID:          "93247691-5c64-4c1f-a8ca-db5d76640ca9",
-			RiskTypeID:  "99bada49-09d0-4f13-b310-6f8633b38dfe",
-			PlaceTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
-			Name:        "Rangel rua da Lama",
-			Latitude:    8.825248,
-			Longitude:   13.263879,
-			Description: "Risco de inundação",
+			ID:        "93247691-5c64-4c1f-a8ca-db5d76640ca9",
+			Latitude:  8.825248,
+			Longitude: 13.263879,
 		},
 		{
-			ID:          "50361691-6b99-8j2u-a8ca-db5d70912837",
-			RiskTypeID:  "99bada49-09d0-4f13-b310-6f8633b38dfe",
-			PlaceTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
-			Name:        "Rangel rua da Lama",
-			Latitude:    8.825248,
-			Longitude:   13.263879,
-			Description: "Risco de inundação",
+			ID:        "50361691-6b99-8j2u-a8ca-db5d70912837",
+			Latitude:  8.825248,
+			Longitude: 13.263879,
 		},
 	}
 
@@ -100,13 +80,9 @@ func TestFindPlaceByID(t *testing.T) {
 	defer ctrl.Finish()
 
 	data := &entities.Place{
-		ID:          "93247691-5c64-4c1f-a8ca-db5d76640ca9",
-		RiskTypeID:  "99bada49-09d0-4f13-b310-6f8633b38dfe",
-		PlaceTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
-		Name:        "Rangel rua da Lama",
-		Latitude:    8.825248,
-		Longitude:   13.263879,
-		Description: "Risco de inundação",
+		ID:        "93247691-5c64-4c1f-a8ca-db5d76640ca9",
+		Latitude:  8.825248,
+		Longitude: 13.263879,
 	}
 
 	mockPlaceRepository := mocks.NewMockPlaceRepository(ctrl)
@@ -115,5 +91,5 @@ func TestFindPlaceByID(t *testing.T) {
 	placeUseCase := place_usecase.NewPlaceUseCase(mockPlaceRepository)
 	place, err := placeUseCase.FindPlaceByID("93247691-5c64-4c1f-a8ca-db5d76640ca9")
 	assert.Nil(t, err)
-	assert.Equal(t, "Rangel rua da Lama", place.Name)
+	assert.Equal(t, "93247691-5c64-4c1f-a8ca-db5d76640ca9", place.ID)
 }

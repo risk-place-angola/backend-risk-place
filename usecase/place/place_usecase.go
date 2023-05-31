@@ -25,12 +25,8 @@ func NewPlaceUseCase(placeRepository repository.PlaceRepository) PlaceUseCase {
 func (r *PlaceUseCaseImpl) CreatePlace(dto CreatePlaceDTO) (*PlaceDTO, error) {
 
 	placeEntity := &entities.Place{
-		RiskTypeID:  dto.RiskTypeID,
-		PlaceTypeID: dto.PlaceTypeID,
-		Name:        dto.Name,
-		Latitude:    dto.Latitude,
-		Longitude:   dto.Longitude,
-		Description: dto.Description,
+		Latitude:  dto.Latitude,
+		Longitude: dto.Longitude,
 	}
 
 	place, err := entities.NewPlace(placeEntity)

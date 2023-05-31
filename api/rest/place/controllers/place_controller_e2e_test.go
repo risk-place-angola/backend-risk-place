@@ -22,13 +22,9 @@ func TestPlaceController(t *testing.T) {
 		e := echo.New()
 
 		data := &entities.Place{
-			ID:          "93247691-5c64-4c1f-a8ca-db5d76640ca9",
-			RiskTypeID:  "99bada49-09d0-4f13-b310-6f8633b38dfe",
-			PlaceTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
-			Name:        "Rangel rua da Lama",
-			Latitude:    8.825248,
-			Longitude:   13.263879,
-			Description: "Risco de inundação",
+			ID:        "93247691-5c64-4c1f-a8ca-db5d76640ca9",
+			Latitude:  8.825248,
+			Longitude: 13.263879,
 		}
 
 		jsonData, _ := json.Marshal(data)
@@ -67,13 +63,9 @@ func TestPlaceController(t *testing.T) {
 		ctx.SetParamValues("93247691-5c64-4c1f-a8ca-db5d76640ca9")
 
 		data := &entities.Place{
-			ID:          "93247691-5c64-4c1f-a8ca-db5d76640ca9",
-			RiskTypeID:  "99bada49-09d0-4f13-b310-6f8633b38dfe",
-			PlaceTypeID: "dd3aadda-9434-4dd7-aaad-035584b8f124",
-			Name:        "Rangel rua da Lama",
-			Latitude:    8.825248,
-			Longitude:   13.263879,
-			Description: "Risco de inundação",
+			ID:        "93247691-5c64-4c1f-a8ca-db5d76640ca9",
+			Latitude:  8.825248,
+			Longitude: 13.263879,
 		}
 
 		ctrl := gomock.NewController(t)
