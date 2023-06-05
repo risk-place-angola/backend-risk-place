@@ -10,12 +10,9 @@ import (
 func DependencyRouter(db *gorm.DB, echo *echo.Echo) *echo.Echo {
 
 	router_ := router.RouterImpl{
-		PlaceTypeRouter: PlaceTypeDependency(db, echo),
-		RiskTypeRouter:  RiskTypeDependency(db, echo),
-		PlaceRouter:     PlaceDependency(db, echo),
-		UserRouter:      UserDependency(db, echo),
-		IAuthService:    authjwt.AuthDependency(db),
-		Echo:            echo,
+		UserRouter:   UserDependency(db, echo),
+		IAuthService: authjwt.AuthDependency(db),
+		Echo:         echo,
 	}
 
 	router.NewRouter(&router_).Router()
