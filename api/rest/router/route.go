@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/risk-place-angola/backend-risk-place/api/rest/middleware"
 	"github.com/risk-place-angola/backend-risk-place/api/rest/router/interfaces"
 	user_router "github.com/risk-place-angola/backend-risk-place/api/rest/user/router"
 	warning_router "github.com/risk-place-angola/backend-risk-place/api/rest/warning/router"
@@ -32,7 +33,7 @@ func (router *RouterImpl) Router() *echo.Echo {
 	router.UserRouter.Router()
 	router.IWaringRouter.Router()
 	router.Echo.GET("/", router.home())
-	router.Echo.GET("/ws", ws.WebsocketServer)
+	router.Echo.GET("/ws", ws.WebsocketServer, middleware.WebsocketAuthMiddleware)
 	router.Echo.GET("/auths", router.Auths)
 	router.Echo.POST("/auth", router.Auth)
 	router.Echo.POST("/auth/generate", router.AuthGenerateApi)
