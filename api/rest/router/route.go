@@ -4,7 +4,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/risk-place-angola/backend-risk-place/api/rest/router/interfaces"
 	user_router "github.com/risk-place-angola/backend-risk-place/api/rest/user/router"
+	warning_router "github.com/risk-place-angola/backend-risk-place/api/rest/warning/router"
 	"github.com/risk-place-angola/backend-risk-place/app/authjwt"
+	"github.com/risk-place-angola/backend-risk-place/app/ws"
 	_ "github.com/risk-place-angola/backend-risk-place/docs"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
@@ -13,6 +15,7 @@ type RouterImpl struct {
 	Echo *echo.Echo
 	user_router.UserRouter
 	authjwt.IAuthService
+	warning_router.IWaringRouter
 }
 
 func NewRouter(router *RouterImpl) interfaces.IRouter {
@@ -26,12 +29,10 @@ func NewRouter(router *RouterImpl) interfaces.IRouter {
 
 func (router *RouterImpl) Router() *echo.Echo {
 
-	router.PlaceRouter.Router()
-	router.PlaceTypeRouter.Router()
-	router.RiskTypeRouter.Router()
 	router.UserRouter.Router()
-
+	router.IWaringRouter.Router()
 	router.Echo.GET("/", router.home())
+	router.Echo.GET("/ws", ws.WebsocketServer)
 	router.Echo.GET("/auths", router.Auths)
 	router.Echo.POST("/auth", router.Auth)
 	router.Echo.POST("/auth/generate", router.AuthGenerateApi)
