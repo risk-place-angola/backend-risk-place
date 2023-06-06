@@ -5,6 +5,10 @@ import (
 	"strconv"
 )
 
+type LocationConverter interface {
+	convertLocationStringToFloat() *Location
+}
+
 type DTO struct {
 	ID           string  `json:"id"`
 	ReportedBy   string  `json:"reported_by"`
@@ -51,9 +55,22 @@ func (w *CreateWarningDTO) convertLocationStringToFloat() *Location {
 	}
 }
 
-func (w *UpdateWarningDTO) ToWarningUpdate() *DTO {
+func (w *UpdateWarningDTO) convertLocationStringToFloat() *Location {
+	lat, _ := strconv.ParseFloat(w.Latitude, 64)
+	lng, _ := strconv.ParseFloat(w.Longitude, 64)
+	return &Location{
+		Latitude:  lat,
+		Longitude: lng,
+	}
+}
+
+func ConvertLocationToFloat(lc LocationConverter) *Location {
+	return lc.convertLocationStringToFloat()
+}
+
+func (w *UpdateWarningDTO) ToWarningUpdate() *entities.Warning {
 	location := w.convertLocationStringToFloat()
-	return &DTO{
+	return &entities.Warning{
 		ReportedBy:   w.ReportedBy,
 		IsVictim:     w.IsVictim,
 		Fact:         w.Fact,
