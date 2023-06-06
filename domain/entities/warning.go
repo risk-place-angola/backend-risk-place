@@ -59,19 +59,3 @@ func (warning *Warning) isValid() error {
 func (warning *Warning) SetUpdatedAt() {
 	warning.UpdatedAt = time.Now()
 }
-
-func (warning *Warning) Update(reportedBy string, isVictim bool, fact string, placeID string, isFake bool, isAnonymous bool) error {
-	warning.ReportedBy = reportedBy
-	warning.IsVictim = isVictim
-	warning.Fact = fact
-	warning.Latitude = warning.Latitude
-	warning.Longitude = warning.Longitude
-	warning.IsFake = isFake
-	warning.IsAnonymous = isAnonymous
-
-	warning.SetUpdatedAt()
-	if err := warning.isValid(); err != nil {
-		return err
-	}
-	return nil
-}
