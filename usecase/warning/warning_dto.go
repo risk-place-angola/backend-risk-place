@@ -6,18 +6,19 @@ import (
 )
 
 type DTO struct {
-	ID          string         `json:"id"`
-	ReportedBy  string         `json:"reported_by"`
-	User        *entities.User `json:"user"`
-	IsVictim    bool           `json:"is_victim"`
-	Fact        string         `json:"fact"`
-	Latitude    float64        `json:"latitude"`
-	Longitude   float64        `json:"longitude"`
-	IsFake      bool           `json:"is_fake"`
-	IsAnonymous bool           `json:"is_anonymous"`
+	ID           string  `json:"id"`
+	ReportedBy   string  `json:"reported_by"`
+	IsVictim     bool    `json:"is_victim"`
+	Fact         string  `json:"fact"`
+	Latitude     float64 `json:"latitude"`
+	Longitude    float64 `json:"longitude"`
+	IsFake       bool    `json:"is_fake"`
+	IsAnonymous  bool    `json:"is_anonymous"`
+	StopAlerting bool    `json:"stop_alerting"`
 }
 
 type CreateWarningDTO struct {
+	ID         string `json:"id"`
 	ReportedBy string `json:"reported_by"`
 	IsVictim   bool   `json:"is_victim"`
 	Fact       string `json:"fact"`
@@ -27,8 +28,9 @@ type CreateWarningDTO struct {
 
 type UpdateWarningDTO struct {
 	CreateWarningDTO
-	IsFake      bool `json:"is_fake"`
-	IsAnonymous bool `json:"is_anonymous"`
+	IsFake       bool `json:"is_fake"`
+	IsAnonymous  bool `json:"is_anonymous"`
+	StopAlerting bool `json:"stop_alerting"`
 }
 
 type Location struct {
@@ -48,13 +50,14 @@ func (w *CreateWarningDTO) convertLocationStringToFloat() *Location {
 func (w *UpdateWarningDTO) ToWarningUpdate() *DTO {
 	location := w.convertLocationStringToFloat()
 	return &DTO{
-		ReportedBy:  w.ReportedBy,
-		IsVictim:    w.IsVictim,
-		Fact:        w.Fact,
-		Latitude:    location.Latitude,
-		Longitude:   location.Longitude,
-		IsFake:      w.IsFake,
-		IsAnonymous: w.IsAnonymous,
+		ReportedBy:   w.ReportedBy,
+		IsVictim:     w.IsVictim,
+		Fact:         w.Fact,
+		Latitude:     location.Latitude,
+		Longitude:    location.Longitude,
+		IsFake:       w.IsFake,
+		IsAnonymous:  w.IsAnonymous,
+		StopAlerting: w.StopAlerting,
 	}
 }
 
@@ -74,13 +77,14 @@ func (w *DTO) ToWarning() *DTO {
 func (w *CreateWarningDTO) ToWarning() *DTO {
 	location := w.convertLocationStringToFloat()
 	return &DTO{
-		ReportedBy:  w.ReportedBy,
-		IsVictim:    w.IsVictim,
-		Fact:        w.Fact,
-		Latitude:    location.Latitude,
-		Longitude:   location.Longitude,
-		IsFake:      false,
-		IsAnonymous: false,
+		ReportedBy:   w.ReportedBy,
+		IsVictim:     w.IsVictim,
+		Fact:         w.Fact,
+		Latitude:     location.Latitude,
+		Longitude:    location.Longitude,
+		IsFake:       false,
+		IsAnonymous:  false,
+		StopAlerting: false,
 	}
 }
 
@@ -103,8 +107,9 @@ func (w *DTO) ToUpdateWarning() *UpdateWarningDTO {
 			Latitude:   strconv.FormatFloat(w.Latitude, 'f', 6, 64),
 			Longitude:  strconv.FormatFloat(w.Longitude, 'f', 6, 64),
 		},
-		IsFake:      w.IsFake,
-		IsAnonymous: w.IsAnonymous,
+		IsFake:       w.IsFake,
+		IsAnonymous:  w.IsAnonymous,
+		StopAlerting: w.StopAlerting,
 	}
 }
 
@@ -131,6 +136,7 @@ func (w *DTO) FromWarnings(warnings []*entities.Warning) []*DTO {
 
 func (w *DTO) FromCreateWarning(warning *entities.Warning) *CreateWarningDTO {
 	return &CreateWarningDTO{
+		ID:         warning.ID,
 		ReportedBy: warning.ReportedBy,
 		IsVictim:   warning.IsVictim,
 		Fact:       warning.Fact,
@@ -148,7 +154,8 @@ func (w *DTO) FromUpdateWarning(warning *entities.Warning) *UpdateWarningDTO {
 			Latitude:   strconv.FormatFloat(warning.Latitude, 'f', 6, 64),
 			Longitude:  strconv.FormatFloat(warning.Longitude, 'f', 6, 64),
 		},
-		IsFake:      warning.IsFake,
-		IsAnonymous: warning.IsAnonymous,
+		IsFake:       warning.IsFake,
+		IsAnonymous:  warning.IsAnonymous,
+		StopAlerting: warning.StopAlerting,
 	}
 }
