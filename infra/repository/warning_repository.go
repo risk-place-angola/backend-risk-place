@@ -27,7 +27,7 @@ func (w *WarningRepository) Delete(id string) error {
 
 func (w *WarningRepository) FindByID(id string) (*entities.Warning, error) {
 	var entity entities.Warning
-	err := w.Db.First(&entity, id).Preload("User").Error
+	err := w.Db.First(&entity, "id=?", id).Error
 	return &entity, err
 }
 
