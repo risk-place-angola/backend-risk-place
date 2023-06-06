@@ -142,22 +142,17 @@ func (w *Websocket) WebsocketServerWriteMessage() {
 		w.Conn.Close()
 	}()
 
-	for {
-		select {
-		case message, ok := <-w.Send:
-			if !ok {
-				err := w.Conn.WriteMessage(websocket.CloseMessage, []byte{})
-				if err != nil {
-					return
-				}
-				return
-			}
-			log.Println("WebsocketServerWriteMessage", string(message))
-			err := w.Conn.WriteMessage(websocket.TextMessage, message)
-			if err != nil {
-				return
-			}
+	for message := range w.Send {
+		log.Println("WebsocketServerWriteMessage", string(message))
+		err := w.Conn.WriteMessage(websocket.TextMessage, message)
+		if err != nil {
+			return
 		}
+	}
+
+	err := w.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+	if err != nil {
+		return
 	}
 }
 
