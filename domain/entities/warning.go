@@ -60,3 +60,16 @@ func (warning *Warning) isValid() error {
 func (warning *Warning) SetUpdatedAt() {
 	warning.UpdatedAt = time.Now()
 }
+
+func (warning *Warning) Update(w *Warning) error {
+	warning.ReportedBy = w.ReportedBy
+	warning.IsVictim = w.IsVictim
+	warning.Fact = w.Fact
+	warning.Latitude = w.Latitude
+	warning.Longitude = w.Longitude
+	warning.IsFake = w.IsFake
+	warning.IsAnonymous = w.IsAnonymous
+	warning.StopAlerting = w.StopAlerting
+	warning.SetUpdatedAt()
+	return nil
+}
