@@ -22,7 +22,7 @@ func (w *WarningRepository) Update(entity *entities.Warning) error {
 }
 
 func (w *WarningRepository) Delete(id string) error {
-	return w.Db.Delete(&entities.Warning{}, id).Error
+	return w.Db.Delete(&entities.Warning{}, "id=?", id).Error
 }
 
 func (w *WarningRepository) FindByID(id string) (*entities.Warning, error) {
