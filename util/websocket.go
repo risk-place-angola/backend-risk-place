@@ -126,14 +126,12 @@ func (w *Websocket) WebsocketClientReadMessage() ([]byte, error) {
 		}
 	}(w.Conn)
 
-	for {
-		_, message, err := w.Conn.ReadMessage()
-		if err != nil {
-			log.Println("Error reading message:", err)
-			return nil, err
-		}
-		return message, nil
+	_, message, err := w.Conn.ReadMessage()
+	if err != nil {
+		log.Println("Error reading message:", err)
+		return nil, err
 	}
+	return message, nil
 
 }
 
