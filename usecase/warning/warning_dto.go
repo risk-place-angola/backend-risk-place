@@ -27,10 +27,14 @@ type CreateWarningDTO struct {
 }
 
 type UpdateWarningDTO struct {
-	CreateWarningDTO
-	IsFake       bool `json:"is_fake"`
-	IsAnonymous  bool `json:"is_anonymous"`
-	StopAlerting bool `json:"stop_alerting"`
+	ReportedBy   string `json:"reported_by"`
+	IsVictim     bool   `json:"is_victim"`
+	Fact         string `json:"fact"`
+	Latitude     string `json:"latitude"`
+	Longitude    string `json:"longitude"`
+	IsFake       bool   `json:"is_fake"`
+	IsAnonymous  bool   `json:"is_anonymous"`
+	StopAlerting bool   `json:"stop_alerting"`
 }
 
 type Location struct {
@@ -100,13 +104,11 @@ func (w *DTO) ToCreateWarning() *CreateWarningDTO {
 
 func (w *DTO) ToUpdateWarning() *UpdateWarningDTO {
 	return &UpdateWarningDTO{
-		CreateWarningDTO: CreateWarningDTO{
-			ReportedBy: w.ReportedBy,
-			IsVictim:   w.IsVictim,
-			Fact:       w.Fact,
-			Latitude:   strconv.FormatFloat(w.Latitude, 'f', 6, 64),
-			Longitude:  strconv.FormatFloat(w.Longitude, 'f', 6, 64),
-		},
+		ReportedBy:   w.ReportedBy,
+		IsVictim:     w.IsVictim,
+		Fact:         w.Fact,
+		Latitude:     strconv.FormatFloat(w.Latitude, 'f', 6, 64),
+		Longitude:    strconv.FormatFloat(w.Longitude, 'f', 6, 64),
 		IsFake:       w.IsFake,
 		IsAnonymous:  w.IsAnonymous,
 		StopAlerting: w.StopAlerting,
@@ -147,13 +149,11 @@ func (w *DTO) FromCreateWarning(warning *entities.Warning) *CreateWarningDTO {
 
 func (w *DTO) FromUpdateWarning(warning *entities.Warning) *UpdateWarningDTO {
 	return &UpdateWarningDTO{
-		CreateWarningDTO: CreateWarningDTO{
-			ReportedBy: warning.ReportedBy,
-			IsVictim:   warning.IsVictim,
-			Fact:       warning.Fact,
-			Latitude:   strconv.FormatFloat(warning.Latitude, 'f', 6, 64),
-			Longitude:  strconv.FormatFloat(warning.Longitude, 'f', 6, 64),
-		},
+		ReportedBy:   warning.ReportedBy,
+		IsVictim:     warning.IsVictim,
+		Fact:         warning.Fact,
+		Latitude:     strconv.FormatFloat(warning.Latitude, 'f', 6, 64),
+		Longitude:    strconv.FormatFloat(warning.Longitude, 'f', 6, 64),
 		IsFake:       warning.IsFake,
 		IsAnonymous:  warning.IsAnonymous,
 		StopAlerting: warning.StopAlerting,
