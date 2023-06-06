@@ -146,7 +146,10 @@ func (w *Websocket) WebsocketServerWriteMessage() {
 		select {
 		case message, ok := <-w.Send:
 			if !ok {
-				w.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				err := w.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err != nil {
+					return
+				}
 				return
 			}
 			log.Println("WebsocketServerWriteMessage", string(message))
