@@ -1,6 +1,7 @@
 package user_router
 
 import (
+	"github.com/risk-place-angola/backend-risk-place/api/rest/middleware"
 	"os"
 
 	"github.com/labstack/echo/v4"
@@ -28,6 +29,7 @@ func (router *UserRouterImpl) Router() *echo.Echo {
 
 	{
 		user := v1.Group("/user")
+		v1.Use(middleware.AuthMiddleware())
 		{
 			user.POST("", func(c echo.Context) error { return router.UserController.UserCreateController(c) })
 			user.GET("", func(c echo.Context) error { return router.UserController.UserFindAllController(c) })

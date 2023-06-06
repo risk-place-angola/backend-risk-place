@@ -45,6 +45,16 @@ func jwtConfig() echojwt.Config {
 	}
 }
 
+func WebsocketAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		authHeader := ctx.Request().Header.Get("Authorization")
+		if ok, err := IsValidToken(authHeader); !ok || err != nil {
+			return echo.NewHTTPError(401, "Unauthorized")
+		}
+		return next(ctx)
+	}
+}
+
 func NewAuthToken(username string) (string, error) {
 	var signingKey string = os.Getenv("JWT_SECRET")
 	claims := CustomClaims{
@@ -60,4 +70,15 @@ func NewAuthToken(username string) (string, error) {
 		return "", nil
 	}
 	return t, nil
+}
+
+func IsValidToken(token string) (bool, error) {
+	var signingKey string = os.Getenv("JWT_SECRET")
+	_, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		return []byte(signingKey), nil
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

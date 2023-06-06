@@ -27,58 +27,26 @@ definitions:
       username:
         type: string
     type: object
-  place_usecase.CreatePlaceDTO:
-    properties:
-      description:
-        type: string
-      latitude:
-        type: number
-      longitude:
-        type: number
-      name:
-        type: string
-      place_type_id:
-        type: string
-      risk_type_id:
-        type: string
-    type: object
-  place_usecase.PlaceDTO:
+  entities.User:
     properties:
       created_at:
         type: string
-      description:
+      email:
         type: string
       id:
         type: string
-      latitude:
-        type: number
-      longitude:
-        type: number
       name:
         type: string
-      place_type_id:
+      password:
         type: string
-      risk_type_id:
+      phone:
         type: string
       updated_at:
         type: string
-    type: object
-  placetype.CreatePlaceTypeDTO:
-    properties:
-      name:
+      verificationCode:
         type: string
-    type: object
-  placetype.PlaceTypeDTO:
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-    type: object
-  placetype.UpdatePlaceTypeDTO:
-    properties:
-      name:
-        type: string
+      verifyEmail:
+        type: boolean
     type: object
   rest.ErrorResponse:
     properties:
@@ -88,34 +56,6 @@ definitions:
   rest.SuccessResponse:
     properties:
       message:
-        type: string
-    type: object
-  risk_presenter.ErrorResponse:
-    properties:
-      message:
-        type: string
-    type: object
-  risktype.CreateRiskTypeDTO:
-    properties:
-      description:
-        type: string
-      name:
-        type: string
-    type: object
-  risktype.RiskTypeDTO:
-    properties:
-      description:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-    type: object
-  risktype.UpdateRiskTypeDTO:
-    properties:
-      description:
-        type: string
-      name:
         type: string
     type: object
   user.CreateUserDTO:
@@ -164,6 +104,46 @@ definitions:
       phone:
         type: string
     type: object
+  warning_usecase.DTO:
+    properties:
+      fact:
+        type: string
+      id:
+        type: string
+      is_anonymous:
+        type: boolean
+      is_fake:
+        type: boolean
+      is_victim:
+        type: boolean
+      latitude:
+        type: number
+      longitude:
+        type: number
+      reported_by:
+        type: string
+      user:
+        $ref: '#/definitions/entities.User'
+    type: object
+  warning_usecase.UpdateWarningDTO:
+    properties:
+      fact:
+        type: string
+      id:
+        type: string
+      is_anonymous:
+        type: boolean
+      is_fake:
+        type: boolean
+      is_victim:
+        type: boolean
+      latitude:
+        type: string
+      longitude:
+        type: string
+      reported_by:
+        type: string
+    type: object
 host: localhost:8000
 info:
   contact:
@@ -192,299 +172,6 @@ paths:
       summary: Home
       tags:
       - Home
-  /api/v1/place:
-    post:
-      consumes:
-      - application/json
-      description: Create Place
-      parameters:
-      - description: Place
-        in: body
-        name: place
-        required: true
-        schema:
-          $ref: '#/definitions/place_usecase.CreatePlaceDTO'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/place_usecase.PlaceDTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/risk_presenter.ErrorResponse'
-      summary: Create Place
-      tags:
-      - Place
-  /api/v1/place/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Find Place by ID
-      parameters:
-      - description: Place ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/place_usecase.PlaceDTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/risk_presenter.ErrorResponse'
-      summary: Find Place by ID
-      tags:
-      - Place
-  /api/v1/place/ws:
-    get:
-      consumes:
-      - application/json
-      description: Find all places websocket url ws://localhost:8000/api/v1/place/ws
-        or use authentication ssl wss://localhost:8000/api/v1/place/ws
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/place_usecase.PlaceDTO'
-      summary: Find all places
-      tags:
-      - Place
-  /api/v1/placetype:
-    get:
-      consumes:
-      - application/json
-      description: Find All PlaceType
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/placetype.PlaceTypeDTO'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Find All PlaceType
-      tags:
-      - PlaceType
-    post:
-      consumes:
-      - application/json
-      description: Create PlaceType
-      parameters:
-      - description: PlaceType
-        in: body
-        name: placeType
-        required: true
-        schema:
-          $ref: '#/definitions/placetype.CreatePlaceTypeDTO'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/placetype.PlaceTypeDTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Create PlaceType
-      tags:
-      - PlaceType
-  /api/v1/placetype/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete PlaceType
-      parameters:
-      - description: PlaceType ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/rest.SuccessResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Delete PlaceType
-      tags:
-      - PlaceType
-    put:
-      consumes:
-      - application/json
-      description: Update PlaceType
-      parameters:
-      - description: PlaceType ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: PlaceType
-        in: body
-        name: placeType
-        required: true
-        schema:
-          $ref: '#/definitions/placetype.UpdatePlaceTypeDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/placetype.PlaceTypeDTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Update PlaceType
-      tags:
-      - PlaceType
-  /api/v1/risktype:
-    get:
-      consumes:
-      - application/json
-      description: Find All RiskType
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/risktype.RiskTypeDTO'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Find All RiskType
-      tags:
-      - RiskType
-    post:
-      consumes:
-      - application/json
-      description: Create RiskType
-      parameters:
-      - description: RiskType
-        in: body
-        name: risktype
-        required: true
-        schema:
-          $ref: '#/definitions/risktype.CreateRiskTypeDTO'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/risktype.RiskTypeDTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Create RiskType
-      tags:
-      - RiskType
-  /api/v1/risktype/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete RiskType
-      parameters:
-      - description: RiskType ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/rest.SuccessResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Delete RiskType
-      tags:
-      - RiskType
-    get:
-      consumes:
-      - application/json
-      description: Find RiskType By ID
-      parameters:
-      - description: RiskType ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/risktype.RiskTypeDTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Find RiskType By ID
-      tags:
-      - RiskType
-    put:
-      consumes:
-      - application/json
-      description: Update RiskType
-      parameters:
-      - description: RiskType ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: RiskType
-        in: body
-        name: risktype
-        required: true
-        schema:
-          $ref: '#/definitions/risktype.UpdateRiskTypeDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/risktype.RiskTypeDTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Update RiskType
-      tags:
-      - RiskType
   /api/v1/user:
     get:
       consumes:
@@ -636,6 +323,145 @@ paths:
       summary: Login User
       tags:
       - User
+  /api/v1/warning:
+    get:
+      consumes:
+      - application/json
+      description: Find all warnings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/warning_usecase.DTO'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Find all warnings
+      tags:
+      - Warning
+    post:
+      consumes:
+      - application/json
+      description: Create a warning
+      parameters:
+      - description: Reported by
+        in: formData
+        name: reported_by
+        required: true
+        type: string
+      - description: Latitude
+        in: formData
+        name: latitude
+        required: true
+        type: string
+      - description: Longitude
+        in: formData
+        name: longitude
+        required: true
+        type: string
+      - description: Fact
+        in: formData
+        name: fact
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Create a warning
+      tags:
+      - Warning
+  /api/v1/warning/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove warning
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Remove warning
+      tags:
+      - Warning
+    get:
+      consumes:
+      - application/json
+      description: Find warning by ID
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/warning_usecase.DTO'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Find warning by ID
+      tags:
+      - Warning
+    put:
+      consumes:
+      - application/json
+      description: Update a warning
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Warning
+        in: body
+        name: update_warning
+        required: true
+        schema:
+          $ref: '#/definitions/warning_usecase.UpdateWarningDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/warning_usecase.UpdateWarningDTO'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Update a warning
+      tags:
+      - Warning
   /auth:
     post:
       consumes:
@@ -701,6 +527,19 @@ paths:
       summary: auths
       tags:
       - Auth
+  /ws:
+    get:
+      consumes:
+      - application/json
+      description: websocket url ws://host/ws or use authentication ssl wss://host/ws
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Websocket server
+      tags:
+      - Websocket
 schemes:
 - http
 swagger: "2.0"
