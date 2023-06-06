@@ -33,6 +33,6 @@ func (w *WarningRepository) FindByID(id string) (*entities.Warning, error) {
 
 func (w *WarningRepository) FindAll() ([]*entities.Warning, error) {
 	var entity []*entities.Warning
-	err := w.Db.Preload("User").Find(&entity, "is_fake=?", false).Error
+	err := w.Db.Find(&entity, "is_fake=?", false).Error
 	return entity, err
 }
