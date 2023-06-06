@@ -11,6 +11,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/swaggo/echo-swagger v1.4.0
 	github.com/swaggo/swag v1.8.12
+	gorm.io/gorm v1.25.1
 )
 
 require (
