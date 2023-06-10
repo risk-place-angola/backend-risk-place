@@ -89,12 +89,7 @@ func WebsocketAuthMiddleware(ctx echo.Context) (string, error) {
 	return authHeader, nil
 }
 
-func wsValidateOrigin() string {
-
-	urlParse, err := url.Parse(env.REMOTEHOST)
-	if err != nil {
-		log.Fatal(err)
-	}
+func wsValidateOrigin(urlParse *url.URL) string {
 
 	if urlParse.Scheme == "" {
 		return "ws://" + env.REMOTEHOST + "/ws"
@@ -104,12 +99,7 @@ func wsValidateOrigin() string {
 
 }
 
-func wssValidateOrigin() string {
-
-	urlParse, err := url.Parse(env.REMOTEHOST)
-	if err != nil {
-		log.Fatal(err)
-	}
+func wssValidateOrigin(urlParse *url.URL) string {
 
 	if urlParse.Scheme == "" {
 		return "wss://" + env.REMOTEHOST + "/ws"
@@ -119,11 +109,17 @@ func wssValidateOrigin() string {
 }
 
 func Uri(r *http.Request) string {
-	if r.TLS != nil {
-		uri = wssValidateOrigin()
+	urlParse, err := url.Parse(env.REMOTEHOST)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if urlParse.Scheme == "https" {
+		log.Println(wssValidateOrigin(urlParse))
+		uri = wssValidateOrigin(urlParse)
 	} else {
-		log.Println(wsValidateOrigin())
-		uri = wsValidateOrigin()
+		log.Println(wsValidateOrigin(urlParse))
+		uri = wsValidateOrigin(urlParse)
 	}
 
 	return uri
