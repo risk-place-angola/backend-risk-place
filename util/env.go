@@ -7,6 +7,8 @@ import (
 )
 
 type Env struct {
+	ENVIRONMENT string `mapstructure:"ENVIRONMENT"`
+
 	DBCONNECTION string `mapstructure:"DB_CONNECTION"`
 
 	DBHOST  string `mapstructure:"DB_HOST"`
@@ -18,7 +20,8 @@ type Env struct {
 
 	AUTH_EMAIL string `mapstructure:"AUTH_EMAIL"`
 
-	PORTSERVER string `mapstructure:"PORT_SERVER"`
+	PORT       string `mapstructure:"PORT"`
+	REMOTEHOST string `mapstructure:"REMOTE_HOST"`
 }
 
 func LoadEnv() *Env {
