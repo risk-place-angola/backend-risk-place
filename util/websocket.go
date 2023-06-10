@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type Websocket struct {
@@ -21,6 +22,12 @@ type WebsocketClientManager struct {
 	Broadcast  chan []byte
 	Register   chan *Websocket
 	Unregister chan *Websocket
+}
+
+var env *Env
+
+func init() {
+	env = LoadEnv()
 }
 
 func NewWebsocketClientManager() *WebsocketClientManager {
@@ -82,18 +89,44 @@ func WebsocketAuthMiddleware(ctx echo.Context) (string, error) {
 	return authHeader, nil
 }
 
-func Uri(r *http.Request) string {
-	if r.TLS != nil {
-		uri = "wss://" + r.Host + "/ws"
-	} else {
-		uri = "ws://" + r.Host + "/ws"
-	}
+func wsValidateOrigin() string {
 
-	u, err := url.Parse(uri)
+	urlParse, err := url.Parse(env.REMOTEHOST)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return u.String()
+
+	if urlParse.Scheme == "" {
+		return "ws://" + env.REMOTEHOST + "/ws"
+	}
+
+	return "ws://" + strings.TrimPrefix(env.REMOTEHOST, "http://") + "/ws"
+
+}
+
+func wssValidateOrigin() string {
+
+	urlParse, err := url.Parse(env.REMOTEHOST)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if urlParse.Scheme == "" {
+		return "wss://" + env.REMOTEHOST + "/ws"
+	}
+
+	return "wss://" + strings.TrimPrefix(env.REMOTEHOST, "https://") + "/ws"
+}
+
+func Uri(r *http.Request) string {
+	if r.TLS != nil {
+		uri = wssValidateOrigin()
+	} else {
+		log.Println(wsValidateOrigin())
+		uri = wsValidateOrigin()
+	}
+
+	return uri
 }
 
 func (w *Websocket) WebsocketClientWriteMessage(message []byte) {
