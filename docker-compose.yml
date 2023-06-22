@@ -1,11 +1,11 @@
 version: '3.7'
 
 x-services-defaults: &defaults
-  restart: unless-stopped
+  restart: on-failure
   networks:
     - risk-place_ntk
   extra_hosts:
-      - "host.docker.internal:172.17.0.1"
+      - "host.docker.internal:host-gateway"
 
 services:
   db:
@@ -33,7 +33,7 @@ services:
     volumes:
       - .:/src/
     ports:
-      - "${PORT_SERVER}:${PORT_SERVER}"
+      - "${PORT}:${PORT}"
     depends_on:
       - db
 

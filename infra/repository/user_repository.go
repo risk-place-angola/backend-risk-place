@@ -42,3 +42,15 @@ func (u *UserRepository) FindByEmail(email string) (*entities.User, error) {
 	err := u.Db.Where("email = ?", email).First(user).Error
 	return user, err
 }
+
+func (u *UserRepository) FindWarningByUserID(id string) ([]*entities.User, error) {
+	var user []*entities.User
+	err := u.Db.Preload("Warnings").Find(&user, "id=?", id).Error
+	return user, err
+}
+
+func (u *UserRepository) FindAllUserWarnings() ([]*entities.User, error) {
+	var user []*entities.User
+	err := u.Db.Preload("Warnings").Find(&user).Error
+	return user, err
+}

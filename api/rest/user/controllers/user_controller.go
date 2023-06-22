@@ -15,6 +15,8 @@ type UserController interface {
 	UserFindByIdController(ctx user_presenter.UserPresenterCTX) error
 	UserDeleteController(ctx user_presenter.UserPresenterCTX) error
 	UserLoginController(ctx user_presenter.UserPresenterCTX) error
+	FindAllUserWarningsController(ctx user_presenter.UserPresenterCTX) error
+	FindWarningByUserIDController(ctx user_presenter.UserPresenterCTX) error
 }
 
 type UserControllerImpl struct {
@@ -151,4 +153,39 @@ func (controller *UserControllerImpl) UserLoginController(ctx user_presenter.Use
 	}
 
 	return ctx.JSON(http.StatusOK, data)
+}
+
+// @Summary Find All User Warnings
+// @Description Find All User Warnings
+// @Tags User
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} []account.DTO
+// @Failure 500 {object} rest.ErrorResponse
+// @Router /api/v1/user/warning [get]
+func (controller *UserControllerImpl) FindAllUserWarningsController(ctx user_presenter.UserPresenterCTX) error {
+	warnings, err := controller.userUseCase.FindAllUserWarnings()
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, rest.ErrorResponse{Message: err.Error()})
+	}
+	return ctx.JSON(http.StatusOK, warnings)
+}
+
+// @Summary Find User Warnings By ID
+// @Description Find User Warnings By ID
+// @Tags User
+// @Accept  json
+// @Produce  json
+// @Param id path string true "User ID"
+// @Success 200 {object} []account.DTO
+// @Failure 500 {object} rest.ErrorResponse
+// @Router /api/v1/user/warning/{id} [get]
+func (controller *UserControllerImpl) FindWarningByUserIDController(ctx user_presenter.UserPresenterCTX) error {
+	id := ctx.Param("id")
+
+	warnings, err := controller.userUseCase.FindWarningByUserID(id)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, rest.ErrorResponse{Message: err.Error()})
+	}
+	return ctx.JSON(http.StatusOK, warnings)
 }
