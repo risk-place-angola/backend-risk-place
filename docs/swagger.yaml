@@ -1,53 +1,5 @@
 basePath: /
 definitions:
-  authjwt.Data:
-    properties:
-      password:
-        type: string
-      username:
-        type: string
-    type: object
-  authjwt.Token:
-    properties:
-      token:
-        type: string
-    type: object
-  entities.Auth:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: string
-      password:
-        type: string
-      updated_at:
-        type: string
-      username:
-        type: string
-    type: object
-  entities.User:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      password:
-        type: string
-      phone:
-        type: string
-      updated_at:
-        type: string
-      verificationCode:
-        type: string
-      verifyEmail:
-        type: boolean
-    type: object
   rest.ErrorResponse:
     properties:
       message:
@@ -71,8 +23,6 @@ definitions:
     type: object
   user.DTO:
     properties:
-      created_at:
-        type: string
       email:
         type: string
       id:
@@ -83,8 +33,10 @@ definitions:
         type: string
       phone:
         type: string
-      updated_at:
-        type: string
+      warnings:
+        items:
+          $ref: '#/definitions/warning_usecase.DTO'
+        type: array
     type: object
   user.LoginDTO:
     properties:
@@ -122,14 +74,12 @@ definitions:
         type: number
       reported_by:
         type: string
-      user:
-        $ref: '#/definitions/entities.User'
+      stop_alerting:
+        type: boolean
     type: object
   warning_usecase.UpdateWarningDTO:
     properties:
       fact:
-        type: string
-      id:
         type: string
       is_anonymous:
         type: boolean
@@ -143,6 +93,8 @@ definitions:
         type: string
       reported_by:
         type: string
+      stop_alerting:
+        type: boolean
     type: object
 host: localhost:8000
 info:
@@ -323,6 +275,54 @@ paths:
       summary: Login User
       tags:
       - User
+  /api/v1/user/warning:
+    get:
+      consumes:
+      - application/json
+      description: Find All User Warnings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/user.DTO'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Find All User Warnings
+      tags:
+      - User
+  /api/v1/user/warning/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Find User Warnings By ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/user.DTO'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Find User Warnings By ID
+      tags:
+      - User
   /api/v1/warning:
     get:
       consumes:
@@ -462,71 +462,6 @@ paths:
       summary: Update a warning
       tags:
       - Warning
-  /auth:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Auth
-        in: body
-        name: place
-        required: true
-        schema:
-          $ref: '#/definitions/authjwt.Data'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/authjwt.Token'
-        "401":
-          description: UnAuthorized
-          schema:
-            type: string
-      summary: auth
-      tags:
-      - Auth
-  /authgenerateapi:
-    get:
-      consumes:
-      - application/json
-      description: generate api authentication
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-        "401":
-          description: Unauthorized
-          schema:
-            type: string
-      summary: authgenerateapi
-      tags:
-      - Auth
-  /auths:
-    get:
-      consumes:
-      - application/json
-      description: return all auths
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/entities.Auth'
-            type: array
-        "401":
-          description: Unauthorized
-          schema:
-            type: string
-      summary: auths
-      tags:
-      - Auth
   /ws:
     get:
       consumes:

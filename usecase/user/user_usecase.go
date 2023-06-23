@@ -17,6 +17,8 @@ type UserUseCase interface {
 	FindUserByID(id string) (*DTO, error)
 	RemoveUser(id string) error
 	Login(data *LoginDTO) (*JwtResponse, error)
+	FindAllUserWarnings() ([]*DTO, error)
+	FindWarningByUserID(id string) ([]*DTO, error)
 }
 
 type UserUseCaseImpl struct {
@@ -123,7 +125,7 @@ func (loginUseCases *UserUseCaseImpl) Login(data *LoginDTO) (*JwtResponse, error
 
 	claims := &UserClaims{
 		ID:        user.ID,
-		Email:     data.Email,
+		Email:     user.Email,
 		ExpiresAt: expirationTime.Unix(),
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   user.ID,
@@ -140,6 +142,31 @@ func (loginUseCases *UserUseCaseImpl) Login(data *LoginDTO) (*JwtResponse, error
 	}
 
 	return &JwtResponse{
+		Name:  user.Name,
 		Token: tokenString,
 	}, nil
+}
+
+func (u *UserUseCaseImpl) FindAllUserWarnings() ([]*DTO, error) {
+	users, err := u.UserRepository.FindAllUserWarnings()
+	if err != nil {
+		return nil, err
+	}
+
+	dtoUser := &DTO{}
+	dtoUsers := dtoUser.FromUserList(users)
+
+	return dtoUsers, nil
+}
+
+func (u *UserUseCaseImpl) FindWarningByUserID(id string) ([]*DTO, error) {
+	users, err := u.UserRepository.FindWarningByUserID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	dtoUser := &DTO{}
+	dtoUsers := dtoUser.FromUserList(users)
+
+	return dtoUsers, nil
 }

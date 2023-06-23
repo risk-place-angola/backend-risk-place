@@ -4,16 +4,18 @@ import (
 	"github.com/asaskevich/govalidator"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"time"
 )
 
 type Erce struct {
-	ID        string    `json:"id" valid:"uuid,required~ O ID é obrigatório."`
-	Name      string    `json:"name" valid:"required~ O nome  é obrigatório."`
-	Email     string    `json:"email" valid:"email,required~ O email é obrigatório."`
-	Password  string    `json:"password" valid:"required~ A senha é obrigatória."`
-	CreatedAt time.Time `json:"created_at" valid:"-"`
-	UpdatedAt time.Time `json:"updated_at" valid:"-"`
+	ID        string         `json:"id" valid:"uuid,required~ O ID é obrigatório."`
+	Name      string         `json:"name" valid:"required~ O nome  é obrigatório."`
+	Email     string         `json:"email" valid:"email,required~ O email é obrigatório."`
+	Password  string         `json:"password" valid:"required~ A senha é obrigatória."`
+	CreatedAt time.Time      `json:"created_at" valid:"-"`
+	UpdatedAt time.Time      `json:"updated_at" valid:"-"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index" valid:"-"`
 }
 
 func NewErce(name, email, password string) (*Erce, error) {

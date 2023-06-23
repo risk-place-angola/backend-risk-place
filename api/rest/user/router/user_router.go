@@ -29,14 +29,15 @@ func (router *UserRouterImpl) Router() *echo.Echo {
 
 	{
 		user := v1.Group("/user")
-		v1.Use(middleware.AuthMiddleware())
 		{
 			user.POST("", func(c echo.Context) error { return router.UserController.UserCreateController(c) })
-			user.GET("", func(c echo.Context) error { return router.UserController.UserFindAllController(c) })
-			user.GET("/:id", func(c echo.Context) error { return router.UserController.UserFindByIdController(c) })
-			user.PUT("/:id", func(c echo.Context) error { return router.UserController.UserUpdateController(c) })
-			user.DELETE("/:id", func(c echo.Context) error { return router.UserController.UserDeleteController(c) })
+			user.GET("", func(c echo.Context) error { return router.UserController.UserFindAllController(c) }, middleware.AuthMiddleware())
+			user.GET("/:id", func(c echo.Context) error { return router.UserController.UserFindByIdController(c) }, middleware.AuthMiddleware())
+			user.PUT("/:id", func(c echo.Context) error { return router.UserController.UserUpdateController(c) }, middleware.AuthMiddleware())
+			user.DELETE("/:id", func(c echo.Context) error { return router.UserController.UserDeleteController(c) }, middleware.AuthMiddleware())
 			user.POST("/login", func(c echo.Context) error { return router.UserController.UserLoginController(c) })
+			user.GET("/warning", func(c echo.Context) error { return router.UserController.FindAllUserWarningsController(c) }, middleware.AuthMiddleware())
+			user.GET("/warning/:id", func(c echo.Context) error { return router.UserController.FindWarningByUserIDController(c) }, middleware.AuthMiddleware())
 		}
 	}
 

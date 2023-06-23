@@ -63,6 +63,21 @@ func (mr *MockUserRepositoryMockRecorder) FindAll() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockUserRepository)(nil).FindAll))
 }
 
+// FindAllUserWarnings mocks base method.
+func (m *MockUserRepository) FindAllUserWarnings() ([]*entities.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindAllUserWarnings")
+	ret0, _ := ret[0].([]*entities.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindAllUserWarnings indicates an expected call of FindAllUserWarnings.
+func (mr *MockUserRepositoryMockRecorder) FindAllUserWarnings() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllUserWarnings", reflect.TypeOf((*MockUserRepository)(nil).FindAllUserWarnings))
+}
+
 // FindByEmail mocks base method.
 func (m *MockUserRepository) FindByEmail(email string) (*entities.User, error) {
 	m.ctrl.T.Helper()
@@ -93,6 +108,21 @@ func (mr *MockUserRepositoryMockRecorder) FindByID(id interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUserRepository)(nil).FindByID), id)
 }
 
+// FindWarningByUserID mocks base method.
+func (m *MockUserRepository) FindWarningByUserID(id string) ([]*entities.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindWarningByUserID", id)
+	ret0, _ := ret[0].([]*entities.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindWarningByUserID indicates an expected call of FindWarningByUserID.
+func (mr *MockUserRepositoryMockRecorder) FindWarningByUserID(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindWarningByUserID", reflect.TypeOf((*MockUserRepository)(nil).FindWarningByUserID), id)
+}
+
 // Save mocks base method.
 func (m *MockUserRepository) Save(entity *entities.User) error {
 	m.ctrl.T.Helper()
@@ -108,15 +138,15 @@ func (mr *MockUserRepositoryMockRecorder) Save(entity interface{}) *gomock.Call 
 }
 
 // Update mocks base method.
-func (m *MockUserRepository) Update(eniy *entities.User) error {
+func (m *MockUserRepository) Update(entity *entities.User) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", eniy)
+	ret := m.ctrl.Call(m, "Update", entity)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockUserRepositoryMockRecorder) Update(eniy interface{}) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) Update(entity interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepository)(nil).Update), eniy)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepository)(nil).Update), entity)
 }

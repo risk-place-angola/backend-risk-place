@@ -27,7 +27,7 @@ func (w *WarningRouterImpl) Router() *echo.Echo {
 	v1 := w.Echo.Group(os.Getenv("BASE_PATH"))
 	{
 		warning := v1.Group("/warning")
-		v1.Use(middleware.AuthMiddleware())
+		warning.Use(middleware.AuthMiddleware())
 		{
 			warning.POST("", func(c echo.Context) error { return w.IWarningController.CreateWarning(c) })
 			warning.GET("", func(c echo.Context) error { return w.IWarningController.FindAllWarning(c) })

@@ -34,7 +34,7 @@ func NewConnection(dns string) (Connection, error) {
 			panic(err)
 		}
 
-		db.AutoMigrate(&entities.User{}, &entities.Auth{}, &entities.Erce{}, &entities.Erfce{}, &entities.Warning{})
+		db.AutoMigrate(&entities.User{}, &entities.Erce{}, &entities.Erfce{}, &entities.Warning{})
 	})
 
 	return &connection{db: db}, nil

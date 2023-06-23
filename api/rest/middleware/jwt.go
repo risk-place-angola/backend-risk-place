@@ -74,6 +74,7 @@ func NewAuthToken(username string) (string, error) {
 
 func IsValidToken(token string) (bool, error) {
 	var signingKey string = os.Getenv("JWT_SECRET")
+	token = strings.Split(token, "Bearer ")[1]
 	_, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		return []byte(signingKey), nil
 	})

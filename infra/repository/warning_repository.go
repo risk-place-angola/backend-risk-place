@@ -1,8 +1,10 @@
 package repository
 
 import (
+	"errors"
 	"github.com/jinzhu/gorm"
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
+	"log"
 )
 
 type WarningRepository struct {
@@ -14,6 +16,13 @@ func NewWarningRepository(db *gorm.DB) *WarningRepository {
 }
 
 func (w *WarningRepository) Save(entity *entities.Warning) error {
+	var ReportedByUser entities.User
+
+	err := w.Db.First(&ReportedByUser, "id=?", entity.ReportedBy).Error
+	if err != nil {
+		return errors.New("ReportedBy not found")
+	}
+
 	return w.Db.Create(entity).Error
 }
 
@@ -33,6 +42,11 @@ func (w *WarningRepository) FindByID(id string) (*entities.Warning, error) {
 
 func (w *WarningRepository) FindAll() ([]*entities.Warning, error) {
 	var entity []*entities.Warning
+	var warnings []entities.Warning
+
+	w.Db.Preload("Users").Find(&warnings)
+	log.Println("user", &warnings)
+
 	err := w.Db.Find(&entity, "is_fake=?", false).Error
 	return entity, err
 }

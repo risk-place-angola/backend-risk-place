@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"gorm.io/gorm"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -13,16 +14,17 @@ func init() {
 }
 
 type User struct {
-	ID               string    `json:"id" valid:"uuid,required~ O ID é obrigatório."`
-	Name             string    `json:"name" valid:"required~ O nome  é obrigatório."`
-	Phone            string    `json:"phone" valid:"required~ O telefone é obrigatório."`
-	Email            string    `json:"email" valid:"email,required~ O email é obrigatório."`
-	Password         string    `json:"password" valid:"required~ A senha é obrigatória."`
-	Warning          []Warning `json:"warning" valid:"-"`
-	VerifyEmail      bool      `valid:"-"`
-	VerificationCode string    `valid:"-"`
-	CreatedAt        time.Time `json:"created_at" valid:"-"`
-	UpdatedAt        time.Time `json:"updated_at" valid:"-"`
+	ID               string         `json:"id" valid:"uuid,required~ O ID é obrigatório."`
+	Name             string         `json:"name" valid:"required~ O nome  é obrigatório."`
+	Phone            string         `json:"phone" valid:"required~ O telefone é obrigatório."`
+	Email            string         `json:"email" valid:"email,required~ O email é obrigatório."`
+	Password         string         `json:"password" valid:"required~ A senha é obrigatória."`
+	Warnings         []Warning      `gorm:"foreignKey:ReportedBy" valid:"-"`
+	VerifyEmail      bool           `valid:"-"`
+	VerificationCode string         `valid:"-"`
+	CreatedAt        time.Time      `json:"created_at" valid:"-"`
+	UpdatedAt        time.Time      `json:"updated_at" valid:"-"`
+	DeletedAt        gorm.DeletedAt `json:"deleted_at" gorm:"index" valid:"-"`
 }
 
 func NewUser(name, phone, email, password string) (*User, error) {

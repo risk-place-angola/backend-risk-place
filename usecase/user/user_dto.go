@@ -1,6 +1,9 @@
 package user
 
-import "github.com/risk-place-angola/backend-risk-place/domain/entities"
+import (
+	"github.com/risk-place-angola/backend-risk-place/domain/entities"
+	warning_usecase "github.com/risk-place-angola/backend-risk-place/usecase/warning"
+)
 
 type CreateUserDTO struct {
 	Name     string `json:"name"`
@@ -14,13 +17,12 @@ type UpdateUserDTO struct {
 }
 
 type DTO struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	Phone     string `json:"phone"`
-	Password  string `json:"password"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	ID       string                `json:"id"`
+	Name     string                `json:"name"`
+	Email    string                `json:"email"`
+	Phone    string                `json:"phone"`
+	Password string                `json:"password"`
+	Warnings []warning_usecase.DTO `json:"warnings"`
 }
 
 type LoginDTO struct {
@@ -29,6 +31,7 @@ type LoginDTO struct {
 }
 
 type JwtResponse struct {
+	Name  string `json:"name"`
 	Token string `json:"token"`
 }
 
@@ -57,8 +60,6 @@ func (u *DTO) FromUser(user *entities.User) *DTO {
 	u.Phone = user.Phone
 	u.Email = user.Email
 	u.Password = user.Password
-	u.CreatedAt = user.CreatedAt.String()
-	u.UpdatedAt = user.UpdatedAt.String()
 	return u
 }
 
