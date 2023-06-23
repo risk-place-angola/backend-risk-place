@@ -1,6 +1,9 @@
 package user
 
-import "github.com/risk-place-angola/backend-risk-place/domain/entities"
+import (
+	"github.com/risk-place-angola/backend-risk-place/domain/entities"
+	warning_usecase "github.com/risk-place-angola/backend-risk-place/usecase/warning"
+)
 
 type CreateUserDTO struct {
 	Name     string `json:"name"`
@@ -14,12 +17,12 @@ type UpdateUserDTO struct {
 }
 
 type DTO struct {
-	ID       string             `json:"id"`
-	Name     string             `json:"name"`
-	Email    string             `json:"email"`
-	Phone    string             `json:"phone"`
-	Password string             `json:"password"`
-	Warnings []entities.Warning `json:"warnings"`
+	ID       string                `json:"id"`
+	Name     string                `json:"name"`
+	Email    string                `json:"email"`
+	Phone    string                `json:"phone"`
+	Password string                `json:"password"`
+	Warnings []warning_usecase.DTO `json:"warnings"`
 }
 
 type LoginDTO struct {

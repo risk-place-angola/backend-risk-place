@@ -157,6 +157,79 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/user/warning": {
+            "get": {
+                "description": "Find All User Warnings",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Find All User Warnings",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/user.DTO"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/warning/{id}": {
+            "get": {
+                "description": "Find User Warnings By ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Find User Warnings By ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/user.DTO"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/user/{id}": {
             "get": {
                 "description": "Find User By ID",
@@ -484,106 +557,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "auth",
-                "parameters": [
-                    {
-                        "description": "Auth",
-                        "name": "place",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/authjwt.Data"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/authjwt.Token"
-                        }
-                    },
-                    "401": {
-                        "description": "UnAuthorized",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/authgenerateapi": {
-            "get": {
-                "description": "generate api authentication",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "authgenerateapi",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/auths": {
-            "get": {
-                "description": "return all auths",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "auths",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/entities.Auth"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
         "/ws": {
             "get": {
                 "security": [
@@ -607,80 +580,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "authjwt.Data": {
-            "type": "object",
-            "properties": {
-                "password": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "authjwt.Token": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "entities.Auth": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "entities.User": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "verificationCode": {
-                    "type": "string"
-                },
-                "verifyEmail": {
-                    "type": "boolean"
-                }
-            }
-        },
         "rest.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -717,9 +616,6 @@ const docTemplate = `{
         "user.DTO": {
             "type": "object",
             "properties": {
-                "created_at": {
-                    "type": "string"
-                },
                 "email": {
                     "type": "string"
                 },
@@ -735,8 +631,11 @@ const docTemplate = `{
                 "phone": {
                     "type": "string"
                 },
-                "updated_at": {
-                    "type": "string"
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/warning_usecase.DTO"
+                    }
                 }
             }
         },
@@ -795,8 +694,8 @@ const docTemplate = `{
                 "reported_by": {
                     "type": "string"
                 },
-                "user": {
-                    "$ref": "#/definitions/entities.User"
+                "stop_alerting": {
+                    "type": "boolean"
                 }
             }
         },
@@ -804,9 +703,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "fact": {
-                    "type": "string"
-                },
-                "id": {
                     "type": "string"
                 },
                 "is_anonymous": {
@@ -826,6 +722,9 @@ const docTemplate = `{
                 },
                 "reported_by": {
                     "type": "string"
+                },
+                "stop_alerting": {
+                    "type": "boolean"
                 }
             }
         }
