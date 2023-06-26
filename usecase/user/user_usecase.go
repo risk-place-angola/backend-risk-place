@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -59,7 +60,7 @@ func (u *UserUseCaseImpl) FindAllUser() ([]*DTO, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	log.Println(users[0])
 	dtoUser := &DTO{}
 	dtoUsers := dtoUser.FromUserList(users)
 

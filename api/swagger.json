@@ -43,7 +43,7 @@
                 }
             }
         },
-        "/api/v1/user": {
+        "/infra/v1/user": {
             "get": {
                 "description": "Find All User",
                 "consumes": [
@@ -113,7 +113,7 @@
                 }
             }
         },
-        "/api/v1/user/login": {
+        "/infra/v1/user/login": {
             "post": {
                 "description": "Login User",
                 "consumes": [
@@ -153,7 +153,7 @@
                 }
             }
         },
-        "/api/v1/user/warning": {
+        "/infra/v1/user/warning": {
             "get": {
                 "description": "Find All User Warnings",
                 "consumes": [
@@ -185,7 +185,7 @@
                 }
             }
         },
-        "/api/v1/user/warning/{id}": {
+        "/infra/v1/user/warning/{id}": {
             "get": {
                 "description": "Find User Warnings By ID",
                 "consumes": [
@@ -226,7 +226,7 @@
                 }
             }
         },
-        "/api/v1/user/{id}": {
+        "/infra/v1/user/{id}": {
             "get": {
                 "description": "Find User By ID",
                 "consumes": [
@@ -345,7 +345,7 @@
                 }
             }
         },
-        "/api/v1/warning": {
+        "/infra/v1/warning": {
             "get": {
                 "description": "Find all warnings",
                 "consumes": [
@@ -434,7 +434,7 @@
                 }
             }
         },
-        "/api/v1/warning/{id}": {
+        "/infra/v1/warning/{id}": {
             "get": {
                 "description": "Find warning by ID",
                 "consumes": [
@@ -666,6 +666,9 @@
         "warning_usecase.DTO": {
             "type": "object",
             "properties": {
+                "event_state": {
+                    "type": "string"
+                },
                 "fact": {
                     "type": "string"
                 },
@@ -673,9 +676,6 @@
                     "type": "string"
                 },
                 "is_anonymous": {
-                    "type": "boolean"
-                },
-                "is_fake": {
                     "type": "boolean"
                 },
                 "is_victim": {
@@ -698,13 +698,13 @@
         "warning_usecase.UpdateWarningDTO": {
             "type": "object",
             "properties": {
+                "event_state": {
+                    "type": "string"
+                },
                 "fact": {
                     "type": "string"
                 },
                 "is_anonymous": {
-                    "type": "boolean"
-                },
-                "is_fake": {
                     "type": "boolean"
                 },
                 "is_victim": {

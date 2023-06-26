@@ -2,7 +2,6 @@ package user
 
 import (
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
-	warning_usecase "github.com/risk-place-angola/backend-risk-place/usecase/warning"
 )
 
 type CreateUserDTO struct {
@@ -17,12 +16,11 @@ type UpdateUserDTO struct {
 }
 
 type DTO struct {
-	ID       string                `json:"id"`
-	Name     string                `json:"name"`
-	Email    string                `json:"email"`
-	Phone    string                `json:"phone"`
-	Password string                `json:"password"`
-	Warnings []warning_usecase.DTO `json:"warnings"`
+	ID       string             `json:"id"`
+	Name     string             `json:"name"`
+	Email    string             `json:"email"`
+	Phone    string             `json:"phone"`
+	Warnings []entities.Warning `json:"warnings"`
 }
 
 type LoginDTO struct {
@@ -50,7 +48,8 @@ func (u *DTO) ToUser() *entities.User {
 		Name:     u.Name,
 		Phone:    u.Phone,
 		Email:    u.Email,
-		Password: u.Password,
+		Warnings: u.Warnings,
+		//Password: u.Password,
 	}
 }
 
@@ -59,7 +58,8 @@ func (u *DTO) FromUser(user *entities.User) *DTO {
 	u.Name = user.Name
 	u.Phone = user.Phone
 	u.Email = user.Email
-	u.Password = user.Password
+	u.Warnings = user.Warnings
+	//u.Password = user.Password
 	return u
 }
 

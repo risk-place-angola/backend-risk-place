@@ -19,13 +19,13 @@ func (u *UserRepository) Save(user *entities.User) error {
 
 func (u *UserRepository) FindAll() ([]*entities.User, error) {
 	var user []*entities.User
-	err := u.Db.Find(&user).Error
+	err := u.Db.Preload("Warnings").Find(&user).Error
 	return user, err
 }
 
 func (u *UserRepository) FindByID(id string) (*entities.User, error) {
 	var user entities.User
-	err := u.Db.First(&user, id).Error
+	err := u.Db.Preload("Warnings").First(&user, id).Error
 	return &user, err
 }
 

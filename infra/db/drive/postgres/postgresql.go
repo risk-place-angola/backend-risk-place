@@ -19,7 +19,7 @@ func NewPostgres() *Postgres {
 }
 
 func (p *Postgres) Connect() string {
-	env := util.LoadEnv()
+	env := util.LoadEnv(".env")
 
 	return "host=" + env.DBHOST + " port=" + env.DBPORT + " user=" + env.DBUSER + " dbname=" + env.DBNAME + " password=" + env.DBPASS + " sslmode=" + env.SSLMODE
 }

@@ -29,6 +29,10 @@ migrate_goto: migrate_setup
 migrate_drop_db: migrate_setup
 	@ migrate -database 'postgres://${DATABSE_DSN}?sslmode=disable' -path $$(pwd)/migrations drop
 
+.PHONY: swagger
+swagger:
+	@swag init -g util/swagger.go -o api
+
 ## build: Build app binary
 .PHONY: build
 build:

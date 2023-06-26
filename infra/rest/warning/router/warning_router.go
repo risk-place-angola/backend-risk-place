@@ -2,8 +2,8 @@ package warning_router
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/risk-place-angola/backend-risk-place/api/rest/middleware"
-	"github.com/risk-place-angola/backend-risk-place/api/rest/warning/controllers"
+	"github.com/risk-place-angola/backend-risk-place/infra/rest/middleware"
+	"github.com/risk-place-angola/backend-risk-place/infra/rest/warning/controllers"
 	"os"
 )
 

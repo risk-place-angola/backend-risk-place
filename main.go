@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
-	"github.com/risk-place-angola/backend-risk-place/api/rest/server"
+	"github.com/risk-place-angola/backend-risk-place/infra/rest/server"
 )
 
 func init() {

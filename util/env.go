@@ -24,8 +24,8 @@ type Env struct {
 	REMOTEHOST string `mapstructure:"REMOTE_HOST"`
 }
 
-func LoadEnv() *Env {
-	viper.SetConfigFile(".env")
+func LoadEnv(path string) *Env {
+	viper.SetConfigFile(path)
 	viper.AutomaticEnv()
 	err := viper.ReadInConfig()
 	if err != nil {

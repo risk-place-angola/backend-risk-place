@@ -58,13 +58,13 @@ definitions:
     type: object
   warning_usecase.DTO:
     properties:
+      event_state:
+        type: string
       fact:
         type: string
       id:
         type: string
       is_anonymous:
-        type: boolean
-      is_fake:
         type: boolean
       is_victim:
         type: boolean
@@ -79,11 +79,11 @@ definitions:
     type: object
   warning_usecase.UpdateWarningDTO:
     properties:
+      event_state:
+        type: string
       fact:
         type: string
       is_anonymous:
-        type: boolean
-      is_fake:
         type: boolean
       is_victim:
         type: boolean
@@ -124,7 +124,7 @@ paths:
       summary: Home
       tags:
       - Home
-  /api/v1/user:
+  /infra/v1/user:
     get:
       consumes:
       - application/json
@@ -170,7 +170,7 @@ paths:
       summary: Create User
       tags:
       - User
-  /api/v1/user/{id}:
+  /infra/v1/user/{id}:
     delete:
       consumes:
       - application/json
@@ -249,7 +249,7 @@ paths:
       summary: Update User
       tags:
       - User
-  /api/v1/user/login:
+  /infra/v1/user/login:
     post:
       consumes:
       - application/json
@@ -275,7 +275,7 @@ paths:
       summary: Login User
       tags:
       - User
-  /api/v1/user/warning:
+  /infra/v1/user/warning:
     get:
       consumes:
       - application/json
@@ -296,7 +296,7 @@ paths:
       summary: Find All User Warnings
       tags:
       - User
-  /api/v1/user/warning/{id}:
+  /infra/v1/user/warning/{id}:
     get:
       consumes:
       - application/json
@@ -323,7 +323,7 @@ paths:
       summary: Find User Warnings By ID
       tags:
       - User
-  /api/v1/warning:
+  /infra/v1/warning:
     get:
       consumes:
       - application/json
@@ -383,7 +383,7 @@ paths:
       summary: Create a warning
       tags:
       - Warning
-  /api/v1/warning/{id}:
+  /infra/v1/warning/{id}:
     delete:
       consumes:
       - application/json

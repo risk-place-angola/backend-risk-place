@@ -19,7 +19,7 @@ type User struct {
 	Phone            string         `json:"phone" valid:"required~ O telefone é obrigatório."`
 	Email            string         `json:"email" valid:"email,required~ O email é obrigatório."`
 	Password         string         `json:"password" valid:"required~ A senha é obrigatória."`
-	Warnings         []Warning      `gorm:"foreignKey:ReportedBy" valid:"-"`
+	Warnings         []Warning      `json:"warnings" gorm:"foreignKey:ReportedBy" valid:"-"`
 	VerifyEmail      bool           `valid:"-"`
 	VerificationCode string         `valid:"-"`
 	CreatedAt        time.Time      `json:"created_at" valid:"-"`
