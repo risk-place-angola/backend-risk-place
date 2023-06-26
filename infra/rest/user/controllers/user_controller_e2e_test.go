@@ -9,9 +9,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
-	user_controller "github.com/risk-place-angola/backend-risk-place/api/rest/user/controllers"
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
 	"github.com/risk-place-angola/backend-risk-place/domain/repository/mocks"
+	user_controller "github.com/risk-place-angola/backend-risk-place/infra/rest/user/controllers"
 	"golang.org/x/crypto/bcrypt"
 
 	account "github.com/risk-place-angola/backend-risk-place/usecase/user"
@@ -33,7 +33,7 @@ func TestUserControllers(t *testing.T) {
 
 		jsonData, _ := json.Marshal(data)
 
-		res := httptest.NewRequest("POST", "/api/v1/user/create", bytes.NewBuffer(jsonData))
+		res := httptest.NewRequest("POST", "/infra/v1/user/create", bytes.NewBuffer(jsonData))
 		res.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		ctx := e.NewContext(res, rec)
@@ -65,13 +65,13 @@ func TestUserControllers(t *testing.T) {
 
 		jsonData, _ := json.Marshal(data)
 
-		res := httptest.NewRequest("PUT", "/api/v1/user/:id", bytes.NewBuffer(jsonData))
+		res := httptest.NewRequest("PUT", "/infra/v1/user/:id", bytes.NewBuffer(jsonData))
 		res.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		ctx := e.NewContext(res, rec)
 		ctx.SetParamNames("id")
 		ctx.SetParamValues("0c1baa42-3909-4bdb-837f-a80e68232ecd")
-		ctx.SetPath("/api/v1/user/:id")
+		ctx.SetPath("/infra/v1/user/:id")
 
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
@@ -100,13 +100,13 @@ func TestUserControllers(t *testing.T) {
 			Password: "12345",
 		}
 
-		res := httptest.NewRequest("DELETE", "/api/v1/user/:id", nil)
+		res := httptest.NewRequest("DELETE", "/infra/v1/user/:id", nil)
 		res.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		ctx := e.NewContext(res, rec)
 		ctx.SetParamNames("id")
 		ctx.SetParamValues("0c1baa42-3909-4bdb-837f-a80e68232ecd")
-		ctx.SetPath("/api/v1/user/:id")
+		ctx.SetPath("/infra/v1/user/:id")
 
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
@@ -143,11 +143,11 @@ func TestUserControllers(t *testing.T) {
 			},
 		}
 
-		res := httptest.NewRequest("GET", "/api/v1/users", nil)
+		res := httptest.NewRequest("GET", "/infra/v1/users", nil)
 		res.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		ctx := e.NewContext(res, rec)
-		ctx.SetPath("/api/v1/users")
+		ctx.SetPath("/infra/v1/users")
 
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
@@ -175,13 +175,13 @@ func TestUserControllers(t *testing.T) {
 			Password: "12345",
 		}
 
-		res := httptest.NewRequest("GET", "/api/v1/user/:id", nil)
+		res := httptest.NewRequest("GET", "/infra/v1/user/:id", nil)
 		res.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		ctx := e.NewContext(res, rec)
 		ctx.SetParamNames("id")
 		ctx.SetParamValues("0c1baa42-3909-4bdb-837f-a80e68232ecd")
-		ctx.SetPath("/api/v1/user/:id")
+		ctx.SetPath("/infra/v1/user/:id")
 
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
@@ -213,7 +213,7 @@ func TestUserControllers(t *testing.T) {
 
 		jsonData, _ := json.Marshal(dto)
 
-		res := httptest.NewRequest("POST", "/api/v1/user/login", bytes.NewBuffer(jsonData))
+		res := httptest.NewRequest("POST", "/infra/v1/user/login", bytes.NewBuffer(jsonData))
 		res.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		ctx := e.NewContext(res, rec)

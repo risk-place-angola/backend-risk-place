@@ -3,10 +3,10 @@ package dependency
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
-	"github.com/risk-place-angola/backend-risk-place/api/rest/router/interfaces"
-	user_controller "github.com/risk-place-angola/backend-risk-place/api/rest/user/controllers"
-	user_router "github.com/risk-place-angola/backend-risk-place/api/rest/user/router"
 	"github.com/risk-place-angola/backend-risk-place/infra/repository"
+	"github.com/risk-place-angola/backend-risk-place/infra/rest/router/interfaces"
+	user_controller "github.com/risk-place-angola/backend-risk-place/infra/rest/user/controllers"
+	user_router "github.com/risk-place-angola/backend-risk-place/infra/rest/user/router"
 	user_usecase "github.com/risk-place-angola/backend-risk-place/usecase/user"
 )
 

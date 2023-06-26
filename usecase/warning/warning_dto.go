@@ -16,7 +16,7 @@ type DTO struct {
 	Fact         string  `json:"fact"`
 	Latitude     float64 `json:"latitude"`
 	Longitude    float64 `json:"longitude"`
-	IsFake       bool    `json:"is_fake"`
+	EventState   string  `json:"event_state"`
 	IsAnonymous  bool    `json:"is_anonymous"`
 	StopAlerting bool    `json:"stop_alerting"`
 }
@@ -28,6 +28,7 @@ type CreateWarningDTO struct {
 	Fact       string `json:"fact"`
 	Latitude   string `json:"latitude"`
 	Longitude  string `json:"longitude"`
+	EventState string `json:"event_state"`
 }
 
 type UpdateWarningDTO struct {
@@ -36,7 +37,7 @@ type UpdateWarningDTO struct {
 	Fact         string `json:"fact"`
 	Latitude     string `json:"latitude"`
 	Longitude    string `json:"longitude"`
-	IsFake       bool   `json:"is_fake"`
+	EventState   string `json:"event_state"`
 	IsAnonymous  bool   `json:"is_anonymous"`
 	StopAlerting bool   `json:"stop_alerting"`
 }
@@ -76,7 +77,7 @@ func (w *UpdateWarningDTO) ToWarningUpdate() *entities.Warning {
 		Fact:         w.Fact,
 		Latitude:     location.Latitude,
 		Longitude:    location.Longitude,
-		IsFake:       w.IsFake,
+		EventState:   entities.EventState(w.EventState),
 		IsAnonymous:  w.IsAnonymous,
 		StopAlerting: w.StopAlerting,
 	}
@@ -90,7 +91,7 @@ func (w *DTO) ToWarning() *DTO {
 		Fact:        w.Fact,
 		Latitude:    w.Latitude,
 		Longitude:   w.Longitude,
-		IsFake:      w.IsFake,
+		EventState:  w.EventState,
 		IsAnonymous: w.IsAnonymous,
 	}
 }
@@ -103,7 +104,7 @@ func (w *CreateWarningDTO) ToWarning() *DTO {
 		Fact:         w.Fact,
 		Latitude:     location.Latitude,
 		Longitude:    location.Longitude,
-		IsFake:       false,
+		EventState:   w.EventState,
 		IsAnonymous:  false,
 		StopAlerting: false,
 	}
@@ -126,7 +127,7 @@ func (w *DTO) ToUpdateWarning() *UpdateWarningDTO {
 		Fact:         w.Fact,
 		Latitude:     strconv.FormatFloat(w.Latitude, 'f', 6, 64),
 		Longitude:    strconv.FormatFloat(w.Longitude, 'f', 6, 64),
-		IsFake:       w.IsFake,
+		EventState:   w.EventState,
 		IsAnonymous:  w.IsAnonymous,
 		StopAlerting: w.StopAlerting,
 	}
@@ -140,7 +141,7 @@ func (w *DTO) FromWarning(warning *entities.Warning) *DTO {
 		Fact:        warning.Fact,
 		Latitude:    warning.Latitude,
 		Longitude:   warning.Longitude,
-		IsFake:      warning.IsFake,
+		EventState:  string(warning.EventState),
 		IsAnonymous: warning.IsAnonymous,
 	}
 }
@@ -161,6 +162,7 @@ func (w *DTO) FromCreateWarning(warning *entities.Warning) *CreateWarningDTO {
 		Fact:       warning.Fact,
 		Latitude:   strconv.FormatFloat(warning.Latitude, 'f', 6, 64),
 		Longitude:  strconv.FormatFloat(warning.Longitude, 'f', 6, 64),
+		EventState: string(warning.EventState),
 	}
 }
 
@@ -171,7 +173,7 @@ func (w *DTO) FromUpdateWarning(warning *entities.Warning) *UpdateWarningDTO {
 		Fact:         warning.Fact,
 		Latitude:     strconv.FormatFloat(warning.Latitude, 'f', 6, 64),
 		Longitude:    strconv.FormatFloat(warning.Longitude, 'f', 6, 64),
-		IsFake:       warning.IsFake,
+		EventState:   string(warning.EventState),
 		IsAnonymous:  warning.IsAnonymous,
 		StopAlerting: warning.StopAlerting,
 	}

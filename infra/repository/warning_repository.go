@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/jinzhu/gorm"
 	"github.com/risk-place-angola/backend-risk-place/domain/entities"
-	"log"
 )
 
 type WarningRepository struct {
@@ -42,11 +41,7 @@ func (w *WarningRepository) FindByID(id string) (*entities.Warning, error) {
 
 func (w *WarningRepository) FindAll() ([]*entities.Warning, error) {
 	var entity []*entities.Warning
-	var warnings []entities.Warning
 
-	w.Db.Preload("Users").Find(&warnings)
-	log.Println("user", &warnings)
-
-	err := w.Db.Find(&entity, "is_fake=?", false).Error
+	err := w.Db.Find(&entity).Error
 	return entity, err
 }

@@ -2,12 +2,12 @@ package router
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/risk-place-angola/backend-risk-place/api/rest/middleware"
-	"github.com/risk-place-angola/backend-risk-place/api/rest/router/interfaces"
-	user_router "github.com/risk-place-angola/backend-risk-place/api/rest/user/router"
-	warning_router "github.com/risk-place-angola/backend-risk-place/api/rest/warning/router"
+	_ "github.com/risk-place-angola/backend-risk-place/api"
 	"github.com/risk-place-angola/backend-risk-place/app/ws"
-	_ "github.com/risk-place-angola/backend-risk-place/docs"
+	"github.com/risk-place-angola/backend-risk-place/infra/rest/middleware"
+	"github.com/risk-place-angola/backend-risk-place/infra/rest/router/interfaces"
+	user_router "github.com/risk-place-angola/backend-risk-place/infra/rest/user/router"
+	warning_router "github.com/risk-place-angola/backend-risk-place/infra/rest/warning/router"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 

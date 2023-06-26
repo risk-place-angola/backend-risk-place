@@ -3,7 +3,7 @@ package util
 import (
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
-	"github.com/risk-place-angola/backend-risk-place/api/rest/middleware"
+	"github.com/risk-place-angola/backend-risk-place/infra/rest/middleware"
 	"log"
 	"net/http"
 	"net/url"
@@ -27,7 +27,7 @@ type WebsocketClientManager struct {
 var env *Env
 
 func init() {
-	env = LoadEnv()
+	env = LoadEnv(".env")
 }
 
 func NewWebsocketClientManager() *WebsocketClientManager {
@@ -66,7 +66,7 @@ var uri string
 
 func WebsocketClientDialer(ctx echo.Context) (*websocket.Conn, *echo.HTTPError) {
 
-	uri := Uri(ctx.Request())
+	uri := Uri()
 
 	authHeader, err := WebsocketAuthMiddleware(ctx)
 	if err != nil {
@@ -108,7 +108,7 @@ func wssValidateOrigin(urlParse *url.URL) string {
 	return "wss://" + strings.TrimPrefix(env.REMOTEHOST, "https://") + "/ws"
 }
 
-func Uri(r *http.Request) string {
+func Uri() string {
 	urlParse, err := url.Parse(env.REMOTEHOST)
 	if err != nil {
 		log.Fatal(err)

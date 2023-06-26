@@ -30,6 +30,7 @@ func (w WarningUseCaseImpl) CreateWarning(dto *CreateWarningDTO) (*CreateWarning
 		Fact:       dto.Fact,
 		Latitude:   location.Latitude,
 		Longitude:  location.Longitude,
+		EventState: entities.Pending,
 	}
 	warning, err := entities.NewWarning(entity)
 	if err != nil {
