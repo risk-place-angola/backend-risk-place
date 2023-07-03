@@ -1,11 +1,12 @@
 package entities
 
 import (
+	"time"
+
 	"github.com/asaskevich/govalidator"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	"time"
 )
 
 type Erfce struct {
@@ -67,6 +68,11 @@ func (e *Erfce) Update(name, email, password string) error {
 	}
 
 	return nil
+}
+
+func (erfce *Erfce) VerifyPassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(erfce.Password), []byte(password))
+	return err == nil
 }
 
 func (e *Erfce) passwordEncrypt() error {

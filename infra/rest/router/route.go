@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 	_ "github.com/risk-place-angola/backend-risk-place/api"
 	"github.com/risk-place-angola/backend-risk-place/app/ws"
+	erfce_router "github.com/risk-place-angola/backend-risk-place/infra/rest/erfce/router"
 	"github.com/risk-place-angola/backend-risk-place/infra/rest/middleware"
 	"github.com/risk-place-angola/backend-risk-place/infra/rest/router/interfaces"
 	user_router "github.com/risk-place-angola/backend-risk-place/infra/rest/user/router"
@@ -15,6 +16,7 @@ type RouterImpl struct {
 	Echo *echo.Echo
 	user_router.UserRouter
 	warning_router.IWaringRouter
+	erfce_router.ErfceRouter
 }
 
 func NewRouter(router *RouterImpl) interfaces.IRouter {
@@ -22,12 +24,14 @@ func NewRouter(router *RouterImpl) interfaces.IRouter {
 		UserRouter:    router.UserRouter,
 		Echo:          router.Echo,
 		IWaringRouter: router.IWaringRouter,
+		ErfceRouter:   router.ErfceRouter,
 	}
 }
 
 func (router *RouterImpl) Router() *echo.Echo {
 
 	router.UserRouter.Router()
+	router.ErfceRouter.Router()
 	router.IWaringRouter.Router()
 	router.Echo.GET("/", router.home())
 	router.Echo.GET("/ws", ws.WebsocketServer, middleware.WebsocketAuthMiddleware)
