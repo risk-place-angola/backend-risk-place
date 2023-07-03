@@ -37,6 +37,8 @@ func (router *ErfceRouterImpl) Router() *echo.Echo {
 			user.PUT("/:id", func(c echo.Context) error { return router.ErfceController.ErfceUpdateController(c) }, middleware.AuthMiddleware())
 			user.DELETE("/:id", func(c echo.Context) error { return router.ErfceController.ErfceDeleteController(c) }, middleware.AuthMiddleware())
 			user.POST("/login", func(c echo.Context) error { return router.ErfceController.ErfceLoginController(c) })
+			user.GET("/warning", func(c echo.Context) error { return router.ErfceController.FindAllErfceWarningsController(c) }, middleware.AuthMiddleware())
+			user.GET("/warning/:id", func(c echo.Context) error { return router.ErfceController.FindWarningByErfceIDController(c) }, middleware.AuthMiddleware())
 		}
 	}
 
