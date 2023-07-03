@@ -47,6 +47,276 @@ const docTemplate = `{
                 }
             }
         },
+        "/infra/v1/erfce": {
+            "get": {
+                "description": "Find All Erfce",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Erfce"
+                ],
+                "summary": "Find All Erfce",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/erfce.DTO"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create Erfce",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Erfce"
+                ],
+                "summary": "Create Erfce",
+                "parameters": [
+                    {
+                        "description": "Erfce",
+                        "name": "erfce",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/erfce.CreateErfceDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/erfce.DTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/infra/v1/erfce/login": {
+            "post": {
+                "description": "Login Erfce",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UErfceser"
+                ],
+                "summary": "Login Erfce",
+                "parameters": [
+                    {
+                        "description": "Erfce",
+                        "name": "erfce",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/erfce.LoginDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/erfce.DTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/infra/v1/erfce/warning/{id}": {
+            "get": {
+                "description": "Find Erfce Warnings By ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Erfceer"
+                ],
+                "summary": "Find Erfce Warnings By ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Erfce ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/erfce.DTO"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/infra/v1/erfce/{id}": {
+            "get": {
+                "description": "Find Erfce By ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Erfce"
+                ],
+                "summary": "Find Erfce By ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Erfce ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/erfce.DTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update Erfce",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Erfce"
+                ],
+                "summary": "Update Erfce",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Erfce ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Erfce",
+                        "name": "erfce",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/erfce.UpdateErfceDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/erfce.DTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete Erfce",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Erfce"
+                ],
+                "summary": "Delete Erfce",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Erfce ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rest.SuccessResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/infra/v1/user": {
             "get": {
                 "description": "Find All User",
@@ -580,6 +850,134 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "entities.EventState": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "in_review",
+                "finished",
+                "in_progress",
+                "in_resolution",
+                "closed",
+                "false_alarm",
+                "false_alert"
+            ],
+            "x-enum-varnames": [
+                "Pending",
+                "InReview",
+                "Finished",
+                "InProgress",
+                "InResolution",
+                "Closed",
+                "FalseAlarm",
+                "FalseAlert"
+            ]
+        },
+        "entities.NullTime": {
+            "type": "object",
+            "properties": {
+                "time": {
+                    "type": "string"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "entities.Warning": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "$ref": "#/definitions/entities.NullTime"
+                },
+                "event_state": {
+                    "$ref": "#/definitions/entities.EventState"
+                },
+                "fact": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_anonymous": {
+                    "type": "boolean"
+                },
+                "is_victim": {
+                    "type": "boolean"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "reported_by": {
+                    "type": "string"
+                },
+                "stop_alerting": {
+                    "type": "boolean"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "erfce.CreateErfceDTO": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "erfce.DTO": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "erfce.LoginDTO": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "erfce.UpdateErfceDTO": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
         "rest.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -625,16 +1023,13 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "password": {
-                    "type": "string"
-                },
                 "phone": {
                     "type": "string"
                 },
                 "warnings": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/warning_usecase.DTO"
+                        "$ref": "#/definitions/entities.Warning"
                     }
                 }
             }
