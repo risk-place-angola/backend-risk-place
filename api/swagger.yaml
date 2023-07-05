@@ -182,7 +182,6 @@ definitions:
       stop_alerting:
         type: boolean
     type: object
-host: localhost:8000
 info:
   contact:
     name: API Support
@@ -210,7 +209,7 @@ paths:
       summary: Home
       tags:
       - Home
-  /infra/v1/erfce:
+  /api/v1/erfce:
     get:
       consumes:
       - application/json
@@ -256,7 +255,7 @@ paths:
       summary: Create Erfce
       tags:
       - Erfce
-  /infra/v1/erfce/{id}:
+  /api/v1/erfce/{id}:
     delete:
       consumes:
       - application/json
@@ -335,7 +334,7 @@ paths:
       summary: Update Erfce
       tags:
       - Erfce
-  /infra/v1/erfce/login:
+  /api/v1/erfce/login:
     post:
       consumes:
       - application/json
@@ -360,8 +359,29 @@ paths:
             $ref: '#/definitions/rest.ErrorResponse'
       summary: Login Erfce
       tags:
-      - UErfceser
-  /infra/v1/erfce/warning/{id}:
+      - Erfce
+  /api/v1/erfce/warning:
+    get:
+      consumes:
+      - application/json
+      description: Find All Erfce Warnings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/erfce.DTO'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Find All Erfce Warnings
+      tags:
+      - Erfce
+  /api/v1/erfce/warning/{id}:
     get:
       consumes:
       - application/json
@@ -387,8 +407,8 @@ paths:
             $ref: '#/definitions/rest.ErrorResponse'
       summary: Find Erfce Warnings By ID
       tags:
-      - Erfceer
-  /infra/v1/user:
+      - Erfce
+  /api/v1/user:
     get:
       consumes:
       - application/json
@@ -434,7 +454,7 @@ paths:
       summary: Create User
       tags:
       - User
-  /infra/v1/user/{id}:
+  /api/v1/user/{id}:
     delete:
       consumes:
       - application/json
@@ -513,7 +533,7 @@ paths:
       summary: Update User
       tags:
       - User
-  /infra/v1/user/login:
+  /api/v1/user/login:
     post:
       consumes:
       - application/json
@@ -539,7 +559,7 @@ paths:
       summary: Login User
       tags:
       - User
-  /infra/v1/user/warning:
+  /api/v1/user/warning:
     get:
       consumes:
       - application/json
@@ -560,7 +580,7 @@ paths:
       summary: Find All User Warnings
       tags:
       - User
-  /infra/v1/user/warning/{id}:
+  /api/v1/user/warning/{id}:
     get:
       consumes:
       - application/json
@@ -587,7 +607,7 @@ paths:
       summary: Find User Warnings By ID
       tags:
       - User
-  /infra/v1/warning:
+  /api/v1/warning:
     get:
       consumes:
       - application/json
@@ -647,7 +667,7 @@ paths:
       summary: Create a warning
       tags:
       - Warning
-  /infra/v1/warning/{id}:
+  /api/v1/warning/{id}:
     delete:
       consumes:
       - application/json
@@ -739,6 +759,4 @@ paths:
       summary: Websocket server
       tags:
       - Websocket
-schemes:
-- http
 swagger: "2.0"

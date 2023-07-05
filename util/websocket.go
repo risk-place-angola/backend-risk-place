@@ -62,11 +62,9 @@ func (manager *WebsocketClientManager) Start() {
 	}
 }
 
-var uri string
+func WebsocketClientDialer(url string, ctx echo.Context) (*websocket.Conn, *echo.HTTPError) {
 
-func WebsocketClientDialer(ctx echo.Context) (*websocket.Conn, *echo.HTTPError) {
-
-	uri := Uri()
+	uri := Uri(url)
 
 	authHeader, err := WebsocketAuthMiddleware(ctx)
 	if err != nil {
@@ -108,8 +106,8 @@ func wssValidateOrigin(urlParse *url.URL) string {
 	return "wss://" + strings.TrimPrefix(env.REMOTEHOST, "https://") + "/ws"
 }
 
-func Uri() string {
-	urlParse, err := url.Parse(env.REMOTEHOST)
+func Uri(uri string) string {
+	urlParse, err := url.Parse(uri)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -2,6 +2,7 @@ package warning_router
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/risk-place-angola/backend-risk-place/app/ws"
 	"github.com/risk-place-angola/backend-risk-place/infra/rest/middleware"
 	"github.com/risk-place-angola/backend-risk-place/infra/rest/warning/controllers"
 	"os"
@@ -34,6 +35,7 @@ func (w *WarningRouterImpl) Router() *echo.Echo {
 			warning.PUT("/:id", func(c echo.Context) error { return w.IWarningController.UpdateWarning(c) })
 			warning.GET("/:id", func(c echo.Context) error { return w.IWarningController.FindWarningByID(c) })
 			warning.DELETE("/:id", func(c echo.Context) error { return w.IWarningController.RemoveWarning(c) })
+			warning.GET("/ws", ws.WebsocketServer, middleware.WebsocketAuthMiddleware)
 		}
 	}
 	return w.Echo

@@ -20,8 +20,8 @@ const (
 )
 
 type NullTime struct {
-	Time  time.Time
-	Valid bool
+	Time  time.Time `json:"time"`
+	Valid bool      `json:"valid"`
 }
 
 type Warning struct {

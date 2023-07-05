@@ -3,9 +3,8 @@ package ws
 import (
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
-	"github.com/risk-place-angola/backend-risk-place/util"
-	uuid "github.com/satori/go.uuid"
 	"net/http"
+	"sync"
 )
 
 var upgrader = websocket.Upgrader{
@@ -32,20 +31,48 @@ func WebsocketServer(ctx echo.Context) error {
 		return ctx.JSON(400, err)
 	}
 
-	manage := util.NewWebsocketClientManager()
-	client := &util.Websocket{
-		ID:                     uuid.NewV4().String(),
-		Conn:                   conn,
-		Send:                   make(chan []byte),
-		WebsocketClientManager: manage,
+	defer func(conn *websocket.Conn) {
+		err := conn.Close()
+		if err != nil {
+			return
+		}
+	}(conn)
+
+	lock.Lock()
+	client[conn] = true
+	lock.Unlock()
+
+	channel := make(chan string)
+	go broadcast(channel)
+
+	for {
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			return ctx.JSON(400, err)
+		}
+		channel <- string(msg)
 	}
 
-	go manage.Start()
-
-	manage.Register <- client
-
-	go client.WebsocketServerWriteMessage()
-	go client.WebsocketServerReadMessage()
+	lock.Lock()
+	delete(client, conn)
+	lock.Unlock()
 
 	return nil
+}
+
+var client = make(map[*websocket.Conn]bool)
+var lock sync.RWMutex
+
+func broadcast(c chan string) {
+	for {
+		msg := <-c
+		lock.RLock()
+		for conn := range client {
+			err := conn.WriteMessage(websocket.TextMessage, []byte(msg))
+			if err != nil {
+				return
+			}
+		}
+		lock.RUnlock()
+	}
 }

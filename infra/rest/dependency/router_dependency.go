@@ -12,6 +12,7 @@ func DependencyRouter(db *gorm.DB, echo *echo.Echo) *echo.Echo {
 		UserRouter:    UserDependency(db, echo),
 		Echo:          echo,
 		IWaringRouter: WarningDependency(db, echo),
+		ErfceRouter:   ErfceDependency(db, echo),
 	}
 
 	router.NewRouter(&router_).Router()

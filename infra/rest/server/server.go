@@ -2,10 +2,10 @@ package server
 
 import (
 	"github.com/jinzhu/gorm"
+	"github.com/risk-place-angola/backend-risk-place/infra/db/drive/postgres"
 	"log"
 
 	"github.com/labstack/echo/v4"
-	"github.com/risk-place-angola/backend-risk-place/infra/db/drive/postgres"
 	"github.com/risk-place-angola/backend-risk-place/infra/rest/dependency"
 )
 

@@ -5,6 +5,7 @@ import (
 	"github.com/risk-place-angola/backend-risk-place/infra/rest/warning/presenter"
 	warning_usecase "github.com/risk-place-angola/backend-risk-place/usecase/warning"
 	"github.com/risk-place-angola/backend-risk-place/util"
+	"log"
 )
 
 type IWarningController interface {
@@ -18,11 +19,13 @@ type IWarningController interface {
 type WarningControllerImpl struct {
 	IWarningUseCase        warning_usecase.IWarningUseCase
 	WebsocketClientManager *util.WebsocketClientManager
+	Env                    *util.Env
 }
 
 func NewWarningController(warningUseCase warning_usecase.IWarningUseCase) IWarningController {
 	return &WarningControllerImpl{
 		IWarningUseCase: warningUseCase,
+		Env:             util.LoadEnv(".env"),
 	}
 }
 
@@ -38,7 +41,7 @@ func NewWarningController(warningUseCase warning_usecase.IWarningUseCase) IWarni
 // @Param fact formData file true "Fact"
 // @Success 200 {object} string
 // @Failure 400 {object} string
-// @Router /infra/v1/warning [post]
+// @Router /api/v1/warning [post]
 func (w WarningControllerImpl) CreateWarning(ctx presenter.WarningPresenterCTX) error {
 	warningDTO := &warning_usecase.CreateWarningDTO{}
 	warningDTO.ReportedBy = ctx.FormValue("reported_by")
@@ -48,8 +51,8 @@ func (w WarningControllerImpl) CreateWarning(ctx presenter.WarningPresenterCTX) 
 	if err != nil {
 		return ctx.JSON(400, err.Error())
 	}
-
-	conn, errWS := util.WebsocketClientDialer(ctx)
+	log.Println("env", w.Env.REMOTEHOST)
+	conn, errWS := util.WebsocketClientDialer(w.Env.REMOTEHOST, ctx)
 	if errWS != nil {
 		return ctx.JSON(errWS.Code, errWS.Message)
 	}
@@ -96,7 +99,7 @@ func (w WarningControllerImpl) CreateWarning(ctx presenter.WarningPresenterCTX) 
 // @Param update_warning body warning_usecase.UpdateWarningDTO true "Update Warning"
 // @Success 200 {object} warning_usecase.UpdateWarningDTO
 // @Failure 400 {object} string
-// @Router /infra/v1/warning/{id} [put]
+// @Router /api/v1/warning/{id} [put]
 func (w WarningControllerImpl) UpdateWarning(ctx presenter.WarningPresenterCTX) error {
 	var warningDTO warning_usecase.UpdateWarningDTO
 	id := ctx.Param("id")
@@ -104,7 +107,7 @@ func (w WarningControllerImpl) UpdateWarning(ctx presenter.WarningPresenterCTX) 
 		return ctx.JSON(400, err.Error())
 	}
 
-	conn, errWS := util.WebsocketClientDialer(ctx)
+	conn, errWS := util.WebsocketClientDialer(w.Env.REMOTEHOST, ctx)
 	if errWS != nil {
 		return ctx.JSON(errWS.Code, errWS.Message)
 	}
@@ -143,7 +146,7 @@ func (w WarningControllerImpl) UpdateWarning(ctx presenter.WarningPresenterCTX) 
 // @Produce  json
 // @Success 200 {object} []warning_usecase.DTO
 // @Failure 400 {object} string
-// @Router /infra/v1/warning [get]
+// @Router /api/v1/warning [get]
 func (w WarningControllerImpl) FindAllWarning(ctx presenter.WarningPresenterCTX) error {
 	warnings, err := w.IWarningUseCase.FindAllWarning()
 	if err != nil {
@@ -161,7 +164,7 @@ func (w WarningControllerImpl) FindAllWarning(ctx presenter.WarningPresenterCTX)
 // @Param id path string true "ID"
 // @Success 200 {object} warning_usecase.DTO
 // @Failure 400 {object} string
-// @Router /infra/v1/warning/{id} [get]
+// @Router /api/v1/warning/{id} [get]
 func (w WarningControllerImpl) FindWarningByID(ctx presenter.WarningPresenterCTX) error {
 	id := ctx.Param("id")
 	warning, err := w.IWarningUseCase.FindWarningByID(id)
@@ -180,7 +183,7 @@ func (w WarningControllerImpl) FindWarningByID(ctx presenter.WarningPresenterCTX
 // @Param id path string true "ID"
 // @Success 200 {object} string
 // @Failure 400 {object} string
-// @Router /infra/v1/warning/{id} [delete]
+// @Router /api/v1/warning/{id} [delete]
 func (w WarningControllerImpl) RemoveWarning(ctx presenter.WarningPresenterCTX) error {
 	id := ctx.Param("id")
 	err := w.IWarningUseCase.RemoveWarning(id)

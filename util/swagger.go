@@ -1,5 +1,11 @@
 package util
 
+import "github.com/risk-place-angola/backend-risk-place/api"
+
+func init() {
+	env = LoadEnv(".env")
+}
+
 // @title Risk Place Angola API
 // @description This is a sample server Risk Place Angola server.
 // @version 1.0.0
@@ -13,7 +19,8 @@ package util
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
 // @BasePath /
-// @host localhost:8000
-// @schemes http
 func Swagger() {
+	api.SwaggerInfo.Host = env.REMOTEHOST
+	api.SwaggerInfo.BasePath = "/"
+	api.SwaggerInfo.Schemes = []string{"http", "https"}
 }
