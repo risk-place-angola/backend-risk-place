@@ -35,7 +35,7 @@ func (router *RouterImpl) Router() *echo.Echo {
 	router.IWaringRouter.Router()
 	router.Echo.GET("/", router.home())
 	router.Echo.GET("/ws", ws.WebsocketServer, middleware.WebsocketAuthMiddleware)
-	router.Echo.GET("/swagger/*", echoSwagger.WrapHandler)
+	router.Echo.GET("/swagger/*any", echoSwagger.WrapHandler)
 
 	return router.Echo
 

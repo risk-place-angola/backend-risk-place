@@ -47,7 +47,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/infra/v1/erfce": {
+        "/api/v1/erfce": {
             "get": {
                 "description": "Find All Erfce",
                 "consumes": [
@@ -117,7 +117,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/infra/v1/erfce/login": {
+        "/api/v1/erfce/login": {
             "post": {
                 "description": "Login Erfce",
                 "consumes": [
@@ -127,7 +127,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "UErfceser"
+                    "Erfce"
                 ],
                 "summary": "Login Erfce",
                 "parameters": [
@@ -157,7 +157,39 @@ const docTemplate = `{
                 }
             }
         },
-        "/infra/v1/erfce/warning/{id}": {
+        "/api/v1/erfce/warning": {
+            "get": {
+                "description": "Find All Erfce Warnings",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Erfce"
+                ],
+                "summary": "Find All Erfce Warnings",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/erfce.DTO"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/erfce/warning/{id}": {
             "get": {
                 "description": "Find Erfce Warnings By ID",
                 "consumes": [
@@ -167,7 +199,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Erfceer"
+                    "Erfce"
                 ],
                 "summary": "Find Erfce Warnings By ID",
                 "parameters": [
@@ -198,7 +230,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/infra/v1/erfce/{id}": {
+        "/api/v1/erfce/{id}": {
             "get": {
                 "description": "Find Erfce By ID",
                 "consumes": [
@@ -317,7 +349,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/infra/v1/user": {
+        "/api/v1/user": {
             "get": {
                 "description": "Find All User",
                 "consumes": [
@@ -387,7 +419,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/infra/v1/user/login": {
+        "/api/v1/user/login": {
             "post": {
                 "description": "Login User",
                 "consumes": [
@@ -427,7 +459,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/infra/v1/user/warning": {
+        "/api/v1/user/warning": {
             "get": {
                 "description": "Find All User Warnings",
                 "consumes": [
@@ -459,7 +491,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/infra/v1/user/warning/{id}": {
+        "/api/v1/user/warning/{id}": {
             "get": {
                 "description": "Find User Warnings By ID",
                 "consumes": [
@@ -500,7 +532,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/infra/v1/user/{id}": {
+        "/api/v1/user/{id}": {
             "get": {
                 "description": "Find User By ID",
                 "consumes": [
@@ -619,7 +651,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/infra/v1/warning": {
+        "/api/v1/warning": {
             "get": {
                 "description": "Find all warnings",
                 "consumes": [
@@ -708,7 +740,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/infra/v1/warning/{id}": {
+        "/api/v1/warning/{id}": {
             "get": {
                 "description": "Find warning by ID",
                 "consumes": [
@@ -1129,9 +1161,9 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.0",
-	Host:             "localhost:8000",
+	Host:             "",
 	BasePath:         "/",
-	Schemes:          []string{"http"},
+	Schemes:          []string{},
 	Title:            "Risk Place Angola API",
 	Description:      "This is a sample server Risk Place Angola server.",
 	InfoInstanceName: "swagger",
