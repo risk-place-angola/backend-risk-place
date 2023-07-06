@@ -1,5 +1,93 @@
 basePath: /
 definitions:
+  entities.EventState:
+    enum:
+    - pending
+    - in_review
+    - finished
+    - in_progress
+    - in_resolution
+    - closed
+    - false_alarm
+    - false_alert
+    type: string
+    x-enum-varnames:
+    - Pending
+    - InReview
+    - Finished
+    - InProgress
+    - InResolution
+    - Closed
+    - FalseAlarm
+    - FalseAlert
+  entities.NullTime:
+    properties:
+      time:
+        type: string
+      valid:
+        type: boolean
+    type: object
+  entities.Warning:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/entities.NullTime'
+      event_state:
+        $ref: '#/definitions/entities.EventState'
+      fact:
+        type: string
+      id:
+        type: string
+      is_anonymous:
+        type: boolean
+      is_victim:
+        type: boolean
+      latitude:
+        type: number
+      longitude:
+        type: number
+      reported_by:
+        type: string
+      stop_alerting:
+        type: boolean
+      updated_at:
+        type: string
+    type: object
+  erfce.CreateErfceDTO:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  erfce.DTO:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  erfce.LoginDTO:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  erfce.UpdateErfceDTO:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
   rest.ErrorResponse:
     properties:
       message:
@@ -29,13 +117,11 @@ definitions:
         type: string
       name:
         type: string
-      password:
-        type: string
       phone:
         type: string
       warnings:
         items:
-          $ref: '#/definitions/warning_usecase.DTO'
+          $ref: '#/definitions/entities.Warning'
         type: array
     type: object
   user.LoginDTO:
@@ -96,7 +182,6 @@ definitions:
       stop_alerting:
         type: boolean
     type: object
-host: localhost:8000
 info:
   contact:
     name: API Support
@@ -124,7 +209,206 @@ paths:
       summary: Home
       tags:
       - Home
-  /infra/v1/user:
+  /api/v1/erfce:
+    get:
+      consumes:
+      - application/json
+      description: Find All Erfce
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/erfce.DTO'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Find All Erfce
+      tags:
+      - Erfce
+    post:
+      consumes:
+      - application/json
+      description: Create Erfce
+      parameters:
+      - description: Erfce
+        in: body
+        name: erfce
+        required: true
+        schema:
+          $ref: '#/definitions/erfce.CreateErfceDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/erfce.DTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Create Erfce
+      tags:
+      - Erfce
+  /api/v1/erfce/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Erfce
+      parameters:
+      - description: Erfce ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Delete Erfce
+      tags:
+      - Erfce
+    get:
+      consumes:
+      - application/json
+      description: Find Erfce By ID
+      parameters:
+      - description: Erfce ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/erfce.DTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Find Erfce By ID
+      tags:
+      - Erfce
+    put:
+      consumes:
+      - application/json
+      description: Update Erfce
+      parameters:
+      - description: Erfce ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Erfce
+        in: body
+        name: erfce
+        required: true
+        schema:
+          $ref: '#/definitions/erfce.UpdateErfceDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/erfce.DTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Update Erfce
+      tags:
+      - Erfce
+  /api/v1/erfce/login:
+    post:
+      consumes:
+      - application/json
+      description: Login Erfce
+      parameters:
+      - description: Erfce
+        in: body
+        name: erfce
+        required: true
+        schema:
+          $ref: '#/definitions/erfce.LoginDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/erfce.DTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Login Erfce
+      tags:
+      - Erfce
+  /api/v1/erfce/warning:
+    get:
+      consumes:
+      - application/json
+      description: Find All Erfce Warnings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/erfce.DTO'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Find All Erfce Warnings
+      tags:
+      - Erfce
+  /api/v1/erfce/warning/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Find Erfce Warnings By ID
+      parameters:
+      - description: Erfce ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/erfce.DTO'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Find Erfce Warnings By ID
+      tags:
+      - Erfce
+  /api/v1/user:
     get:
       consumes:
       - application/json
@@ -170,7 +454,7 @@ paths:
       summary: Create User
       tags:
       - User
-  /infra/v1/user/{id}:
+  /api/v1/user/{id}:
     delete:
       consumes:
       - application/json
@@ -249,7 +533,7 @@ paths:
       summary: Update User
       tags:
       - User
-  /infra/v1/user/login:
+  /api/v1/user/login:
     post:
       consumes:
       - application/json
@@ -275,7 +559,7 @@ paths:
       summary: Login User
       tags:
       - User
-  /infra/v1/user/warning:
+  /api/v1/user/warning:
     get:
       consumes:
       - application/json
@@ -296,7 +580,7 @@ paths:
       summary: Find All User Warnings
       tags:
       - User
-  /infra/v1/user/warning/{id}:
+  /api/v1/user/warning/{id}:
     get:
       consumes:
       - application/json
@@ -323,7 +607,7 @@ paths:
       summary: Find User Warnings By ID
       tags:
       - User
-  /infra/v1/warning:
+  /api/v1/warning:
     get:
       consumes:
       - application/json
@@ -383,7 +667,7 @@ paths:
       summary: Create a warning
       tags:
       - Warning
-  /infra/v1/warning/{id}:
+  /api/v1/warning/{id}:
     delete:
       consumes:
       - application/json
@@ -475,6 +759,4 @@ paths:
       summary: Websocket server
       tags:
       - Websocket
-schemes:
-- http
 swagger: "2.0"

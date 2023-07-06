@@ -1,11 +1,10 @@
 package user_router
 
 import (
-	"github.com/risk-place-angola/backend-risk-place/infra/rest/middleware"
-	"os"
-
 	"github.com/labstack/echo/v4"
+	"github.com/risk-place-angola/backend-risk-place/infra/rest/middleware"
 	user_controller "github.com/risk-place-angola/backend-risk-place/infra/rest/user/controllers"
+	"os"
 )
 
 type UserRouter interface {

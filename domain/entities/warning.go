@@ -3,7 +3,6 @@ package entities
 import (
 	"errors"
 	uuid "github.com/satori/go.uuid"
-	"gorm.io/gorm"
 	"time"
 )
 
@@ -20,19 +19,24 @@ const (
 	FalseAlert   EventState = "false_alert"
 )
 
+type NullTime struct {
+	Time  time.Time `json:"time"`
+	Valid bool      `json:"valid"`
+}
+
 type Warning struct {
-	ID           string         `json:"id"`
-	ReportedBy   string         `json:"reported_by"`
-	IsVictim     bool           `json:"is_victim"`
-	Fact         string         `json:"fact"`
-	Latitude     float64        `json:"latitude" valid:"required~ A latitude do risco é obrigatória."`
-	Longitude    float64        `json:"longitude" valid:"required~ A longitude do risco é obrigatória."`
-	EventState   EventState     `json:"event_state" valid:"-"`
-	IsAnonymous  bool           `json:"is_anonymous"`
-	StopAlerting bool           `json:"stop_alerting"`
-	CreatedAt    time.Time      `json:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at"`
-	DeletedAt    gorm.DeletedAt `json:"deleted_at" gorm:"index" valid:"-"`
+	ID           string     `json:"id"`
+	ReportedBy   string     `json:"reported_by"`
+	IsVictim     bool       `json:"is_victim"`
+	Fact         string     `json:"fact"`
+	Latitude     float64    `json:"latitude" valid:"required~ A latitude do risco é obrigatória."`
+	Longitude    float64    `json:"longitude" valid:"required~ A longitude do risco é obrigatória."`
+	EventState   EventState `json:"event_state" valid:"-"`
+	IsAnonymous  bool       `json:"is_anonymous"`
+	StopAlerting bool       `json:"stop_alerting"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+	DeletedAt    NullTime   `json:"deleted_at" gorm:"index" valid:"-"`
 }
 
 func NewWarning(w *Warning) (*Warning, error) {

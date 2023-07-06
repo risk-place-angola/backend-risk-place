@@ -38,7 +38,7 @@ func NewErfceController(erfceRepo account.ErfceUseCase) ErfceController {
 // @Param erfce body account.CreateErfceDTO true "Erfce"
 // @Success 201 {object} account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/erfce [post]
+// @Router /api/v1/erfce [post]
 func (controller *ErfceontrollerImpl) ErfceCreateController(ctx erfce_presenter.ErfcePresenterCTX) error {
 	var erfce account.CreateErfceDTO
 	if err := ctx.Bind(&erfce); err != nil {
@@ -60,7 +60,7 @@ func (controller *ErfceontrollerImpl) ErfceCreateController(ctx erfce_presenter.
 // @Produce  json
 // @Success 200 {object} []account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/erfce [get]
+// @Router /api/v1/erfce [get]
 func (controller *ErfceontrollerImpl) ErfceFindAllController(ctx erfce_presenter.ErfcePresenterCTX) error {
 	erfces, err := controller.erfceUseCase.FindAllErfce()
 	if err != nil {
@@ -77,7 +77,7 @@ func (controller *ErfceontrollerImpl) ErfceFindAllController(ctx erfce_presenter
 // @Param id path string true "Erfce ID"
 // @Success 200 {object} account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/erfce/{id} [get]
+// @Router /api/v1/erfce/{id} [get]
 func (controller *ErfceontrollerImpl) ErfceFindByIdController(ctx erfce_presenter.ErfcePresenterCTX) error {
 	id := ctx.Param("id")
 
@@ -97,7 +97,7 @@ func (controller *ErfceontrollerImpl) ErfceFindByIdController(ctx erfce_presente
 // @Param erfce body account.UpdateErfceDTO true "Erfce"
 // @Success 200 {object} account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/erfce/{id} [put]
+// @Router /api/v1/erfce/{id} [put]
 func (controller *ErfceontrollerImpl) ErfceUpdateController(ctx erfce_presenter.ErfcePresenterCTX) error {
 	id := ctx.Param("id")
 
@@ -122,7 +122,7 @@ func (controller *ErfceontrollerImpl) ErfceUpdateController(ctx erfce_presenter.
 // @Param id path string true "Erfce ID"
 // @Success 200 {object} rest.SuccessResponse
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/erfce/{id} [delete]
+// @Router /api/v1/erfce/{id} [delete]
 func (controller *ErfceontrollerImpl) ErfceDeleteController(ctx erfce_presenter.ErfcePresenterCTX) error {
 	id := ctx.Param("id")
 
@@ -135,13 +135,13 @@ func (controller *ErfceontrollerImpl) ErfceDeleteController(ctx erfce_presenter.
 
 // @Summary Login Erfce
 // @Description Login Erfce
-// @Tags UErfceser
+// @Tags Erfce
 // @Accept  json
 // @Produce  json
 // @Param erfce body account.LoginDTO true "Erfce"
 // @Success 200 {object} account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/erfce/login [post]
+// @Router /api/v1/erfce/login [post]
 func (controller *ErfceontrollerImpl) ErfceLoginController(ctx erfce_presenter.ErfcePresenterCTX) error {
 	var credentials account.LoginDTO
 	if err := ctx.Bind(&credentials); err != nil {
@@ -163,8 +163,7 @@ func (controller *ErfceontrollerImpl) ErfceLoginController(ctx erfce_presenter.E
 // @Produce  json
 // @Success 200 {object} []account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/erfce/warning [get]
-
+// @Router /api/v1/erfce/warning [get]
 func (controller *ErfceontrollerImpl) FindAllErfceWarningsController(ctx erfce_presenter.ErfcePresenterCTX) error {
 	warnings, err := controller.erfceUseCase.FindAllUErfceWarnings()
 	if err != nil {
@@ -175,13 +174,13 @@ func (controller *ErfceontrollerImpl) FindAllErfceWarningsController(ctx erfce_p
 
 // @Summary Find Erfce Warnings By ID
 // @Description Find Erfce Warnings By ID
-// @Tags Erfceer
+// @Tags Erfce
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Erfce ID"
 // @Success 200 {object} []account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/erfce/warning/{id} [get]
+// @Router /api/v1/erfce/warning/{id} [get]
 func (controller *ErfceontrollerImpl) FindWarningByErfceIDController(ctx erfce_presenter.ErfcePresenterCTX) error {
 	id := ctx.Param("id")
 

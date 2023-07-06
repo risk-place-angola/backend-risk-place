@@ -37,7 +37,7 @@ func NewUserController(userRepo account.UserUseCase) UserController {
 // @Param user body account.CreateUserDTO true "User"
 // @Success 201 {object} account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/user [post]
+// @Router /api/v1/user [post]
 func (controller *UserControllerImpl) UserCreateController(ctx user_presenter.UserPresenterCTX) error {
 	var user account.CreateUserDTO
 	if err := ctx.Bind(&user); err != nil {
@@ -59,7 +59,7 @@ func (controller *UserControllerImpl) UserCreateController(ctx user_presenter.Us
 // @Produce  json
 // @Success 200 {object} []account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/user [get]
+// @Router /api/v1/user [get]
 func (controller *UserControllerImpl) UserFindAllController(ctx user_presenter.UserPresenterCTX) error {
 	users, err := controller.userUseCase.FindAllUser()
 	if err != nil {
@@ -76,7 +76,7 @@ func (controller *UserControllerImpl) UserFindAllController(ctx user_presenter.U
 // @Param id path string true "User ID"
 // @Success 200 {object} account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/user/{id} [get]
+// @Router /api/v1/user/{id} [get]
 func (controller *UserControllerImpl) UserFindByIdController(ctx user_presenter.UserPresenterCTX) error {
 	id := ctx.Param("id")
 
@@ -96,7 +96,7 @@ func (controller *UserControllerImpl) UserFindByIdController(ctx user_presenter.
 // @Param user body account.UpdateUserDTO true "User"
 // @Success 200 {object} account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/user/{id} [put]
+// @Router /api/v1/user/{id} [put]
 func (controller *UserControllerImpl) UserUpdateController(ctx user_presenter.UserPresenterCTX) error {
 	id := ctx.Param("id")
 
@@ -121,7 +121,7 @@ func (controller *UserControllerImpl) UserUpdateController(ctx user_presenter.Us
 // @Param id path string true "User ID"
 // @Success 200 {object} rest.SuccessResponse
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/user/{id} [delete]
+// @Router /api/v1/user/{id} [delete]
 func (controller *UserControllerImpl) UserDeleteController(ctx user_presenter.UserPresenterCTX) error {
 	id := ctx.Param("id")
 
@@ -140,7 +140,7 @@ func (controller *UserControllerImpl) UserDeleteController(ctx user_presenter.Us
 // @Param user body account.LoginDTO true "User"
 // @Success 200 {object} account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/user/login [post]
+// @Router /api/v1/user/login [post]
 func (controller *UserControllerImpl) UserLoginController(ctx user_presenter.UserPresenterCTX) error {
 	var credentials account.LoginDTO
 	if err := ctx.Bind(&credentials); err != nil {
@@ -162,7 +162,7 @@ func (controller *UserControllerImpl) UserLoginController(ctx user_presenter.Use
 // @Produce  json
 // @Success 200 {object} []account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/user/warning [get]
+// @Router /api/v1/user/warning [get]
 func (controller *UserControllerImpl) FindAllUserWarningsController(ctx user_presenter.UserPresenterCTX) error {
 	warnings, err := controller.userUseCase.FindAllUserWarnings()
 	if err != nil {
@@ -179,7 +179,7 @@ func (controller *UserControllerImpl) FindAllUserWarningsController(ctx user_pre
 // @Param id path string true "User ID"
 // @Success 200 {object} []account.DTO
 // @Failure 500 {object} rest.ErrorResponse
-// @Router /infra/v1/user/warning/{id} [get]
+// @Router /api/v1/user/warning/{id} [get]
 func (controller *UserControllerImpl) FindWarningByUserIDController(ctx user_presenter.UserPresenterCTX) error {
 	id := ctx.Param("id")
 
