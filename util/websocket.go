@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 )
 
 type Websocket struct {
@@ -25,6 +26,7 @@ type WebsocketClientManager struct {
 }
 
 var env *Env
+var lock sync.RWMutex
 
 func init() {
 	env = LoadEnv(".env")
