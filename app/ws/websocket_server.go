@@ -15,6 +15,9 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+var client = make(map[*websocket.Conn]bool)
+var lock sync.RWMutex
+
 // WebsocketServer godoc
 // @Summary Websocket server
 // @Description websocket url ws://host/ws or use authentication ssl wss://host/ws
@@ -32,6 +35,9 @@ func WebsocketServer(ctx echo.Context) error {
 	}
 
 	defer func(conn *websocket.Conn) {
+		lock.Lock()
+		delete(client, conn)
+		lock.Unlock()
 		err := conn.Close()
 		if err != nil {
 			return
@@ -45,6 +51,11 @@ func WebsocketServer(ctx echo.Context) error {
 	channel := make(chan string)
 	go broadcast(channel)
 
+	// remover unreachable code
+	// lock.Lock() // lock
+	// delete(client, conn)
+	// lock.Unlock() // unlock
+
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
@@ -52,16 +63,7 @@ func WebsocketServer(ctx echo.Context) error {
 		}
 		channel <- string(msg)
 	}
-
-	lock.Lock()
-	delete(client, conn)
-	lock.Unlock()
-
-	return nil
 }
-
-var client = make(map[*websocket.Conn]bool)
-var lock sync.RWMutex
 
 func broadcast(c chan string) {
 	for {
