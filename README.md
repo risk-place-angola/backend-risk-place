@@ -71,7 +71,7 @@ para detalhes sobre o nosso código de conduta, e o processo para submeter pedid
 
 > Nota: O tipo de local é um campo obrigatório para o cadastro de um local. O primeiro local que vamos utilizar é o tipo `Risco`.
 
-* **Riscos**: Vão cadastrar os locais que consideram riscos. Ex: `Bairro X`, `Rua Y`, `Latitude`, `Logintude` etc.
+* **Riscos**: Vão cadastrar os locais que consideram riscos. Ex: `Bairro X`, `Rua Y`, `Latitude`, `Longitude` etc.
 
 * **Tipos de um riscos**: aqui vamos cadastrar os tipos riscos que podem ser encontrados em um local. Ex: `Criminalidade`, `Vala`, `doença`.
     * **Topicos**: aqui vamos cadastrar os tópicos de um risco. Ex: `Assalto`, `Incêndio`, `Furto`, `Assalto`, `Acidente`, `Roubo`, `Inundação` etc.
