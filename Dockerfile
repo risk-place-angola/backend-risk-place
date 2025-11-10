@@ -1,20 +1,30 @@
-FROM golang:1.19.2-alpine AS builder
+# Etapa 1: build (imagem oficial do Go)
+FROM golang:1.24.5-alpine AS builder
 
-RUN apk update && apk upgrade && \
-    apk add --no-cache make bash
+# Instala dependências mínimas (git, ca-certificates)
+RUN apk add --no-cache git ca-certificates
 
-WORKDIR /src
+# Diretório de trabalho
+WORKDIR /app
 
+# Copia os arquivos Go mod
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copia o restante do código
 COPY . .
 
-# Build
-RUN make build
+# Compila para binário estático (GOOS linux, GOARCH amd64)
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main ./cmd/api
 
-# Using a distroless image from https://github.com/GoogleContainerTools/distroless
-FROM gcr.io/distroless/static-debian11
+# Etapa 2: imagem final minimalista
+FROM scratch
 
-COPY --from=builder /src/bin/app /
+# Copia certificados SSL e binário do build
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /app/main /main
 
 EXPOSE 8000
 
-CMD ["/app"]
+# Comando padrão
+ENTRYPOINT ["/main"]

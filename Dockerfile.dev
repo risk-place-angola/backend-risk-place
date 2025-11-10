@@ -1,4 +1,4 @@
-FROM golang:1.19.2-alpine
+FROM golang:1.24.5-alpine AS builder
 
 RUN apk update && apk upgrade && \
     apk add git make curl openssh-client
