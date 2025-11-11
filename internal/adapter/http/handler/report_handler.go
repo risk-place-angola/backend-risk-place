@@ -101,7 +101,7 @@ func (h *ReportHandler) ListNearby(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response []dto.ReportDTO
+	response := make([]dto.ReportDTO, 0, len(list))
 	for _, v := range list {
 		response = append(response, dto.ReportToDTO(v))
 	}
