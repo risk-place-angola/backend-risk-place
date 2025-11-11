@@ -23,6 +23,11 @@ func NewReportRepoPG(db *sql.DB) repository.ReportRepository {
 }
 
 func dbToModel(r sqlc.Report) *model.Report {
+	status, ok := r.Status.(model.ReportStatus)
+	if !ok {
+		status = model.ReportStatus("pending")
+	}
+
 	return &model.Report{
 		ID:           r.ID,
 		UserID:       r.UserID,
@@ -36,7 +41,7 @@ func dbToModel(r sqlc.Report) *model.Report {
 		Neighborhood: r.Neighborhood.String,
 		Address:      r.Address.String,
 		ImageURL:     r.ImageUrl.String,
-		Status:       r.Status.(model.ReportStatus),
+		Status:       status,
 		ReviewedBy:   *uuidToPtr(r.ReviewedBy.UUID),
 		ResolvedAt:   *timePtr(r.ResolvedAt),
 		CreatedAt:    r.CreatedAt.Time,
@@ -142,13 +147,6 @@ func (r *ReportPG) FindByRadius(ctx context.Context, lat float64, lon float64, r
 
 func sqlString(v string) sql.NullString {
 	return sql.NullString{String: v, Valid: v != ""}
-}
-
-func uuidFromPtr(id *uuid.UUID) uuid.UUID {
-	if id == nil {
-		return uuid.Nil
-	}
-	return *id
 }
 
 func mapSlice[T any, R any](in []T, fn func(T) *R) []*R {

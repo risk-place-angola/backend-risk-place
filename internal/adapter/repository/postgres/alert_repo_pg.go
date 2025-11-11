@@ -3,11 +3,14 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"math"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/repository/postgres/sqlc"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/model"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/repository"
-	"time"
 )
 
 type alertRepoPG struct {
@@ -15,6 +18,12 @@ type alertRepoPG struct {
 }
 
 func (a alertRepoPG) Create(ctx context.Context, alert *model.Alert) error {
+	if alert.RadiusMeters > math.MaxInt32 || alert.RadiusMeters < math.MinInt32 {
+		return fmt.Errorf("radius meters out of range: must be between %d and %d", math.MinInt32, math.MaxInt32)
+	}
+
+	radiusMeters := int32(alert.RadiusMeters) // #nosec G115
+
 	return a.q.CreateAlert(ctx,
 		sqlc.CreateAlertParams{
 			ID:           alert.ID,
@@ -29,7 +38,7 @@ func (a alertRepoPG) Create(ctx context.Context, alert *model.Alert) error {
 			Neighborhood: sql.NullString{String: alert.Neighborhood, Valid: true},
 			Address:      sql.NullString{String: alert.Address, Valid: true},
 			Severity:     string(alert.Severity),
-			RadiusMeters: int32(alert.RadiusMeters),
+			RadiusMeters: radiusMeters,
 			ExpiresAt:    sql.NullTime{Time: alert.ExpiresAt, Valid: alert.ExpiresAt != time.Time{}},
 		})
 }
