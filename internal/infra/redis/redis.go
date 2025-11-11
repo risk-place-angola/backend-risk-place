@@ -3,16 +3,22 @@ package redis
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/redis/go-redis/v9"
 	"github.com/risk-place-angola/backend-risk-place/internal/config"
-	"log/slog"
-	"os"
-	"time"
 )
 
 type Redis struct {
 	client *redis.Client
 }
+
+const (
+	// Define any constants related to the database connection here
+	RedisDefaultExpiration = 0 // 0 means the key has no expiration
+	WithTimeout            = 50 * time.Second
+)
 
 // NewRedis creates a new instance of the Redis cache.
 func NewRedis(cfg config.Config) *Redis {
@@ -27,12 +33,11 @@ func NewRedis(cfg config.Config) *Redis {
 		DB:       cfg.RedisConfig.DB,
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*50)
+	ctx, cancel := context.WithTimeout(context.Background(), WithTimeout)
 	defer cancel()
 
 	if err := client.Ping(ctx).Err(); err != nil {
 		panic(fmt.Sprintf("failed to connect to redis: %v", err))
-		os.Exit(1)
 	}
 
 	return &Redis{
@@ -77,8 +82,8 @@ func (r *Redis) HGetAll(ctx context.Context, key string) (map[string]string, err
 //   - value: string - The value to store in Redis.
 //   - timer: time.Duration - The expiration duration for the key. Use a value <= 0 for no expiration.
 func (r *Redis) Set(ctx context.Context, key, value string, timer time.Duration) error {
-	if timer <= 0 {
-		timer = 0
+	if timer <= RedisDefaultExpiration {
+		timer = RedisDefaultExpiration
 	}
 	err := r.client.Set(ctx, key, value, timer).Err()
 	return err
