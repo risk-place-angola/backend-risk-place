@@ -351,7 +351,7 @@ func (uc *UserUseCase) FindAllUsers(ctx context.Context) ([]*dto.UserProfileOutp
 		return nil, err
 	}
 
-	var userProfiles []*dto.UserProfileOutput
+	userProfiles := make([]*dto.UserProfileOutput, 0, len(users))
 	for _, user := range users {
 		roles, err := uc.roleRepo.GetUserRoles(ctx, user.ID)
 		if err != nil {
