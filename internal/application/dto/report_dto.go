@@ -28,12 +28,12 @@ type ReportDTO struct {
 }
 
 type ReportCreate struct {
-	UserID       string  `json:"user_id" validate:"required,uuid"`
-	RiskTypeID   string  `json:"risk_type_id" validate:"required,uuid"`
+	UserID       string  `json:"user_id"`
+	RiskTypeID   string  `json:"risk_type_id"`
 	RiskTopicID  string  `json:"risk_topic_id"`
 	Description  string  `json:"description"`
-	Latitude     float64 `json:"latitude" validate:"required"`
-	Longitude    float64 `json:"longitude" validate:"required"`
+	Latitude     float64 `json:"latitude"`
+	Longitude    float64 `json:"longitude"`
 	Province     string  `json:"province,omitempty"`
 	Municipality string  `json:"municipality,omitempty"`
 	Neighborhood string  `json:"neighborhood,omitempty"`
