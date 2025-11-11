@@ -117,27 +117,21 @@ linters:
       #ignore-comments: true
     gocognit:
       min-complexity: 50
-    exclusions:
-      generated: lax
-      presets:
-        - comments
-        - common-false-positives
-        - legacy
-        - std-error-handling
-      paths:
-        - zz_.*\.go$
-        - .+\.generated.go
-        - .+_test.go
-        - .+_test_.+.go
-        - third_party$
-        - builtin$
-        - examples$
+
 issues:
   max-same-issues: 0
-formatters:
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+  exclude-generated: lax
+  exclude-dirs:
+    - third_party
+    - builtin
+    - examples
+  exclude-files:
+    - "zz_.*\\.go$"
+    - ".+\\.generated.go"
+    - ".+_test\\.go"
+    - ".+_test_.+\\.go"
+  exclude-rules:
+    - linters:
+        - gosec
+        - errcheck
+      text: "Error return value"
