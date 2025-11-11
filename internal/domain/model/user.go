@@ -46,6 +46,13 @@ type User struct {
 	EmailVerification EmailVerification
 }
 
+const (
+	DefaultAlertRadiusMeters = 1000 // in meters
+	defaultCodeMax           = 900000
+	defaultCodeMin           = 100000
+	minimumLengthPassword    = 6
+)
+
 func NewUser(
 	name,
 	phone,
@@ -58,7 +65,7 @@ func NewUser(
 		Phone:             phone,
 		Email:             email,
 		Password:          password,
-		AlertRadiusMeters: 1000,
+		AlertRadiusMeters: DefaultAlertRadiusMeters,
 		CreatedAt:         time.Now(),
 	}
 
@@ -92,7 +99,7 @@ func (u *User) Validate() error {
 		return errors.New("password is required")
 	}
 
-	if err := u.ValidatePasswordPolicy(validatePasswordPolicy); err != nil {
+	if err := u.ValidatePasswordPolicy(DefaultPasswordPolicy()); err != nil {
 		return err
 	}
 
@@ -133,8 +140,8 @@ func (u *User) Update(name, phone, email string, address Address) error {
 }
 
 func GenerateConfirmationCode() string { // Generates a 6-digit code
-	n, _ := rand.Int(rand.Reader, big.NewInt(900000))
-	code := int(n.Int64()) + 100000
+	n, _ := rand.Int(rand.Reader, big.NewInt(defaultCodeMax))
+	code := int(n.Int64()) + defaultCodeMin
 	return fmt.Sprintf("%06d", code)
 }
 
@@ -225,10 +232,12 @@ func ContainsLowercase(password string) bool {
 	return false
 }
 
-var validatePasswordPolicy = &PasswordPolicy{
-	MinimumLength:    6,
-	RequireLowercase: true,
-	RequireNumbers:   true,
-	RequireSymbols:   true,
-	RequireUppercase: true,
+func DefaultPasswordPolicy() *PasswordPolicy {
+	return &PasswordPolicy{
+		MinimumLength:    minimumLengthPassword,
+		RequireLowercase: true,
+		RequireNumbers:   true,
+		RequireSymbols:   true,
+		RequireUppercase: true,
+	}
 }
