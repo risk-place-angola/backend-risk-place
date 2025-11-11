@@ -11,7 +11,12 @@ func SeedRoles(ctx context.Context, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func(tx *sql.Tx) {
+		err := tx.Rollback()
+		if err != nil {
+			slog.Error("Failed to rollback transaction", slog.Any("error", err.Error()))
+		}
+	}(tx)
 
 	// Insere roles padrões
 	_, err = tx.ExecContext(ctx, `
