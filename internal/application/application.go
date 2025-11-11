@@ -30,7 +30,6 @@ func NewUserApplication(
 	geoService port.GeolocationService,
 	eventDispatcher port.EventDispatcher,
 ) *Application {
-
 	return &Application{
 		UserUseCase: user.NewUserUseCase(
 			userRepo,
