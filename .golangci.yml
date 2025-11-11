@@ -120,18 +120,3 @@ linters:
 
 issues:
   max-same-issues: 0
-  exclude-generated: lax
-  exclude-dirs:
-    - third_party
-    - builtin
-    - examples
-  exclude-files:
-    - "zz_.*\\.go$"
-    - ".+\\.generated.go"
-    - ".+_test\\.go"
-    - ".+_test_.+\\.go"
-  exclude-rules:
-    - linters:
-        - gosec
-        - errcheck
-      text: "Error return value"
