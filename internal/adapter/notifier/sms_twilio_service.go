@@ -9,8 +9,6 @@ import (
 	openapi "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
-
-
 type SMSNotifier struct {
 	Config *config.TwilioConfig
 	Client *twilio.RestClient
