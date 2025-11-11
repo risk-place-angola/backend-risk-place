@@ -1,5 +1,5 @@
 # Etapa 1: build (imagem oficial do Go)
-FROM golang:1.24.5-alpine AS builder
+FROM golang:1.25.3-alpine AS builder
 
 # Instala dependências mínimas (git, ca-certificates)
 RUN apk add --no-cache git ca-certificates
