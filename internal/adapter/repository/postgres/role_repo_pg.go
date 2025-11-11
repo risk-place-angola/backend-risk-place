@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log/slog"
+
 	"github.com/google/uuid"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/repository/postgres/sqlc"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/model"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/repository"
-	"log/slog"
 )
 
 type roleRepoPG struct {
@@ -40,7 +41,7 @@ func (r *roleRepoPG) AssignRoleToUser(ctx context.Context, userID uuid.UUID, rol
 func (r *roleRepoPG) AssignRoleNameToUser(ctx context.Context, userID uuid.UUID, roleName string) error {
 	role, err := r.q.GetRoleByName(ctx, roleName)
 	if err != nil {
-		if errors.Is(sql.ErrNoRows, err) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 		return err
@@ -50,7 +51,7 @@ func (r *roleRepoPG) AssignRoleNameToUser(ctx context.Context, userID uuid.UUID,
 		RoleID: role.ID,
 	})
 	if err != nil {
-		if errors.Is(sql.ErrNoRows, err) {
+		if errors.Is(err, sql.ErrNoRows) {
 			slog.Error("Role not found", slog.String("roleName", roleName), slog.Any("error", err))
 			return err
 		}
@@ -77,18 +78,15 @@ func (r *roleRepoPG) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]mode
 }
 
 func (r *roleRepoPG) RemoveRoleFromUser(ctx context.Context, userID uuid.UUID, roleID uuid.UUID) error {
-	//TODO implement me
-	panic("implement me")
+	panic("TODO implement me")
 }
 
 func (r *roleRepoPG) GetUsersByRole(ctx context.Context, roleID uuid.UUID) ([]model.User, error) {
-	//TODO implement me
-	panic("implement me")
+	panic("TODO implement me")
 }
 
 func (r *roleRepoPG) GetAllRoles(ctx context.Context) ([]model.Role, error) {
-	//TODO implement me
-	panic("implement me")
+	panic("TODO implement me")
 }
 
 func NewRoleRepoPG(db *sql.DB) repository.RoleRepository {
