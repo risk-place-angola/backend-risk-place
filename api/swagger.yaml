@@ -79,11 +79,6 @@ definitions:
         type: string
       user_id:
         type: string
-    required:
-    - latitude
-    - longitude
-    - risk_type_id
-    - user_id
     type: object
   dto.ReportDTO:
     properties:
@@ -199,7 +194,12 @@ info:
     email: support@riskplace.ao
     name: API Support
     url: http://www.riskplace.ao
-  description: This is the API documentation for the Risk Place Angola application.
+  description: |-
+    This is the API documentation for the Risk Place Angola application.
+
+    ## Environments
+    - **Development**: https://risk-place-angola-904a.onrender.com
+    - **Local**: http://localhost:8000
   title: Risk Place Angola API
   version: 1.0.0
 paths:
@@ -207,7 +207,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new alert
+      description: Create a new alert.
       parameters:
       - description: Alert
         in: body
@@ -232,7 +232,7 @@ paths:
             $ref: '#/definitions/util.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Create a new alert
+      summary: Create a new alert.
       tags:
       - alerts
   /auth/confirm:

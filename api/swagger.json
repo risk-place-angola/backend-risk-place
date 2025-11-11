@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is the API documentation for the Risk Place Angola application.",
+        "description": "This is the API documentation for the Risk Place Angola application.\n\n## Environments\n- **Development**: https://risk-place-angola-904a.onrender.com\n- **Local**: http://localhost:8000",
         "title": "Risk Place Angola API",
         "contact": {
             "name": "API Support",
@@ -19,7 +19,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new alert",
+                "description": "Create a new alert.",
                 "consumes": [
                     "application/json"
                 ],
@@ -29,7 +29,7 @@
                 "tags": [
                     "alerts"
                 ],
-                "summary": "Create a new alert",
+                "summary": "Create a new alert.",
                 "parameters": [
                     {
                         "description": "Alert",
@@ -709,12 +709,6 @@
         },
         "dto.ReportCreate": {
             "type": "object",
-            "required": [
-                "latitude",
-                "longitude",
-                "risk_type_id",
-                "user_id"
-            ],
             "properties": {
                 "address": {
                     "type": "string"
