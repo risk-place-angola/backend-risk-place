@@ -8,13 +8,11 @@ import (
 
 type RedisLocationStore struct {
 	cache port.Cache
-	ctx   context.Context
 }
 
 func NewRedisLocationStore(cache port.Cache) *RedisLocationStore {
 	return &RedisLocationStore{
 		cache: cache,
-		ctx:   context.Background(),
 	}
 }
 
