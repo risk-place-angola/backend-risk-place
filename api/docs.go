@@ -27,7 +27,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new alert",
+                "description": "Create a new alert.",
                 "consumes": [
                     "application/json"
                 ],
@@ -37,7 +37,7 @@ const docTemplate = `{
                 "tags": [
                     "alerts"
                 ],
-                "summary": "Create a new alert",
+                "summary": "Create a new alert.",
                 "parameters": [
                     {
                         "description": "Alert",
@@ -717,12 +717,6 @@ const docTemplate = `{
         },
         "dto.ReportCreate": {
             "type": "object",
-            "required": [
-                "latitude",
-                "longitude",
-                "risk_type_id",
-                "user_id"
-            ],
             "properties": {
                 "address": {
                     "type": "string"
@@ -943,7 +937,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Risk Place Angola API",
-	Description:      "This is the API documentation for the Risk Place Angola application.",
+	Description:      "This is the API documentation for the Risk Place Angola application.\n\n## Environments\n- **Development**: https://risk-place-angola-904a.onrender.com\n- **Local**: http://localhost:8000",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
