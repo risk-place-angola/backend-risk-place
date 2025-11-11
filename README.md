@@ -271,7 +271,19 @@ go test -bench=. ./...
 
 ## 📖 API Documentation
 
-Once the server is running, access the interactive API documentation:
+### Development Environment
+
+The development API is deployed and available at:
+
+**🌐 Development API**: [https://risk-place-angola-904a.onrender.com](https://risk-place-angola-904a.onrender.com)
+
+**📚 API Documentation (Development)**: [https://risk-place-angola-904a.onrender.com/docs/index.html](https://risk-place-angola-904a.onrender.com/docs/index.html)
+
+> ⚠️ **Note**: This is the development environment. Data may be reset periodically and should not be used for production purposes.
+
+### Local Development
+
+Once the server is running locally, access the interactive API documentation:
 
 **Swagger UI**: `http://localhost:8000/docs/index.html`
 
