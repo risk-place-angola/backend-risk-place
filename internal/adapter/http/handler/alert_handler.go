@@ -20,9 +20,9 @@ func NewAlertHandler(alertUseCase *application.Application) *AlertHandler {
 	}
 }
 
-// CreateAlert godoc
-// @Summary Create a new alert
-// @Description Create a new alert
+// CreateAlert godoc.
+// @Summary Create a new alert.
+// @Description Create a new alert.
 // @Tags alerts
 // @Accept json
 // @Produce json
@@ -31,7 +31,7 @@ func NewAlertHandler(alertUseCase *application.Application) *AlertHandler {
 // @Success 201 {object} dto.Alert
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 401 {object} util.ErrorResponse
-// @Router /alerts [post]
+// @Router /alerts [post].
 func (h *AlertHandler) CreateAlert(w http.ResponseWriter, r *http.Request) {
 	userIDStr, ok := util.GetUserIDFromContext(r.Context())
 	if !ok {
