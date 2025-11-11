@@ -1,9 +1,12 @@
 package websocket
 
 import (
+	"context"
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"log"
+	"log/slog"
+
+	"github.com/gorilla/websocket"
 )
 
 type Client struct {
@@ -13,10 +16,10 @@ type Client struct {
 	Hub    *Hub
 }
 
-func (c *Client) ReadPump() {
+func (c *Client) ReadPump(ctx context.Context) {
 	defer func() {
 		c.Hub.unregister <- c
-		c.Conn.Close()
+		_ = c.Conn.Close()
 	}()
 
 	for {
@@ -26,25 +29,44 @@ func (c *Client) ReadPump() {
 			break
 		}
 
-		c.Hub.handleIncomingMessage(c, message)
+		c.Hub.handleIncomingMessage(ctx, c, message)
 	}
 }
 
 func (c *Client) WritePump() {
-	defer c.Conn.Close()
+	defer func(Conn *websocket.Conn) {
+		err := Conn.Close()
+		if err != nil {
+			slog.Error("error closing connection", slog.Any("error", err))
+		}
+	}(c.Conn)
 	for {
 		select {
 		case message, ok := <-c.Send:
 			if !ok {
-				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				err := c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err != nil {
+					slog.Error("error writing close message", slog.Any("error", err))
+					return
+				}
 				return
 			}
-			c.Conn.WriteMessage(websocket.TextMessage, message)
+			err := c.Conn.WriteMessage(websocket.TextMessage, message)
+			if err != nil {
+				slog.Error("error writing message", slog.Any("error", err))
+				return
+			}
+		default:
+			return
 		}
 	}
 }
 
 func (c *Client) SendJSON(event string, data interface{}) {
-	msg, _ := json.Marshal(Message{Event: event, Data: data})
+	msg, err := json.Marshal(Message{Event: event, Data: data})
+	if err != nil {
+		slog.Error("error marshaling message", slog.Any("error", err))
+		return
+	}
 	c.Send <- msg
 }
