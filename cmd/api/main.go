@@ -27,7 +27,7 @@ func main() {
 	slog.Info("Starting server on port " + container.Cfg.Port)
 
 	srv := &http.Server{
-		Addr:         ":" + container.Cfg.Port,
+		Addr:         "0.0.0.0:" + container.Cfg.Port,
 		Handler:      handler,
 		ReadTimeout:  config.ReadTimeout,
 		WriteTimeout: config.WriteTimeout,
