@@ -1,10 +1,9 @@
 module github.com/risk-place-angola/backend-risk-place
 
-go 1.24.4
+go 1.25.3
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
-	github.com/golang/mock v1.6.0
 	github.com/lib/pq v1.1.1
 	github.com/redis/go-redis/v9 v9.10.0
 	github.com/swaggo/swag v1.16.6
@@ -43,6 +42,7 @@ require (
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
+	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
