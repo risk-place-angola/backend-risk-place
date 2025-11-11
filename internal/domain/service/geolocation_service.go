@@ -10,6 +10,17 @@ type Geolocation struct {
 	Longitude float64 `json:"longitude"`
 }
 
+const (
+	EarthRadiusMeters         = 6371e3
+	latitudeMin               = -90.0
+	latitudeMax               = 90.0
+	longitudeMin              = -180.0
+	longitudeMax              = 180.0
+	latitudeConversionFactor  = 180.0
+	longitudeConversionFactor = 180.0
+	haversineCoefficient      = 2
+)
+
 // DefaultGeolocationService is the standard implementation of the service.
 type DefaultGeolocationService struct{}
 
@@ -19,10 +30,10 @@ func NewGeolocationService() *DefaultGeolocationService {
 
 // ValidateCoordinates checks whether latitude and longitude are valid.
 func (g *DefaultGeolocationService) ValidateCoordinates(lat, lon float64) error {
-	if lat < -90 || lat > 90 {
+	if lat < latitudeMin || lat > latitudeMax {
 		return errors.New("invalid latitude value")
 	}
-	if lon < -180 || lon > 180 {
+	if lon < longitudeMin || lon > longitudeMax {
 		return errors.New("invalid longitude value")
 	}
 	return nil
@@ -30,19 +41,17 @@ func (g *DefaultGeolocationService) ValidateCoordinates(lat, lon float64) error 
 
 // DistanceBetween calculates the distance in meters between two geolocations using the Haversine formula.
 func (g *DefaultGeolocationService) DistanceBetween(p1, p2 Geolocation) float64 {
-	const EarthRadius = 6371e3
+	lat1 := p1.Latitude * math.Pi / latitudeConversionFactor
+	lat2 := p2.Latitude * math.Pi / latitudeConversionFactor
+	dLat := (p2.Latitude - p1.Latitude) * math.Pi / latitudeConversionFactor
+	dLon := (p2.Longitude - p1.Longitude) * math.Pi / longitudeConversionFactor
 
-	lat1 := p1.Latitude * math.Pi / 180
-	lat2 := p2.Latitude * math.Pi / 180
-	dLat := (p2.Latitude - p1.Latitude) * math.Pi / 180
-	dLon := (p2.Longitude - p1.Longitude) * math.Pi / 180
-
-	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+	a := math.Sin(dLat/haversineCoefficient)*math.Sin(dLat/haversineCoefficient) +
 		math.Cos(lat1)*math.Cos(lat2)*
-			math.Sin(dLon/2)*math.Sin(dLon/2)
+			math.Sin(dLon/haversineCoefficient)*math.Sin(dLon/haversineCoefficient)
 
-	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-	return EarthRadius * c
+	c := haversineCoefficient * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+	return EarthRadiusMeters * c
 }
 
 // IsWithinRadius checks if two geolocations are within a specified radius in meters.
@@ -60,10 +69,10 @@ func (g *DefaultGeolocationService) Parse(lat, lon float64) (Geolocation, error)
 
 // Midpoint calculates the midpoint between two geolocations
 func (g *DefaultGeolocationService) Midpoint(p1, p2 Geolocation) Geolocation {
-	lat1 := p1.Latitude * math.Pi / 180
-	lon1 := p1.Longitude * math.Pi / 180
-	lat2 := p2.Latitude * math.Pi / 180
-	dLon := (p2.Longitude - p1.Longitude) * math.Pi / 180
+	lat1 := p1.Latitude * math.Pi / latitudeConversionFactor
+	lon1 := p1.Longitude * math.Pi / longitudeConversionFactor
+	lat2 := p2.Latitude * math.Pi / latitudeConversionFactor
+	dLon := (p2.Longitude - p1.Longitude) * math.Pi / longitudeConversionFactor
 
 	bx := math.Cos(lat2) * math.Cos(dLon)
 	by := math.Cos(lat2) * math.Sin(dLon)
@@ -75,7 +84,7 @@ func (g *DefaultGeolocationService) Midpoint(p1, p2 Geolocation) Geolocation {
 	lon3 := lon1 + math.Atan2(by, math.Cos(lat1)+bx)
 
 	return Geolocation{
-		Latitude:  lat3 * 180 / math.Pi,
-		Longitude: lon3 * 180 / math.Pi,
+		Latitude:  lat3 * latitudeConversionFactor / math.Pi,
+		Longitude: lon3 * longitudeConversionFactor / math.Pi,
 	}
 }
