@@ -10,7 +10,7 @@ else
   ARCH := $(ARCH_RAW)
 endif
 
-GCL_VERSION ?= v2.3.0
+GCL_VERSION ?= v2.4.0
 GCL_VER_STR := $(patsubst v%,%,$(GCL_VERSION))
 BIN_DIR := tmp
 GCL := $(BIN_DIR)/golangci-lint
@@ -39,6 +39,9 @@ sec-scan:
 build:
 	@go build -o tmp/main ./cmd/api
 
+clean-test:
+	@go clean -cache -modcache -i -r
+	@rm -f coverage.out
 
 print-gcl-url:
 	@echo "URL   : $(GCL_URL)"
