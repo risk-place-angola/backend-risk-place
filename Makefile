@@ -51,6 +51,9 @@ print-gcl-url:
 clean-gcl:
 	@rm -rf $(BIN_DIR)
 
+sqlc:
+	@sqlc generate
+
 .PHONY: swagger
 swagger:
 	@swag init -g internal/config/swagger.go -o api
