@@ -11,10 +11,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-func init() {
-	_ = godotenv.Load(".env")
-}
-
 type Config struct {
 	AppEnv string // dev, prod
 	Port   string // :8080
@@ -134,6 +130,8 @@ func (c *Config) IsDevelopment() bool {
 }
 
 func Load() Config {
+	_ = godotenv.Load(".env")
+
 	viper.SetConfigFile(".env")
 	viper.SetConfigType("env")
 	viper.AutomaticEnv()
