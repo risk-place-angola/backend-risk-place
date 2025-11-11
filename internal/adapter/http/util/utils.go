@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"log/slog"
 	"net/http"
 	"strconv"
 )
@@ -10,7 +11,7 @@ import (
 func ConvertStringToFloat64(value string) float64 {
 	floatValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		fmt.Errorf("error converting string to float64: %v", err)
+		slog.Error("error converting string to float64", "error", err)
 		return 0.0
 	}
 	return floatValue
