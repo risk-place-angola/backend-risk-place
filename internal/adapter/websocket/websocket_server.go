@@ -12,17 +12,21 @@ import (
 type WSHandler struct {
 	Hub            *Hub
 	AuthMiddleware middleware.AuthMiddleware
+	upgrader       websocket.Upgrader
 }
+
+const (
+	maxWebSocketMessageSize = 256
+)
 
 func NewWSHandler(hub *Hub, authMiddleware middleware.AuthMiddleware) *WSHandler {
 	return &WSHandler{
 		Hub:            hub,
 		AuthMiddleware: authMiddleware,
+		upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool { return true },
+		},
 	}
-}
-
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
 // HandleWebSocket godoc
@@ -41,7 +45,7 @@ func (h *WSHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		slog.Error("failed to upgrade to WebSocket", slog.Any("error", err))
 		util.Error(w, "Failed to upgrade to WebSocket", http.StatusInternalServerError)
@@ -51,7 +55,7 @@ func (h *WSHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	client := &Client{
 		UserID: userIDStr,
 		Conn:   conn,
-		Send:   make(chan []byte, 256),
+		Send:   make(chan []byte, maxWebSocketMessageSize),
 		Hub:    h.Hub,
 	}
 
@@ -60,5 +64,5 @@ func (h *WSHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	h.Hub.register <- client
 
 	go client.WritePump()
-	go client.ReadPump()
+	go client.ReadPump(r.Context())
 }
