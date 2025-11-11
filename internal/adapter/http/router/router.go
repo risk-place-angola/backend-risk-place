@@ -54,5 +54,4 @@ func RoutesDEV(container *bootstrap.Container) {
 	if !container.Cfg.IsDevelopment() {
 		return
 	}
-
 }
