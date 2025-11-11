@@ -69,12 +69,10 @@ func (u *userRepoPG) Save(ctx context.Context, entity *model.User) error {
 }
 
 func (u *userRepoPG) Update(ctx context.Context, entity *model.User) error {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (u *userRepoPG) Delete(ctx context.Context, id string) error {
-	//TODO implement me
 	panic("implement me")
 }
 
@@ -106,7 +104,6 @@ func (u *userRepoPG) FindByID(ctx context.Context, id uuid.UUID) (*model.User, e
 }
 
 func (u *userRepoPG) FindAll(ctx context.Context) ([]*model.User, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
@@ -152,7 +149,6 @@ func (u *userRepoPG) UpdateUserPassword(ctx context.Context, userID uuid.UUID, n
 }
 
 func (u *userRepoPG) UserHasPermission(ctx context.Context, userID uuid.UUID, permission string) (bool, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
