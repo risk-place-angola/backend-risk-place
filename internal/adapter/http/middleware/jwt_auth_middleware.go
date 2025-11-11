@@ -3,14 +3,14 @@ package middleware
 import (
 	"context"
 	"fmt"
-	httputil "github.com/risk-place-angola/backend-risk-place/internal/adapter/http/util"
-	"github.com/risk-place-angola/backend-risk-place/internal/config"
 	"log/slog"
 	"net/http"
 	"strings"
 
+	httputil "github.com/risk-place-angola/backend-risk-place/internal/adapter/http/util"
+	"github.com/risk-place-angola/backend-risk-place/internal/config"
+
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/risk-place-angola/backend-risk-place/internal/adapter/http/util"
 )
 
 type AuthMiddleware struct {
@@ -34,7 +34,7 @@ func (m *AuthMiddleware) ValidateJWT(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), util.UserIDCtxKey, sub)
+		ctx := context.WithValue(r.Context(), httputil.UserIDCtxKey, sub)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
