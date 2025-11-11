@@ -1,26 +1,50 @@
-version: '3.7'
+version: '3.8'
 
 x-services-defaults: &defaults
   restart: on-failure
   networks:
     - risk-place_ntk
-  extra_hosts:
-      - "host.docker.internal:host-gateway"
 
 services:
   db:
     <<: *defaults
-    image: postgres:9.4
+    image: postgres:15-alpine
     container_name: risk_place_db
     tty: true
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - ./tmp/postgres/data:/var/lib/postgresql/data
+      - ./migrations/000001_init_schema.up.sql:/docker-entrypoint-initdb.d/db.sql
     environment:
       - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
       - "${DB_PORT}:${DB_PORT}"
+
+  redis:
+    <<: *defaults
+    image: redis:7-alpine
+    container_name: risk_place_redis
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+
+  mailpit:
+    <<: *defaults
+    image: mailpit/mailpit:latest
+    container_name: risk_place_mailpit
+    ports:
+      - "8025:8025"   # Web UI
+      - "1025:1025"   # SMTP
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_DATABASE: /tmp/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
    
   api:
     <<: *defaults
@@ -30,8 +54,6 @@ services:
       dockerfile: Dockerfile.dev
     env_file:
       - .env
-    volumes:
-      - .:/src/
     ports:
       - "${PORT}:${PORT}"
     depends_on:
@@ -41,4 +63,4 @@ networks:
   risk-place_ntk: {}
 
 volumes:
-  postgres: {}
+  redis_data: {}
