@@ -3,9 +3,10 @@ package websocket
 import (
 	"context"
 	"encoding/json"
-	"github.com/risk-place-angola/backend-risk-place/internal/application/port"
 	"log"
 	"log/slog"
+
+	"github.com/risk-place-angola/backend-risk-place/internal/application/port"
 )
 
 type Hub struct {
@@ -54,7 +55,7 @@ func (h *Hub) Run() {
 	}
 }
 
-func (h *Hub) handleIncomingMessage(c *Client, raw []byte) {
+func (h *Hub) handleIncomingMessage(ctx context.Context, c *Client, raw []byte) {
 	var msg Message
 	if err := json.Unmarshal(raw, &msg); err != nil {
 		log.Println("invalid message:", err)
@@ -64,18 +65,26 @@ func (h *Hub) handleIncomingMessage(c *Client, raw []byte) {
 	switch msg.Event {
 	case "update_location":
 		var payload UpdateLocationPayload
-		b, _ := json.Marshal(msg.Data)
-		_ = json.Unmarshal(b, &payload)
+		b, err := json.Marshal(msg.Data)
+		if err != nil {
+			log.Printf("failed to marshal payload: %v", err)
+			return
+		}
+		err = json.Unmarshal(b, &payload)
+		if err != nil {
+			log.Printf("failed to unmarshal payload: %v", err)
+			return
+		}
 
-		err := h.locationStore.UpdateUserLocation(context.Background(), c.UserID, payload.Latitude, payload.Longitude)
+		err = h.locationStore.UpdateUserLocation(ctx, c.UserID, payload.Latitude, payload.Longitude)
 		if err != nil {
 			log.Printf("failed to update location: %v", err)
 			return
 		}
 
-		c.SendJSON("location_updated", map[string]interface{}{
-			"status": "ok",
-		})
+		c.SendJSON("location_updated", map[string]interface{}{"status": "ok"})
+	default:
+		log.Printf("unknown event type: %s", msg.Event)
 	}
 }
 
