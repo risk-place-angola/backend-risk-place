@@ -318,15 +318,33 @@ The API follows RESTful principles with the following main endpoints:
 - **Notification System**: Multi-channel delivery (Push, SMS, Email)
 - **Real-time Updates**: WebSocket-based alert broadcasting
 
-### Diagrams
+## 📱 Integration Guides
 
-#### Alert Use Cases
+### For Mobile Developers
+
+**[📲 Mobile WebSocket Integration Guide](./docs/MOBILE_WEBSOCKET_INTEGRATION.md)**
+
+Complete guide for integrating the Risk Place WebSocket system into mobile applications (Flutter, React Native, iOS, Android). Includes:
+- Authentication flow with JWT
+- WebSocket connection management
+- Real-time event handling (alerts, reports, notifications)
+- Location update protocols
+- Error handling and reconnection strategies
+- Testing scenarios with sample data
+
+### For Backend Developers
+
+- **[WebSocket Notification System](./docs/WEBSOCKET_NOTIFICATION_GUIDE.md)** - Complete WebSocket system documentation with testing examples and implementation details
+
+## 📊 Architecture Diagrams
+
+### Alert Use Cases
 ![Trigger Alert Use Case Diagram](./docs/diagram/TriggerAlertFlow.svg)
 
-#### Reporting Use Cases
+### Reporting Use Cases
 ![Report Use Case Diagram](./docs/diagram/ReportFlow.svg)
 
-#### User Authentication Use Cases
+### User Authentication Use Cases
 ![User Authentication Use Case Diagram](./docs/diagram/UserAuthenticationFlow.svg)
 
 ### Notification Flow
