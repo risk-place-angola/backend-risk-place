@@ -200,6 +200,9 @@ info:
     ## Environments
     - **Development**: https://risk-place-angola-904a.onrender.com
     - **Local**: http://localhost:8000
+
+    ## WebSocket Integration Guide
+    For detailed instructions on integrating WebSocket in mobile applications, please refer to our [WebSocket Notification Guide](https://github.com/risk-place-angola/backend-risk-place/blob/develop/docs/MOBILE_WEBSOCKET_INTEGRATION.md)
   title: Risk Place Angola API
   version: 1.0.0
 paths:

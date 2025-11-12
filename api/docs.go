@@ -937,7 +937,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Risk Place Angola API",
-	Description:      "This is the API documentation for the Risk Place Angola application.\n\n## Environments\n- **Development**: https://risk-place-angola-904a.onrender.com\n- **Local**: http://localhost:8000",
+	Description:      "This is the API documentation for the Risk Place Angola application.\n\n## Environments\n- **Development**: https://risk-place-angola-904a.onrender.com\n- **Local**: http://localhost:8000\n\n## WebSocket Integration Guide\nFor detailed instructions on integrating WebSocket in mobile applications, please refer to our [WebSocket Notification Guide](https://github.com/risk-place-angola/backend-risk-place/blob/develop/docs/MOBILE_WEBSOCKET_INTEGRATION.md)",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
