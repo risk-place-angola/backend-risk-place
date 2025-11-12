@@ -9,6 +9,9 @@ import "github.com/risk-place-angola/backend-risk-place/api"
 // @description ## Environments
 // @description - **Development**: https://risk-place-angola-904a.onrender.com
 // @description - **Local**: http://localhost:8000
+// @description
+// @description ## WebSocket Integration Guide
+// @description For detailed instructions on integrating WebSocket in mobile applications, please refer to our [WebSocket Notification Guide](https://github.com/risk-place-angola/backend-risk-place/blob/develop/docs/MOBILE_WEBSOCKET_INTEGRATION.md)
 
 // @contact.name API Support
 // @contact.url http://www.riskplace.ao
