@@ -96,7 +96,7 @@ This document explains how the backend WebSocket system works and what mobile ap
 |-------------|---------------|----------|
 | **Development** | `ws://localhost:8000/ws/alerts` | ws:// |
 | **Staging** | `ws://risk-place-angola-904a.onrender.com/ws/alerts` | ws:// |
-| **Production** | `wss://exemple.riskplace.com/ws/alerts` | wss:// (TLS) |
+| **Production** | `wss://example.riskplace.com/ws/alerts` | wss:// (TLS) |
 
 > ⚠️ **Important**: Production uses `wss://` (WebSocket Secure) with TLS encryption.
 
@@ -124,7 +124,7 @@ The JWT token must be obtained from the login endpoint before connecting.
 **HTTP Request:**
 ```http
 POST /api/v1/auth/login HTTP/1.1
-Host: exemple.riskplace.com
+Host: example.riskplace.com
 Content-Type: application/json
 
 {
@@ -159,7 +159,7 @@ The mobile app must include the JWT token in the `Authorization` header when est
 **Connection Example (Conceptual):**
 ```javascript
 // Conceptual example - adapt to your platform
-const ws = new WebSocket('wss://exemple.riskplace.com/ws/alerts', {
+const ws = new WebSocket('wss://example.riskplace.com/ws/alerts', {
   headers: {
     'Authorization': 'Bearer ' + jwtToken
   }
@@ -1031,7 +1031,7 @@ Expected performance metrics:
 - Email: dev@riskplace.com
 
 **Documentation:**
-- API Docs: https://exemple.riskplace.com/docs/
+- API Docs: https://example.riskplace.com/docs/
 - WebSocket Guide: [WEBSOCKET_NOTIFICATION_GUIDE.md](./WEBSOCKET_NOTIFICATION_GUIDE.md)
 
 ---
