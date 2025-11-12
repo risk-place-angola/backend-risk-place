@@ -354,7 +354,7 @@ Sent when a report is marked as resolved, notifying nearby users.
    **Response:**
    ```json
    {
-     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+     "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
      "user": { ... }
    }
    ```
