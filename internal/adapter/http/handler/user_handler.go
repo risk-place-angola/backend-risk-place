@@ -57,7 +57,7 @@ func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 // Login godoc
 // @Summary Login a user
 // @Description Login a user
-// @Tags users
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param credentials body dto.LoginInput true "User login credentials"

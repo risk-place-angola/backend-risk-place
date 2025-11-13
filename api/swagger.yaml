@@ -302,7 +302,7 @@ paths:
             $ref: '#/definitions/util.ErrorResponse'
       summary: Login a user
       tags:
-      - users
+      - auth
   /auth/password/forgot:
     post:
       consumes:
