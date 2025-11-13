@@ -272,7 +272,7 @@ paths:
             $ref: '#/definitions/util.ErrorResponse'
       summary: Confirm user signup
       tags:
-      - users
+      - auth
   /auth/login:
     post:
       consumes:
@@ -335,7 +335,7 @@ paths:
             $ref: '#/definitions/util.ErrorResponse'
       summary: Initiate password reset
       tags:
-      - users
+      - auth
   /auth/password/reset:
     post:
       consumes:
@@ -370,7 +370,33 @@ paths:
             $ref: '#/definitions/util.ErrorResponse'
       summary: Reset user password
       tags:
-      - users
+      - auth
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user
+      parameters:
+      - description: User registration data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterUserInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.RegisterUserOutput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - auth
   /reports:
     post:
       consumes:
@@ -550,32 +576,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Get current user info
-      tags:
-      - users
-  /users/signup:
-    post:
-      consumes:
-      - application/json
-      description: Register a new user
-      parameters:
-      - description: User registration data
-        in: body
-        name: user
-        required: true
-        schema:
-          $ref: '#/definitions/dto.RegisterUserInput'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/dto.RegisterUserOutput'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-      summary: Register a new user
       tags:
       - users
   /ws/alerts:

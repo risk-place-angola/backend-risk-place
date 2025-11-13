@@ -25,13 +25,13 @@ func NewUserHandler(userUseCase *application.Application) *UserHandler {
 // Signup godoc
 // @Summary Register a new user
 // @Description Register a new user
-// @Tags users
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param user body dto.RegisterUserInput true "User registration data"
 // @Success 201 {object} dto.RegisterUserOutput
 // @Failure 400 {object} util.ErrorResponse
-// @Router /users/signup [post]
+// @Router /auth/signup [post]
 func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		util.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -92,7 +92,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 // ForgotPassword godoc
 // @Summary Initiate password reset
 // @Description Send a password reset code to the user's email
-// @Tags users
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param email body object{email=string} true "User email"
@@ -126,7 +126,7 @@ func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 // ResetPassword godoc
 // @Summary Reset user password
 // @Description Reset user password using the reset code
-// @Tags users
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param reset body object{email=string,password=string} true "Password reset data"
@@ -163,7 +163,7 @@ func (h *UserHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 // ConfirmSignup godoc
 // @Summary Confirm user signup
 // @Description Confirm user signup using the verification code
-// @Tags users
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param confirmation body object{email=string,code=string} true "Signup confirmation data"
