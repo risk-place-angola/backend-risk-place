@@ -12,13 +12,21 @@ import (
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/repository"
 )
 
-type ReportPG struct {
-	q sqlc.Querier
+type LocationStore interface {
+	UpdateReportLocation(ctx context.Context, reportID string, lat, lon float64) error
+	FindReportsInRadius(ctx context.Context, lat, lon float64, radiusMeters float64) ([]string, error)
+	RemoveReportLocation(ctx context.Context, reportID string) error
 }
 
-func NewReportRepoPG(db *sql.DB) repository.ReportRepository {
+type ReportPG struct {
+	q             sqlc.Querier
+	locationStore LocationStore
+}
+
+func NewReportRepoPG(db *sql.DB, locationStore LocationStore) repository.ReportRepository {
 	return &ReportPG{
-		q: sqlc.New(db),
+		q:             sqlc.New(db),
+		locationStore: locationStore,
 	}
 }
 
@@ -64,7 +72,8 @@ func timePtr(t sql.NullTime) *time.Time {
 }
 
 func (r *ReportPG) Create(ctx context.Context, m *model.Report) error {
-	return r.q.CreateReport(ctx, sqlc.CreateReportParams{
+	// Cria o report no PostgreSQL e obtém o ID gerado
+	reportID, err := r.q.CreateReport(ctx, sqlc.CreateReportParams{
 		UserID:       m.UserID,
 		RiskTypeID:   m.RiskTypeID,
 		RiskTopicID:  uuid.NullUUID{UUID: m.RiskTopicID, Valid: m.RiskTopicID != uuid.Nil},
@@ -77,6 +86,22 @@ func (r *ReportPG) Create(ctx context.Context, m *model.Report) error {
 		Address:      sqlString(m.Address),
 		ImageUrl:     sqlString(m.ImageURL),
 	})
+	if err != nil {
+		slog.Error("failed to create report", "error", err)
+		return err
+	}
+
+	// Salva a localização do report no Redis para buscas geoespaciais rápidas
+	if err := r.locationStore.UpdateReportLocation(ctx, reportID.String(), m.Latitude, m.Longitude); err != nil {
+		slog.Warn("failed to update report location in redis", "reportID", reportID, "error", err)
+		// Não retorna erro, pois o report já foi criado no PostgreSQL
+		// A falha no Redis não deve impedir a criação do report
+	}
+
+	// Atualiza o ID no model
+	m.ID = reportID
+
+	return nil
 }
 
 func (r *ReportPG) GetByID(ctx context.Context, id uuid.UUID) (*model.Report, error) {
@@ -115,12 +140,47 @@ func (r *ReportPG) ResolveReport(ctx context.Context, reportID uuid.UUID) error 
 }
 
 func (r *ReportPG) DeleteReport(ctx context.Context, reportID uuid.UUID) error {
-	return r.q.DeleteReport(ctx, reportID)
+	// Deleta o report do PostgreSQL
+	err := r.q.DeleteReport(ctx, reportID)
+	if err != nil {
+		slog.Error("failed to delete report", "reportID", reportID, "error", err)
+		return err
+	}
+
+	// Remove a localização do Redis
+	if err := r.locationStore.RemoveReportLocation(ctx, reportID.String()); err != nil {
+		slog.Warn("failed to remove report location from redis", "reportID", reportID, "error", err)
+		// Não retorna erro, pois o report já foi deletado do PostgreSQL
+	}
+
+	return nil
 }
 
-func (r *ReportPG) Update(ctx context.Context, m *model.Report) error {
-	// Pode ser criado depois com UpdateCustom
-	return sql.ErrNoRows // ainda não implementado no SQLC
+func (r *ReportPG) UpdateLocation(ctx context.Context, reportID uuid.UUID, params repository.UpdateLocationParams) error {
+	// Atualiza a localização no PostgreSQL
+	_, err := r.q.UpdateReportLocation(ctx, sqlc.UpdateReportLocationParams{
+		ID:        reportID,
+		Latitude:  params.Latitude,
+		Longitude: params.Longitude,
+		Column4:   params.Address,
+		Column5:   params.Neighborhood,
+		Column6:   params.Municipality,
+		Column7:   params.Province,
+	})
+	if err != nil {
+		slog.Error("failed to update report location", "reportID", reportID, "error", err)
+		return err
+	}
+
+	// Atualiza a localização no Redis para buscas geoespaciais
+	if err := r.locationStore.UpdateReportLocation(ctx, reportID.String(), params.Latitude, params.Longitude); err != nil {
+		slog.Warn("failed to update report location in redis", "reportID", reportID, "error", err)
+		// Não retorna erro, pois a localização já foi atualizada no PostgreSQL
+	}
+
+	slog.Info("report location updated successfully", "reportID", reportID)
+
+	return nil
 }
 
 func (r *ReportPG) CreateReportNotification(ctx context.Context, reportID uuid.UUID, userID uuid.UUID) error {
@@ -132,15 +192,38 @@ func (r *ReportPG) CreateReportNotification(ctx context.Context, reportID uuid.U
 }
 
 func (r *ReportPG) FindByRadius(ctx context.Context, lat float64, lon float64, radiusMeters float64) ([]*model.Report, error) {
-	items, err := r.q.ListReportsNearby(ctx, sqlc.ListReportsNearbyParams{
-		Column1: lon,
-		Column2: lat,
-		Column3: radiusMeters,
-	})
+	// 1. Busca IDs dos reports próximos usando Redis (ultra-rápido)
+	reportIDs, err := r.locationStore.FindReportsInRadius(ctx, lat, lon, radiusMeters)
 	if err != nil {
-		slog.Error("failed to find reports by radius", "error", err)
+		slog.Error("failed to find reports in radius from redis", "error", err)
 		return nil, err
 	}
+
+	// Se não encontrou nenhum report próximo, retorna lista vazia
+	if len(reportIDs) == 0 {
+		slog.Info("no reports found in radius")
+		return []*model.Report{}, nil
+	}
+
+	// 2. Converte strings para UUIDs
+	uuids := make([]uuid.UUID, 0, len(reportIDs))
+	for _, id := range reportIDs {
+		reportUUID, err := uuid.Parse(id)
+		if err != nil {
+			slog.Warn("invalid report UUID from redis", "id", id, "error", err)
+			continue
+		}
+		uuids = append(uuids, reportUUID)
+	}
+
+	// 3. Busca os dados completos dos reports no PostgreSQL
+	items, err := r.q.ListReportsByIDs(ctx, uuids)
+	if err != nil {
+		slog.Error("failed to find reports by ids", "error", err)
+		return nil, err
+	}
+
+	slog.Info("found reports in radius", "count", len(items))
 
 	return mapSlice(items, dbToModel), nil
 }
