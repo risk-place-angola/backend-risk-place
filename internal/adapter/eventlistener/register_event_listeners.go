@@ -15,6 +15,7 @@ func RegisterEventListeners(
 	dispatcher port.EventDispatcher,
 	hub *websocket.Hub,
 	userRepo domainrepository.UserRepository,
+	anonymousSessionRepo domainrepository.AnonymousSessionRepository,
 	notifierPush port.NotifierPushService,
 	notifierSMS port.NotifierSMSService,
 ) {
@@ -22,6 +23,7 @@ func RegisterEventListeners(
 		dispatcher,
 		hub,
 		userRepo,
+		anonymousSessionRepo,
 		notifierPush,
 		"AlertCreated",
 		"🚨 Alerta de Risco",
@@ -35,6 +37,7 @@ func RegisterEventListeners(
 		dispatcher,
 		hub,
 		userRepo,
+		anonymousSessionRepo,
 		notifierPush,
 		"ReportCreated",
 		"📍 Novo Relato de Risco",
@@ -77,6 +80,7 @@ func registerBroadcastHandler[T any](
 	dispatcher port.EventDispatcher,
 	hub *websocket.Hub,
 	userRepo domainrepository.UserRepository,
+	anonymousSessionRepo domainrepository.AnonymousSessionRepository,
 	notifierPush port.NotifierPushService,
 	eventName, title string,
 	broadcast func(context.Context, *websocket.Hub, T),
@@ -93,20 +97,39 @@ func registerBroadcastHandler[T any](
 		broadcast(ctx, hub, ev)
 
 		var userID []uuid.UUID
+		var lat, lon, radius float64
+
 		switch v := any(ev).(type) {
 		case event.AlertCreatedEvent:
 			userID = v.UserID
+			lat = v.Latitude
+			lon = v.Longitude
+			radius = v.Radius
 		case event.ReportCreatedEvent:
 			userID = v.UserID
+			lat = v.Latitude
+			lon = v.Longitude
+			radius = v.Radius
 		}
 
+		// Get FCM tokens from authenticated users
 		deviceTokens, err := userRepo.ListDeviceTokensByUserIDs(ctx, userID)
 		if err != nil {
 			slog.Error("failed to list device tokens", "event_name", eventName, "error", err)
-			return
 		}
 
-		if len(deviceTokens) > 0 {
+		// Get FCM tokens from anonymous sessions in radius
+		anonymousTokens, err := anonymousSessionRepo.GetFCMTokensInRadius(ctx, lat, lon, radius)
+		if err != nil {
+			slog.Error("failed to list anonymous tokens", "event_name", eventName, "error", err)
+		}
+
+		// Combine all tokens
+		allTokens := make([]string, 0, len(deviceTokens)+len(anonymousTokens))
+		allTokens = append(allTokens, deviceTokens...)
+		allTokens = append(allTokens, anonymousTokens...)
+
+		if len(allTokens) > 0 {
 			var id string
 			switch v := any(ev).(type) {
 			case event.AlertCreatedEvent:
@@ -115,7 +138,13 @@ func registerBroadcastHandler[T any](
 				id = v.ReportID.String()
 			}
 
-			err = notifierPush.NotifyPushMulti(ctx, deviceTokens, title, getMessage(ev), map[string]string{
+			slog.Info("sending push notifications",
+				slog.String("event", eventName),
+				slog.Int("authenticated_users", len(deviceTokens)),
+				slog.Int("anonymous_sessions", len(anonymousTokens)),
+				slog.Int("total", len(allTokens)))
+
+			err = notifierPush.NotifyPushMulti(ctx, allTokens, title, getMessage(ev), map[string]string{
 				idKey: id,
 			})
 			if err != nil {
