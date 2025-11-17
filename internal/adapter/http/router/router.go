@@ -40,6 +40,7 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	// Reports
 	g.ProtectedJWT.HandleFunc("POST /api/v1/reports", container.ReportHandler.Create)
 	g.ProtectedJWT.HandleFunc("GET /api/v1/reports/nearby", container.ReportHandler.ListNearby)
+	g.ProtectedJWT.HandleFunc("PUT /api/v1/reports/{id}/location", container.ReportHandler.UpdateLocation)
 	g.ProtectedJWT.HandleFunc("POST /api/v1/reports/{id}/verify", container.ReportHandler.Verify)
 	g.ProtectedJWT.HandleFunc("POST /api/v1/reports/{id}/resolve", container.ReportHandler.Resolve)
 

@@ -180,3 +180,48 @@ func (h *ReportHandler) Resolve(w http.ResponseWriter, r *http.Request) {
 		"report_id": id,
 	}, http.StatusOK)
 }
+
+// UpdateLocation godoc
+// @Summary Update report location
+// @Description Update the geographic location of a report (used when user drags marker on map)
+// @Tags reports
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Report ID"
+// @Param location body dto.UpdateReportLocationRequest true "New location data"
+// @Success 200 {object} dto.UpdateReportLocationResponse
+// @Failure 400 {object} util.ErrorResponse
+// @Failure 401 {object} util.ErrorResponse
+// @Failure 404 {object} util.ErrorResponse
+// @Failure 500 {object} util.ErrorResponse
+// @Router /reports/{id}/location [put]
+func (h *ReportHandler) UpdateLocation(w http.ResponseWriter, r *http.Request) {
+	reportID := r.PathValue("id")
+	if reportID == "" {
+		util.Error(w, "report ID is required", http.StatusBadRequest)
+		return
+	}
+
+	if _, err := uuid.Parse(reportID); err != nil {
+		util.Error(w, "invalid report ID format", http.StatusBadRequest)
+		return
+	}
+
+	var req dto.UpdateReportLocationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		util.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.reportUseCase.ReportUseCase.UpdateLocation(r.Context(), reportID, req); err != nil {
+		slog.Error("failed to update report location", "reportID", reportID, "error", err)
+		util.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	util.Response(w, map[string]string{
+		"id":      reportID,
+		"message": "Report location updated successfully",
+	}, http.StatusOK)
+}
