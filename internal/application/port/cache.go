@@ -29,6 +29,7 @@ type HashCache interface {
 type GeoCache interface {
 	GeoAdd(ctx context.Context, key string, longitude, latitude float64, member string) error
 	GeoSearch(ctx context.Context, key string, longitude, latitude, radiusMeters float64) ([]string, error)
+	GeoRemove(ctx context.Context, key string, member string) error
 }
 
 type HealthChecker interface {
