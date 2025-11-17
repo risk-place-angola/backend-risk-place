@@ -124,6 +124,50 @@ definitions:
     required:
     - moderator_id
     type: object
+  dto.RiskTopicResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      risk_type_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RiskTopicsListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.RiskTopicResponse'
+        type: array
+    type: object
+  dto.RiskTypeResponse:
+    properties:
+      created_at:
+        type: string
+      default_radius:
+        type: integer
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RiskTypesListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.RiskTypeResponse'
+        type: array
+    type: object
   dto.UserProfileOutput:
     properties:
       address:
@@ -553,6 +597,50 @@ paths:
       summary: List nearby reports
       tags:
       - reports
+  /risks/topics:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve risk topics, optionally filtered by risk_type_id query
+        parameter.
+      parameters:
+      - description: Filter by risk type ID (UUID)
+        in: query
+        name: risk_type_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RiskTopicsListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: List risk topics.
+      tags:
+      - risks
+  /risks/types:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all available risk types with their default radius.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RiskTypesListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: List all risk types.
+      tags:
+      - risks
   /users/me:
     get:
       consumes:
