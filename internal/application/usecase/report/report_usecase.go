@@ -111,9 +111,6 @@ func (uc *ReportUseCase) Verify(ctx context.Context, reportID string) error {
 		return err
 	}
 
-	report.Status = model.ReportStatusVerified
-	_ = uc.repo.Update(ctx, report)
-
 	uc.eventDispatcher.Dispatch(event.ReportVerifiedEvent{
 		ReportID: report.ID,
 		UserID:   report.UserID,
@@ -127,10 +124,6 @@ func (uc *ReportUseCase) Resolve(ctx context.Context, reportID, moderatorID stri
 	if err != nil {
 		return err
 	}
-
-	report.Status = model.ReportStatusResolved
-	report.ReviewedBy = uuid.MustParse(moderatorID)
-	_ = uc.repo.Update(ctx, report)
 
 	riskType, _ := uc.riskTypesRepo.GetRiskTypeByID(ctx, report.RiskTypeID.String())
 
@@ -154,4 +147,41 @@ func (uc *ReportUseCase) ListNearby(ctx context.Context, lat, lon, radius float6
 		return nil, err
 	}
 	return uc.repo.FindByRadius(ctx, lat, lon, radius)
+}
+
+func (uc *ReportUseCase) UpdateLocation(ctx context.Context, reportID string, req dto.UpdateReportLocationRequest) error {
+	id, err := uuid.Parse(reportID)
+	if err != nil {
+		slog.Error("invalid report ID", "reportID", reportID, "error", err)
+		return err
+	}
+
+	err = uc.geoService.ValidateCoordinates(req.Latitude, req.Longitude)
+	if err != nil {
+		slog.Error("invalid coordinates", "error", err)
+		return err
+	}
+
+	report, err := uc.repo.GetByID(ctx, id)
+	if err != nil {
+		slog.Error("failed to get report", "reportID", reportID, "error", err)
+		return err
+	}
+
+	err = uc.repo.UpdateLocation(ctx, id, repository.UpdateLocationParams{
+		Latitude:     req.Latitude,
+		Longitude:    req.Longitude,
+		Address:      req.Address,
+		Neighborhood: req.Neighborhood,
+		Municipality: req.Municipality,
+		Province:     req.Province,
+	})
+	if err != nil {
+		slog.Error("failed to update report location", "reportID", reportID, "error", err)
+		return err
+	}
+
+	slog.Info("report location updated", "reportID", reportID, "userID", report.UserID)
+
+	return nil
 }

@@ -161,3 +161,8 @@ func (r *Redis) GeoSearch(ctx context.Context, key string, longitude float64, la
 	}
 	return members, nil
 }
+
+// GeoRemove removes a geospatial member from the geospatial index stored at key.
+func (r *Redis) GeoRemove(ctx context.Context, key string, member string) error {
+	return r.client.ZRem(ctx, key, member).Err()
+}

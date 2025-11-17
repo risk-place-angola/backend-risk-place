@@ -49,20 +49,21 @@ func NewContainer() (*Container, error) {
 	twilioSMS := twilio.NewTwilio(cfg.TwilioConfig)
 	firebaseApp := fcm.NewFirebaseApp(cfg.FirebaseConfig)
 
+	// Location Store (usado por reports e websocket)
+	locationStore := location.NewRedisLocationStore(rdb)
+
 	// Repositories
 	userRepoPG := postgres.NewUserRepoPG(database)
 	roleRepoPG := postgres.NewRoleRepoPG(database)
 	alertRepoPG := postgres.NewAlertRepoPG(database)
 	riskTypeRepoPG := postgres.NewRiskTypeRepoPG(database)
 	riskTopicRepoPG := postgres.NewRiskTopicRepoPG(database)
-	reportRepoPG := postgres.NewReportRepoPG(database)
+	reportRepoPG := postgres.NewReportRepoPG(database, locationStore)
 
 	// Services (Adapters)
 	emailService := notifier.NewSmtpEmailService(cfg)
 	tokenService := service.NewJwtTokenService(cfg)
 	hashService := service.NewBcryptHasher()
-
-	locationStore := location.NewRedisLocationStore(rdb)
 	geoService := domainService.NewGeolocationService()
 
 	// Event Dispatcher
