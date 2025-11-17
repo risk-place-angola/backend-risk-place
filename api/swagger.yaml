@@ -32,12 +32,55 @@ definitions:
       user_id:
         type: string
     type: object
+  dto.DeviceResponse:
+    properties:
+      alert_radius_meters:
+        type: integer
+      device_id:
+        type: string
+      fcm_token:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      message:
+        type: string
+      platform:
+        type: string
+    type: object
   dto.LoginInput:
     properties:
       email:
         type: string
       password:
         type: string
+    type: object
+  dto.RegisterDeviceRequest:
+    properties:
+      alert_radius_meters:
+        type: integer
+      device_id:
+        minLength: 16
+        type: string
+      fcm_token:
+        type: string
+      language:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      model:
+        type: string
+      platform:
+        enum:
+        - ios
+        - android
+        - web
+        type: string
+    required:
+    - device_id
     type: object
   dto.RegisterUserInput:
     properties:
@@ -168,6 +211,50 @@ definitions:
           $ref: '#/definitions/dto.RiskTypeResponse'
         type: array
     type: object
+  dto.UpdateDeviceLocationRequest:
+    properties:
+      device_id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+    required:
+    - device_id
+    - latitude
+    - longitude
+    type: object
+  dto.UpdateReportLocationRequest:
+    properties:
+      address:
+        type: string
+      latitude:
+        maximum: 90
+        minimum: -90
+        type: number
+      longitude:
+        maximum: 180
+        minimum: -180
+        type: number
+      municipality:
+        type: string
+      neighborhood:
+        type: string
+      province:
+        type: string
+    required:
+    - latitude
+    - longitude
+    type: object
+  dto.UpdateReportLocationResponse:
+    properties:
+      id:
+        type: string
+      message:
+        type: string
+      updated_at:
+        type: string
+    type: object
   dto.UserProfileOutput:
     properties:
       address:
@@ -282,6 +369,70 @@ paths:
       summary: Create a new alert.
       tags:
       - alerts
+  /api/v1/devices/location:
+    put:
+      consumes:
+      - application/json
+      description: Update the location of an anonymous device for proximity-based
+        notifications
+      parameters:
+      - description: Location update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateDeviceLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Update device location
+      tags:
+      - devices
+  /api/v1/devices/register:
+    post:
+      consumes:
+      - application/json
+      description: Register or update an anonymous device for receiving notifications
+        without authentication
+      parameters:
+      - description: Device registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterDeviceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DeviceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Register anonymous device
+      tags:
+      - devices
   /auth/confirm:
     post:
       consumes:
@@ -471,6 +622,52 @@ paths:
       security:
       - BearerAuth: []
       summary: Create a new report
+      tags:
+      - reports
+  /reports/{id}/location:
+    put:
+      consumes:
+      - application/json
+      description: Update the geographic location of a report (used when user drags
+        marker on map)
+      parameters:
+      - description: Report ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New location data
+        in: body
+        name: location
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateReportLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UpdateReportLocationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update report location
       tags:
       - reports
   /reports/{id}/resolve:
@@ -668,7 +865,13 @@ paths:
       - users
   /ws/alerts:
     get:
-      description: Upgrade HTTP connection to WebSocket for real-time alerts
+      description: Upgrade HTTP connection to WebSocket for real-time alerts. Supports
+        both authenticated (JWT) and anonymous (device_id) connections
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
       responses:
         "101":
           description: Switching Protocols
