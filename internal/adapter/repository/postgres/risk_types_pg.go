@@ -18,7 +18,7 @@ type RiskTypePG struct {
 
 func (r *RiskTypePG) CreateRiskType(ctx context.Context, name string, description string, defaultRadiusMeters *int) error {
 	var radiusInt32 sql.NullInt32
-	
+
 	if defaultRadiusMeters != nil {
 		if *defaultRadiusMeters > math.MaxInt32 || *defaultRadiusMeters < math.MinInt32 {
 			return fmt.Errorf("default radius meters out of range: must be between %d and %d", math.MinInt32, math.MaxInt32)
@@ -46,6 +46,8 @@ func (r *RiskTypePG) ListRiskTypes(ctx context.Context) ([]model.RiskType, error
 			Name:                rt.Name,
 			Description:         rt.Description.String,
 			DefaultRadiusMeters: int(rt.DefaultRadiusMeters.Int32),
+			CreatedAt:           rt.CreatedAt.Time,
+			UpdatedAt:           rt.UpdatedAt.Time,
 		})
 	}
 
@@ -63,6 +65,8 @@ func (r *RiskTypePG) GetRiskTypeByID(ctx context.Context, id string) (model.Risk
 		Name:                rt.Name,
 		Description:         rt.Description.String,
 		DefaultRadiusMeters: int(rt.DefaultRadiusMeters.Int32),
+		CreatedAt:           rt.CreatedAt.Time,
+		UpdatedAt:           rt.UpdatedAt.Time,
 	}, nil
 }
 

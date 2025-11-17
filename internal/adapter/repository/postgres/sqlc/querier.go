@@ -31,6 +31,7 @@ type Querier interface {
 	ExpireAlert(ctx context.Context, id uuid.UUID) error
 	GetEntitiesByType(ctx context.Context, entityType interface{}) ([]Entity, error)
 	GetReportByID(ctx context.Context, id uuid.UUID) (Report, error)
+	GetRiskTopicByID(ctx context.Context, id uuid.UUID) (RiskTopic, error)
 	GetRiskTypeByID(ctx context.Context, id uuid.UUID) (RiskType, error)
 	GetRoleByName(ctx context.Context, name string) (Role, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
@@ -45,6 +46,7 @@ type Querier interface {
 	ListReportsByStatus(ctx context.Context, status interface{}) ([]Report, error)
 	ListReportsByUser(ctx context.Context, userID uuid.UUID) ([]Report, error)
 	ListReportsNearby(ctx context.Context, arg ListReportsNearbyParams) ([]Report, error)
+	ListRiskTopics(ctx context.Context) ([]RiskTopic, error)
 	ListRiskTopicsByType(ctx context.Context, riskTypeID uuid.UUID) ([]RiskTopic, error)
 	ListRiskTypes(ctx context.Context) ([]RiskType, error)
 	ListRoles(ctx context.Context) ([]Role, error)

@@ -47,6 +47,58 @@ func (q *Queries) DeleteRiskTopic(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getRiskTopicByID = `-- name: GetRiskTopicByID :one
+SELECT id, risk_type_id, name, description, created_at, updated_at FROM risk_topics WHERE id = $1
+`
+
+func (q *Queries) GetRiskTopicByID(ctx context.Context, id uuid.UUID) (RiskTopic, error) {
+	row := q.db.QueryRowContext(ctx, getRiskTopicByID, id)
+	var i RiskTopic
+	err := row.Scan(
+		&i.ID,
+		&i.RiskTypeID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const listRiskTopics = `-- name: ListRiskTopics :many
+SELECT id, risk_type_id, name, description, created_at, updated_at FROM risk_topics ORDER BY created_at DESC
+`
+
+func (q *Queries) ListRiskTopics(ctx context.Context) ([]RiskTopic, error) {
+	rows, err := q.db.QueryContext(ctx, listRiskTopics)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []RiskTopic{}
+	for rows.Next() {
+		var i RiskTopic
+		if err := rows.Scan(
+			&i.ID,
+			&i.RiskTypeID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRiskTopicsByType = `-- name: ListRiskTopicsByType :many
 SELECT id, risk_type_id, name, description, created_at, updated_at FROM risk_topics WHERE risk_type_id = $1 ORDER BY created_at DESC
 `

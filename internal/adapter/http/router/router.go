@@ -30,6 +30,10 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	// WebSocket connection
 	mux.HandleFunc("/ws/alerts", container.WSHandler.HandleWebSocket)
 
+	// Risks
+	g.ProtectedJWT.HandleFunc("GET /api/v1/risks/types", container.RiskHandler.ListRiskTypes)
+	g.ProtectedJWT.HandleFunc("GET /api/v1/risks/topics", container.RiskHandler.ListRiskTopics)
+
 	// Alert
 	g.ProtectedJWT.HandleFunc("POST /api/v1/alerts", container.AlertHandler.CreateAlert)
 
