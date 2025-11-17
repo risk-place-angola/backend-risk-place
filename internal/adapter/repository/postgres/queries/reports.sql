@@ -1,4 +1,4 @@
--- name: CreateReport :exec
+-- name: CreateReport :one
 INSERT INTO reports (
     user_id, risk_type_id, risk_topic_id, description,
     latitude, longitude, province, municipality,
@@ -6,7 +6,8 @@ INSERT INTO reports (
 ) VALUES (
              $1, $2, $3, $4, $5,
              $6, $7, $8, $9, $10, $11
-         );
+         )
+RETURNING id;
 
 -- name: ListReportsByStatus :many
 SELECT * FROM reports WHERE status = $1 ORDER BY created_at DESC;
@@ -45,18 +46,26 @@ WHERE id = $1;
 -- name: DeleteReport :exec
 DELETE FROM reports WHERE id = $1;
 
--- name: ListReportsNearby :many
+-- name: UpdateReportLocation :one
+UPDATE reports
+SET latitude = $2,
+    longitude = $3,
+    address = COALESCE(NULLIF($4, ''), address),
+    neighborhood = COALESCE(NULLIF($5, ''), neighborhood),
+    municipality = COALESCE(NULLIF($6, ''), municipality),
+    province = COALESCE(NULLIF($7, ''), province),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, updated_at;
+
+-- name: ListReportsByIDs :many
 SELECT
     id, user_id, risk_type_id, risk_topic_id, description,
     latitude, longitude, province, municipality, neighborhood,
     address, image_url, status, reviewed_by, resolved_at,
     created_at, updated_at
 FROM reports
-WHERE ST_DWithin(
-              geography(ST_MakePoint(longitude, latitude)),
-              geography(ST_MakePoint($1::float8, $2::float8)),
-              $3::float8
-      )
+WHERE id = ANY($1::uuid[])
 ORDER BY created_at DESC;
 
 -- name: CreateReportNotification :exec

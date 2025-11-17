@@ -10,9 +10,10 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
-const createReport = `-- name: CreateReport :exec
+const createReport = `-- name: CreateReport :one
 INSERT INTO reports (
     user_id, risk_type_id, risk_topic_id, description,
     latitude, longitude, province, municipality,
@@ -21,6 +22,7 @@ INSERT INTO reports (
              $1, $2, $3, $4, $5,
              $6, $7, $8, $9, $10, $11
          )
+RETURNING id
 `
 
 type CreateReportParams struct {
@@ -37,8 +39,8 @@ type CreateReportParams struct {
 	ImageUrl     sql.NullString `json:"image_url"`
 }
 
-func (q *Queries) CreateReport(ctx context.Context, arg CreateReportParams) error {
-	_, err := q.db.ExecContext(ctx, createReport,
+func (q *Queries) CreateReport(ctx context.Context, arg CreateReportParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, createReport,
 		arg.UserID,
 		arg.RiskTypeID,
 		arg.RiskTopicID,
@@ -51,7 +53,9 @@ func (q *Queries) CreateReport(ctx context.Context, arg CreateReportParams) erro
 		arg.Address,
 		arg.ImageUrl,
 	)
-	return err
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const createReportNotification = `-- name: CreateReportNotification :exec
@@ -106,6 +110,58 @@ func (q *Queries) GetReportByID(ctx context.Context, id uuid.UUID) (Report, erro
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const listReportsByIDs = `-- name: ListReportsByIDs :many
+SELECT
+    id, user_id, risk_type_id, risk_topic_id, description,
+    latitude, longitude, province, municipality, neighborhood,
+    address, image_url, status, reviewed_by, resolved_at,
+    created_at, updated_at
+FROM reports
+WHERE id = ANY($1::uuid[])
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListReportsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]Report, error) {
+	rows, err := q.db.QueryContext(ctx, listReportsByIDs, pq.Array(dollar_1))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Report{}
+	for rows.Next() {
+		var i Report
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.RiskTypeID,
+			&i.RiskTopicID,
+			&i.Description,
+			&i.Latitude,
+			&i.Longitude,
+			&i.Province,
+			&i.Municipality,
+			&i.Neighborhood,
+			&i.Address,
+			&i.ImageUrl,
+			&i.Status,
+			&i.ReviewedBy,
+			&i.ResolvedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listReportsByStatus = `-- name: ListReportsByStatus :many
@@ -198,68 +254,6 @@ func (q *Queries) ListReportsByUser(ctx context.Context, userID uuid.UUID) ([]Re
 	return items, nil
 }
 
-const listReportsNearby = `-- name: ListReportsNearby :many
-SELECT
-    id, user_id, risk_type_id, risk_topic_id, description,
-    latitude, longitude, province, municipality, neighborhood,
-    address, image_url, status, reviewed_by, resolved_at,
-    created_at, updated_at
-FROM reports
-WHERE ST_DWithin(
-              geography(ST_MakePoint(longitude, latitude)),
-              geography(ST_MakePoint($1::float8, $2::float8)),
-              $3::float8
-      )
-ORDER BY created_at DESC
-`
-
-type ListReportsNearbyParams struct {
-	Column1 float64 `json:"column_1"`
-	Column2 float64 `json:"column_2"`
-	Column3 float64 `json:"column_3"`
-}
-
-func (q *Queries) ListReportsNearby(ctx context.Context, arg ListReportsNearbyParams) ([]Report, error) {
-	rows, err := q.db.QueryContext(ctx, listReportsNearby, arg.Column1, arg.Column2, arg.Column3)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Report{}
-	for rows.Next() {
-		var i Report
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.RiskTypeID,
-			&i.RiskTopicID,
-			&i.Description,
-			&i.Latitude,
-			&i.Longitude,
-			&i.Province,
-			&i.Municipality,
-			&i.Neighborhood,
-			&i.Address,
-			&i.ImageUrl,
-			&i.Status,
-			&i.ReviewedBy,
-			&i.ResolvedAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const rejectReport = `-- name: RejectReport :exec
 UPDATE reports
 SET status = 'rejected',
@@ -302,6 +296,49 @@ type UpdateReportParams struct {
 func (q *Queries) UpdateReport(ctx context.Context, arg UpdateReportParams) error {
 	_, err := q.db.ExecContext(ctx, updateReport, arg.ID, arg.Description, arg.Status)
 	return err
+}
+
+const updateReportLocation = `-- name: UpdateReportLocation :one
+UPDATE reports
+SET latitude = $2,
+    longitude = $3,
+    address = COALESCE(NULLIF($4, ''), address),
+    neighborhood = COALESCE(NULLIF($5, ''), neighborhood),
+    municipality = COALESCE(NULLIF($6, ''), municipality),
+    province = COALESCE(NULLIF($7, ''), province),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, updated_at
+`
+
+type UpdateReportLocationParams struct {
+	ID        uuid.UUID   `json:"id"`
+	Latitude  float64     `json:"latitude"`
+	Longitude float64     `json:"longitude"`
+	Column4   interface{} `json:"column_4"`
+	Column5   interface{} `json:"column_5"`
+	Column6   interface{} `json:"column_6"`
+	Column7   interface{} `json:"column_7"`
+}
+
+type UpdateReportLocationRow struct {
+	ID        uuid.UUID    `json:"id"`
+	UpdatedAt sql.NullTime `json:"updated_at"`
+}
+
+func (q *Queries) UpdateReportLocation(ctx context.Context, arg UpdateReportLocationParams) (UpdateReportLocationRow, error) {
+	row := q.db.QueryRowContext(ctx, updateReportLocation,
+		arg.ID,
+		arg.Latitude,
+		arg.Longitude,
+		arg.Column4,
+		arg.Column5,
+		arg.Column6,
+		arg.Column7,
+	)
+	var i UpdateReportLocationRow
+	err := row.Scan(&i.ID, &i.UpdatedAt)
+	return i, err
 }
 
 const verifyReport = `-- name: VerifyReport :exec

@@ -18,7 +18,7 @@ type Querier interface {
 	CreateAlert(ctx context.Context, arg CreateAlertParams) error
 	CreateAlertNotification(ctx context.Context, arg CreateAlertNotificationParams) error
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (Entity, error)
-	CreateReport(ctx context.Context, arg CreateReportParams) error
+	CreateReport(ctx context.Context, arg CreateReportParams) (uuid.UUID, error)
 	CreateReportNotification(ctx context.Context, arg CreateReportNotificationParams) error
 	CreateRiskTopic(ctx context.Context, arg CreateRiskTopicParams) (RiskTopic, error)
 	CreateRiskType(ctx context.Context, arg CreateRiskTypeParams) error
@@ -43,9 +43,9 @@ type Querier interface {
 	ListDeviceTokensByUserIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]ListDeviceTokensByUserIDsRow, error)
 	ListEntities(ctx context.Context) ([]Entity, error)
 	ListNearbyUsers(ctx context.Context) ([]User, error)
+	ListReportsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]Report, error)
 	ListReportsByStatus(ctx context.Context, status interface{}) ([]Report, error)
 	ListReportsByUser(ctx context.Context, userID uuid.UUID) ([]Report, error)
-	ListReportsNearby(ctx context.Context, arg ListReportsNearbyParams) ([]Report, error)
 	ListRiskTopics(ctx context.Context) ([]RiskTopic, error)
 	ListRiskTopicsByType(ctx context.Context, riskTypeID uuid.UUID) ([]RiskTopic, error)
 	ListRiskTypes(ctx context.Context) ([]RiskType, error)
@@ -59,6 +59,7 @@ type Querier interface {
 	UpdateAlertRadius(ctx context.Context, arg UpdateAlertRadiusParams) error
 	UpdateEmailVerificationCode(ctx context.Context, arg UpdateEmailVerificationCodeParams) error
 	UpdateReport(ctx context.Context, arg UpdateReportParams) error
+	UpdateReportLocation(ctx context.Context, arg UpdateReportLocationParams) (UpdateReportLocationRow, error)
 	UpdateRiskType(ctx context.Context, arg UpdateRiskTypeParams) error
 	UpdateUserDeviceInfo(ctx context.Context, arg UpdateUserDeviceInfoParams) error
 	UpdateUserLocation(ctx context.Context, arg UpdateUserLocationParams) error
