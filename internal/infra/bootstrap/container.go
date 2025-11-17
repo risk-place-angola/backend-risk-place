@@ -28,6 +28,7 @@ type Container struct {
 	WSHandler     *websocket.WSHandler
 	AlertHandler  *handler.AlertHandler
 	ReportHandler *handler.ReportHandler
+	RiskHandler   *handler.RiskHandler
 
 	UserApp *application.Application
 
@@ -53,6 +54,7 @@ func NewContainer() (*Container, error) {
 	roleRepoPG := postgres.NewRoleRepoPG(database)
 	alertRepoPG := postgres.NewAlertRepoPG(database)
 	riskTypeRepoPG := postgres.NewRiskTypeRepoPG(database)
+	riskTopicRepoPG := postgres.NewRiskTopicRepoPG(database)
 	reportRepoPG := postgres.NewReportRepoPG(database)
 
 	// Services (Adapters)
@@ -87,6 +89,7 @@ func NewContainer() (*Container, error) {
 		roleRepoPG,
 		alertRepoPG,
 		riskTypeRepoPG,
+		riskTopicRepoPG,
 		reportRepoPG,
 		tokenService,
 		hashService,
@@ -105,6 +108,7 @@ func NewContainer() (*Container, error) {
 	alertHandler := handler.NewAlertHandler(userApp)
 	wsHandler := websocket.NewWSHandler(hub, *authMW)
 	reportHandler := handler.NewReportHandler(userApp)
+	riskHandler := handler.NewRiskHandler(userApp)
 
 	return &Container{
 		UserApp:        userApp,
@@ -115,5 +119,6 @@ func NewContainer() (*Container, error) {
 		Cfg:            &cfg,
 		AlertHandler:   alertHandler,
 		ReportHandler:  reportHandler,
+		RiskHandler:    riskHandler,
 	}, nil
 }

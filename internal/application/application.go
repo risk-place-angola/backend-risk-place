@@ -4,6 +4,7 @@ import (
 	"github.com/risk-place-angola/backend-risk-place/internal/application/port"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/alert"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/report"
+	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/risk"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/user"
 	"github.com/risk-place-angola/backend-risk-place/internal/config"
 	domainrepository "github.com/risk-place-angola/backend-risk-place/internal/domain/repository"
@@ -13,6 +14,7 @@ type Application struct {
 	UserUseCase   *user.UserUseCase
 	AlertUseCase  *alert.AlertUseCase
 	ReportUseCase *report.ReportUseCase
+	RiskUseCase   *risk.RiskUseCase
 }
 
 func NewUserApplication(
@@ -20,6 +22,7 @@ func NewUserApplication(
 	roleRepo domainrepository.RoleRepository,
 	alertRepo domainrepository.AlertRepository,
 	riskTypeRepo domainrepository.RiskTypesRepository,
+	riskTopicRepo domainrepository.RiskTopicsRepository,
 	reportRepo domainrepository.ReportRepository,
 
 	token port.TokenGenerator,
@@ -52,6 +55,10 @@ func NewUserApplication(
 			geoService,
 			riskTypeRepo,
 			locationStore,
+		),
+		RiskUseCase: risk.NewRiskUseCase(
+			riskTypeRepo,
+			riskTopicRepo,
 		),
 	}
 }
