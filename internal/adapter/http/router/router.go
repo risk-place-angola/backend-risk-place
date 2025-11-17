@@ -17,6 +17,10 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	// Health
 	g.Public.HandleFunc("GET /api/v1/health", healthCheckHandler)
 
+	// Anonymous Device Routes (Public)
+	g.Public.HandleFunc("POST /api/v1/devices/register", container.DeviceHandler.RegisterDevice)
+	g.Public.HandleFunc("PUT /api/v1/devices/location", container.DeviceHandler.UpdateDeviceLocation)
+
 	// Auth
 	g.Public.HandleFunc("POST /api/v1/auth/signup", container.UserHandler.Signup)
 	g.Public.HandleFunc("POST /api/v1/auth/login", container.UserHandler.Login)

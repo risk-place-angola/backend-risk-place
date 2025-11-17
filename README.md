@@ -289,16 +289,18 @@ Once the server is running locally, access the interactive API documentation:
 
 The API follows RESTful principles with the following main endpoints:
 
-| Endpoint | Description |
-|----------|-------------|
-| `POST /api/v1/auth/signup` | User registration |
-| `POST /api/v1/auth/login` | User authentication |
-| `GET /api/v1/alerts` | List alerts |
-| `POST /api/v1/alerts` | Create new alert |
-| `GET /api/v1/reports` | List reports |
-| `POST /api/v1/reports` | Submit new report |
-| `GET /api/v1/risks/types` | List risk types |
-| `WS /ws/alerts` | WebSocket connection for real-time alerts |
+| Endpoint | Description | Auth Required |
+|----------|-------------|---------------|
+| `POST /api/v1/auth/signup` | User registration | No |
+| `POST /api/v1/auth/login` | User authentication | No |
+| `POST /api/v1/devices/register` | Register anonymous device | No |
+| `PUT /api/v1/devices/location` | Update device location | No |
+| `GET /api/v1/alerts` | List alerts | Yes |
+| `POST /api/v1/alerts` | Create new alert | Yes (ERCE/ERFCE) |
+| `GET /api/v1/reports` | List reports | Yes |
+| `POST /api/v1/reports` | Submit new report | Yes |
+| `GET /api/v1/risks/types` | List risk types | Yes |
+| `WS /ws/alerts` | WebSocket (JWT or device_id) | Optional |
 
 ### Core Entities
 
@@ -318,23 +320,33 @@ The API follows RESTful principles with the following main endpoints:
 - **Notification System**: Multi-channel delivery (Push, SMS, Email)
 - **Real-time Updates**: WebSocket-based alert broadcasting
 
-## 📱 Integration Guides
+## 📱 Mobile Integration
 
-### For Mobile Developers
+### Anonymous Users Support
 
-**[📲 Mobile WebSocket Integration Guide](./docs/MOBILE_WEBSOCKET_INTEGRATION.md)**
+The system supports **anonymous users** who can receive notifications without authentication, similar to Waze. This allows users to:
 
-Complete guide for integrating the Risk Place WebSocket system into mobile applications (Flutter, React Native, iOS, Android). Includes:
-- Authentication flow with JWT
-- WebSocket connection management
-- Real-time event handling (alerts, reports, notifications)
-- Location update protocols
-- Error handling and reconnection strategies
-- Testing scenarios with sample data
+- ✅ Receive real-time alerts about nearby risks
+- ✅ Get notifications about incident reports
+- ✅ Connect via WebSocket without login
+- ✅ Update location for proximity-based notifications
 
-### For Backend Developers
+**Public Endpoints**:
+- `POST /api/v1/devices/register` - Register anonymous device
+- `PUT /api/v1/devices/location` - Update device location
+- `WS /ws/alerts` - Connect WebSocket (with device_id)
 
-- **[WebSocket Notification System](./docs/WEBSOCKET_NOTIFICATION_GUIDE.md)** - Complete WebSocket system documentation with testing examples and implementation details
+### Integration Guides
+
+#### For Mobile Developers
+
+- **[📲 WebSocket Real-Time Notifications](./docs/WEBSOCKET_GUIDE.md)** - Complete guide for WebSocket integration with authentication (JWT) and anonymous users (device_id). Includes connection setup, message protocol, event handling, and best practices.
+
+- **[🔧 Mobile API Integration](./docs/MOBILE_API_INTEGRATION.md)** - REST API endpoints documentation for mobile apps, including authentication, alerts, reports, and risks management.
+
+- **[📱 Flutter Integration Guide](./docs/FLUTTER_INTEGRATION_GUIDE.md)** - Step-by-step Flutter implementation guide with complete code examples, models, and services.
+
+- **[👤 Anonymous Users Guide](./docs/ANONYMOUS_USER_GUIDE.md)** - Complete technical documentation for implementing anonymous user system, including backend architecture and mobile integration.
 
 ## 📊 Architecture Diagrams
 
