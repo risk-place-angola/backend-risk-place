@@ -40,25 +40,18 @@ func (c *Client) WritePump() {
 			slog.Error("error closing connection", slog.Any("error", err))
 		}
 	}(c.Conn)
-	for {
-		select {
-		case message, ok := <-c.Send:
-			if !ok {
-				err := c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
-				if err != nil {
-					slog.Error("error writing close message", slog.Any("error", err))
-					return
-				}
-				return
-			}
-			err := c.Conn.WriteMessage(websocket.TextMessage, message)
-			if err != nil {
-				slog.Error("error writing message", slog.Any("error", err))
-				return
-			}
-		default:
+	for message := range c.Send {
+		err := c.Conn.WriteMessage(websocket.TextMessage, message)
+		if err != nil {
+			slog.Error("error writing message", slog.Any("error", err))
 			return
 		}
+	}
+
+	// Channel was closed, send close message
+	err := c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+	if err != nil {
+		slog.Error("error writing close message", slog.Any("error", err))
 	}
 }
 
