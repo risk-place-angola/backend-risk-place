@@ -31,6 +31,16 @@ func dbToModel(r sqlc.Report) *model.Report {
 		status = model.ReportStatus("pending")
 	}
 
+	var reviewedBy uuid.UUID
+	if r.ReviewedBy.Valid {
+		reviewedBy = r.ReviewedBy.UUID
+	}
+
+	var resolvedAt time.Time
+	if r.ResolvedAt.Valid {
+		resolvedAt = r.ResolvedAt.Time
+	}
+
 	return &model.Report{
 		ID:           r.ID,
 		UserID:       r.UserID,
@@ -45,25 +55,11 @@ func dbToModel(r sqlc.Report) *model.Report {
 		Address:      r.Address.String,
 		ImageURL:     r.ImageUrl.String,
 		Status:       status,
-		ReviewedBy:   *uuidToPtr(r.ReviewedBy.UUID),
-		ResolvedAt:   *timePtr(r.ResolvedAt),
+		ReviewedBy:   reviewedBy,
+		ResolvedAt:   resolvedAt,
 		CreatedAt:    r.CreatedAt.Time,
 		UpdatedAt:    r.UpdatedAt.Time,
 	}
-}
-
-func uuidToPtr(id uuid.UUID) *uuid.UUID {
-	if id == uuid.Nil {
-		return nil
-	}
-	return &id
-}
-
-func timePtr(t sql.NullTime) *time.Time {
-	if !t.Valid {
-		return nil
-	}
-	return &t.Time
 }
 
 func (r *ReportPG) Create(ctx context.Context, m *model.Report) error {
