@@ -8,22 +8,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/repository/postgres/sqlc"
+	"github.com/risk-place-angola/backend-risk-place/internal/application/port"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/model"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/repository"
 )
 
-type LocationStore interface {
-	UpdateReportLocation(ctx context.Context, reportID string, lat, lon float64) error
-	FindReportsInRadius(ctx context.Context, lat, lon float64, radiusMeters float64) ([]string, error)
-	RemoveReportLocation(ctx context.Context, reportID string) error
-}
-
 type ReportPG struct {
 	q             sqlc.Querier
-	locationStore LocationStore
+	locationStore port.LocationStore
 }
 
-func NewReportRepoPG(db *sql.DB, locationStore LocationStore) repository.ReportRepository {
+func NewReportRepoPG(db *sql.DB, locationStore port.LocationStore) repository.ReportRepository {
 	return &ReportPG{
 		q:             sqlc.New(db),
 		locationStore: locationStore,
@@ -92,10 +87,14 @@ func (r *ReportPG) Create(ctx context.Context, m *model.Report) error {
 	}
 
 	// Salva a localização do report no Redis para buscas geoespaciais rápidas
-	if err := r.locationStore.UpdateReportLocation(ctx, reportID.String(), m.Latitude, m.Longitude); err != nil {
-		slog.Warn("failed to update report location in redis", "reportID", reportID, "error", err)
-		// Não retorna erro, pois o report já foi criado no PostgreSQL
-		// A falha no Redis não deve impedir a criação do report
+	if r.locationStore != nil {
+		if err := r.locationStore.UpdateReportLocation(ctx, reportID.String(), m.Latitude, m.Longitude); err != nil {
+			slog.Warn("failed to update report location in redis", "reportID", reportID, "error", err)
+			// Não retorna erro, pois o report já foi criado no PostgreSQL
+			// A falha no Redis não deve impedir a criação do report
+		}
+	} else {
+		slog.Warn("location store is nil, skipping redis update", "reportID", reportID)
 	}
 
 	// Atualiza o ID no model
@@ -107,6 +106,7 @@ func (r *ReportPG) Create(ctx context.Context, m *model.Report) error {
 func (r *ReportPG) GetByID(ctx context.Context, id uuid.UUID) (*model.Report, error) {
 	item, err := r.q.GetReportByID(ctx, id)
 	if err != nil {
+		slog.Error("failed to get report by id", "reportID", id, "error", err)
 		return nil, err
 	}
 	return dbToModel(item), nil
@@ -173,9 +173,13 @@ func (r *ReportPG) UpdateLocation(ctx context.Context, reportID uuid.UUID, param
 	}
 
 	// Atualiza a localização no Redis para buscas geoespaciais
-	if err := r.locationStore.UpdateReportLocation(ctx, reportID.String(), params.Latitude, params.Longitude); err != nil {
-		slog.Warn("failed to update report location in redis", "reportID", reportID, "error", err)
-		// Não retorna erro, pois a localização já foi atualizada no PostgreSQL
+	if r.locationStore != nil {
+		if err := r.locationStore.UpdateReportLocation(ctx, reportID.String(), params.Latitude, params.Longitude); err != nil {
+			slog.Warn("failed to update report location in redis", "reportID", reportID, "error", err)
+			// Não retorna erro, pois a localização já foi atualizada no PostgreSQL
+		}
+	} else {
+		slog.Warn("location store is nil, skipping redis update", "reportID", reportID)
 	}
 
 	slog.Info("report location updated successfully", "reportID", reportID)

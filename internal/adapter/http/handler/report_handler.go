@@ -204,6 +204,7 @@ func (h *ReportHandler) UpdateLocation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := uuid.Parse(reportID); err != nil {
+		slog.Error("invalid report ID format", "reportID", reportID, "error", err)
 		util.Error(w, "invalid report ID format", http.StatusBadRequest)
 		return
 	}
@@ -211,6 +212,12 @@ func (h *ReportHandler) UpdateLocation(w http.ResponseWriter, r *http.Request) {
 	var req dto.UpdateReportLocationRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		util.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if h.reportUseCase == nil || h.reportUseCase.ReportUseCase == nil {
+		slog.Error("reportUseCase is nil")
+		util.Error(w, "internal server error: use case not initialized", http.StatusInternalServerError)
 		return
 	}
 
