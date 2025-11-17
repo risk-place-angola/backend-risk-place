@@ -9,6 +9,7 @@ import (
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/service"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/websocket"
 	"github.com/risk-place-angola/backend-risk-place/internal/application"
+	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/device"
 	"github.com/risk-place-angola/backend-risk-place/internal/config"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/event"
 	domainService "github.com/risk-place-angola/backend-risk-place/internal/domain/service"
@@ -23,56 +24,49 @@ import (
 type Container struct {
 	Cfg *config.Config
 
-	// Handlers
 	UserHandler   *handler.UserHandler
 	WSHandler     *websocket.WSHandler
 	AlertHandler  *handler.AlertHandler
 	ReportHandler *handler.ReportHandler
 	RiskHandler   *handler.RiskHandler
+	DeviceHandler *handler.DeviceHandler
 
 	UserApp *application.Application
 
-	Hub *websocket.Hub
-	// Middlewares
+	Hub            *websocket.Hub
 	AuthMiddleware *middleware.AuthMiddleware
 }
 
-// NewContainer initializes the application container with all dependencies.
 func NewContainer() (*Container, error) {
 	cfg := config.Load()
 
 	logger.LoggerInit(cfg.AppEnv)
 
-	// Infra
 	database := db.NewPostgresConnection(cfg)
 	rdb := redis.NewRedis(cfg)
 	twilioSMS := twilio.NewTwilio(cfg.TwilioConfig)
 	firebaseApp := fcm.NewFirebaseApp(cfg.FirebaseConfig)
 
-	// Location Store (usado por reports e websocket)
 	locationStore := location.NewRedisLocationStore(rdb)
 
-	// Repositories
 	userRepoPG := postgres.NewUserRepoPG(database)
 	roleRepoPG := postgres.NewRoleRepoPG(database)
 	alertRepoPG := postgres.NewAlertRepoPG(database)
 	riskTypeRepoPG := postgres.NewRiskTypeRepoPG(database)
 	riskTopicRepoPG := postgres.NewRiskTopicRepoPG(database)
 	reportRepoPG := postgres.NewReportRepoPG(database, locationStore)
+	anonymousSessionRepoPG := postgres.NewAnonymousSessionRepository(database)
 
-	// Services (Adapters)
 	emailService := notifier.NewSmtpEmailService(cfg)
 	tokenService := service.NewJwtTokenService(cfg)
 	hashService := service.NewBcryptHasher()
 	geoService := domainService.NewGeolocationService()
 
-	// Event Dispatcher
 	dispatcher := event.NewEventDispatcher()
 
 	hub := websocket.NewHub(locationStore, geoService)
 	go hub.Run()
 
-	// Notifier
 	notifierFCM := notifier.NewFCMNotifier(firebaseApp)
 	notifierSMS := notifier.NewSMSNotifier(twilioSMS, cfg.TwilioConfig)
 
@@ -80,11 +74,11 @@ func NewContainer() (*Container, error) {
 		dispatcher,
 		hub,
 		userRepoPG,
+		anonymousSessionRepoPG,
 		notifierFCM,
 		notifierSMS,
 	)
 
-	// Application (usecases)
 	userApp := application.NewUserApplication(
 		userRepoPG,
 		roleRepoPG,
@@ -101,15 +95,18 @@ func NewContainer() (*Container, error) {
 		dispatcher,
 	)
 
-	// Middlewares
 	authMW := middleware.NewAuthMiddleware(cfg)
+	optionalAuthMW := middleware.NewOptionalAuthMiddleware(authMW)
 
-	// Handlers
+	registerDeviceUC := device.NewRegisterDeviceUseCase(anonymousSessionRepoPG)
+	updateDeviceLocationUC := device.NewUpdateDeviceLocationUseCase(anonymousSessionRepoPG, locationStore)
+
 	userHandler := handler.NewUserHandler(userApp)
 	alertHandler := handler.NewAlertHandler(userApp)
-	wsHandler := websocket.NewWSHandler(hub, *authMW)
+	wsHandler := websocket.NewWSHandler(hub, *authMW, optionalAuthMW)
 	reportHandler := handler.NewReportHandler(userApp)
 	riskHandler := handler.NewRiskHandler(userApp)
+	deviceHandler := handler.NewDeviceHandler(registerDeviceUC, updateDeviceLocationUC)
 
 	return &Container{
 		UserApp:        userApp,
@@ -121,5 +118,6 @@ func NewContainer() (*Container, error) {
 		AlertHandler:   alertHandler,
 		ReportHandler:  reportHandler,
 		RiskHandler:    riskHandler,
+		DeviceHandler:  deviceHandler,
 	}, nil
 }
