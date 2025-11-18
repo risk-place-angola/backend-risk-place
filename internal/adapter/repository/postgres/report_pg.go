@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -230,6 +231,179 @@ func (r *ReportPG) FindByRadius(ctx context.Context, lat float64, lon float64, r
 
 func sqlString(v string) sql.NullString {
 	return sql.NullString{String: v, Valid: v != ""}
+}
+
+func (r *ReportPG) ListWithPagination(ctx context.Context, params repository.ListReportsParams) ([]*model.Report, int, error) {
+	const (
+		defaultLimit = 20
+		maxLimit     = 100
+	)
+
+	// Validate and set defaults
+	if params.Limit <= 0 {
+		params.Limit = defaultLimit
+	}
+	if params.Limit > maxLimit {
+		params.Limit = maxLimit
+	}
+	if params.Order != "asc" && params.Order != "desc" {
+		params.Order = "desc"
+	}
+
+	// Calculate offset
+	offset := (params.Page - 1) * params.Limit
+
+	// Get total count
+	var statusFilter sql.NullString
+	if params.Status != "" {
+		statusFilter = sql.NullString{String: params.Status, Valid: true}
+	}
+
+	total, err := r.q.CountReports(ctx, statusFilter)
+	if err != nil {
+		slog.Error("failed to count reports", "error", err)
+		return nil, 0, err
+	}
+
+	// Get paginated results
+	// #nosec G115 -- params.Limit and offset are validated to be within safe bounds
+	items, err := r.q.ListReportsWithPagination(ctx, sqlc.ListReportsWithPaginationParams{
+		Column1: params.Order,
+		Limit:   int32(params.Limit),
+		Offset:  int32(offset),
+		Status:  statusFilter,
+	})
+	if err != nil {
+		slog.Error("failed to list reports with pagination", "error", err)
+		return nil, 0, err
+	}
+
+	reports := mapSlice(items, dbToModel)
+	return reports, int(total), nil
+}
+
+func (r *ReportPG) FindByRadiusWithDistance(ctx context.Context, lat float64, lon float64, radiusMeters float64, limit int) ([]repository.ReportWithDistance, error) {
+	// 1. Busca IDs dos reports próximos usando Redis com distâncias
+	type reportDistance struct {
+		id       string
+		distance float64
+	}
+
+	// Busca reports próximos do Redis
+	reportIDs, err := r.locationStore.FindReportsInRadius(ctx, lat, lon, radiusMeters)
+	if err != nil {
+		slog.Error("failed to find reports in radius from redis", "error", err)
+		return nil, err
+	}
+
+	// Se não encontrou nenhum report próximo, retorna lista vazia
+	if len(reportIDs) == 0 {
+		slog.Info("no reports found in radius")
+		return []repository.ReportWithDistance{}, nil
+	}
+
+	// 2. Calcula distâncias para cada report (usando fórmula de Haversine)
+	reportsWithDist := make([]reportDistance, 0, len(reportIDs))
+	for _, id := range reportIDs {
+		// Por enquanto, vamos buscar o report do PostgreSQL para obter as coordenadas
+		// e calcular a distância usando a fórmula de Haversine
+		reportUUID, err := uuid.Parse(id)
+		if err != nil {
+			slog.Warn("invalid report UUID from redis", "id", id, "error", err)
+			continue
+		}
+
+		// Busca report do PostgreSQL
+		reportData, err := r.q.GetReportByID(ctx, reportUUID)
+		if err != nil {
+			slog.Warn("failed to get report", "id", id, "error", err)
+			continue
+		}
+
+		// Calcula distância usando Haversine
+		distance := haversineDistance(lat, lon, reportData.Latitude, reportData.Longitude)
+
+		reportsWithDist = append(reportsWithDist, reportDistance{
+			id:       id,
+			distance: distance,
+		})
+	}
+
+	// 3. Ordena por distância (mais próximo primeiro)
+	// Implementação simples de bubble sort (para poucos items é suficiente)
+	for i := range len(reportsWithDist) - 1 {
+		for j := range len(reportsWithDist) - i - 1 {
+			if reportsWithDist[j].distance > reportsWithDist[j+1].distance {
+				reportsWithDist[j], reportsWithDist[j+1] = reportsWithDist[j+1], reportsWithDist[j]
+			}
+		}
+	}
+
+	// 4. Aplica limite se especificado
+	if limit > 0 && limit < len(reportsWithDist) {
+		reportsWithDist = reportsWithDist[:limit]
+	}
+
+	// 5. Converte para UUIDs
+	uuids := make([]uuid.UUID, 0, len(reportsWithDist))
+	for _, rd := range reportsWithDist {
+		reportUUID, _ := uuid.Parse(rd.id)
+		uuids = append(uuids, reportUUID)
+	}
+
+	// 6. Busca os dados completos dos reports no PostgreSQL
+	items, err := r.q.ListReportsByIDs(ctx, uuids)
+	if err != nil {
+		slog.Error("failed to find reports by ids", "error", err)
+		return nil, err
+	}
+
+	// 7. Monta resultado final com distâncias
+	result := make([]repository.ReportWithDistance, 0, len(items))
+	distanceMap := make(map[string]float64)
+	for _, rd := range reportsWithDist {
+		distanceMap[rd.id] = rd.distance
+	}
+
+	for _, item := range items {
+		distance := distanceMap[item.ID.String()]
+		result = append(result, repository.ReportWithDistance{
+			Report:   dbToModel(item),
+			Distance: distance,
+		})
+	}
+
+	slog.Info("found reports in radius with distances", "count", len(result))
+
+	return result, nil
+}
+
+// haversineDistance calcula a distância entre dois pontos usando a fórmula de Haversine
+// Retorna a distância em metros
+func haversineDistance(lat1, lon1, lat2, lon2 float64) float64 {
+	const (
+		earthRadiusMeters = 6371000 // Raio da Terra em metros
+		degreesToRadians  = math.Pi / 180
+		half              = 0.5
+		two               = 2.0
+	)
+
+	// Converte graus para radianos
+	lat1Rad := lat1 * degreesToRadians
+	lat2Rad := lat2 * degreesToRadians
+	deltaLat := (lat2 - lat1) * degreesToRadians
+	deltaLon := (lon2 - lon1) * degreesToRadians
+
+	// Fórmula de Haversine
+	sinDeltaLatHalf := math.Sin(deltaLat * half)
+	sinDeltaLonHalf := math.Sin(deltaLon * half)
+
+	a := sinDeltaLatHalf*sinDeltaLatHalf +
+		math.Cos(lat1Rad)*math.Cos(lat2Rad)*
+			sinDeltaLonHalf*sinDeltaLonHalf
+	c := two * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	return earthRadiusMeters * c
 }
 
 func mapSlice[T any, R any](in []T, fn func(T) *R) []*R {

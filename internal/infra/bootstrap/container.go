@@ -33,8 +33,9 @@ type Container struct {
 
 	UserApp *application.Application
 
-	Hub            *websocket.Hub
-	AuthMiddleware *middleware.AuthMiddleware
+	Hub                    *websocket.Hub
+	AuthMiddleware         *middleware.AuthMiddleware
+	OptionalAuthMiddleware *middleware.OptionalAuthMiddleware
 }
 
 func NewContainer() (*Container, error) {
@@ -109,15 +110,16 @@ func NewContainer() (*Container, error) {
 	deviceHandler := handler.NewDeviceHandler(registerDeviceUC, updateDeviceLocationUC)
 
 	return &Container{
-		UserApp:        userApp,
-		UserHandler:    userHandler,
-		AuthMiddleware: authMW,
-		WSHandler:      wsHandler,
-		Hub:            hub,
-		Cfg:            &cfg,
-		AlertHandler:   alertHandler,
-		ReportHandler:  reportHandler,
-		RiskHandler:    riskHandler,
-		DeviceHandler:  deviceHandler,
+		UserApp:                userApp,
+		UserHandler:            userHandler,
+		AuthMiddleware:         authMW,
+		OptionalAuthMiddleware: optionalAuthMW,
+		WSHandler:              wsHandler,
+		Hub:                    hub,
+		Cfg:                    &cfg,
+		AlertHandler:           alertHandler,
+		ReportHandler:          reportHandler,
+		RiskHandler:            riskHandler,
+		DeviceHandler:          deviceHandler,
 	}, nil
 }

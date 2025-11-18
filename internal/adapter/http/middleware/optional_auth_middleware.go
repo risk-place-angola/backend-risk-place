@@ -48,17 +48,21 @@ func (m *OptionalAuthMiddleware) ExtractIdentifier(r *http.Request) (string, boo
 func (m *OptionalAuthMiddleware) ValidateOptional(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		identifier, isAuthenticated, err := m.ExtractIdentifier(r)
-		if err != nil {
-			slog.Error("Failed to extract identifier", slog.Any("error", err))
-			httputil.Error(w, "Unauthorized: "+err.Error(), http.StatusUnauthorized)
-			return
-		}
 
 		type contextKey string
 		const isAuthenticatedKey contextKey = "is_authenticated"
 
-		ctx := context.WithValue(r.Context(), httputil.UserIDCtxKey, identifier)
-		ctx = context.WithValue(ctx, isAuthenticatedKey, isAuthenticated)
+		ctx := r.Context()
+
+		if err != nil {
+			// Allow anonymous access - no identifier required
+			slog.Debug("No identifier found, allowing anonymous access")
+			ctx = context.WithValue(ctx, httputil.UserIDCtxKey, "")
+			ctx = context.WithValue(ctx, isAuthenticatedKey, false)
+		} else {
+			ctx = context.WithValue(ctx, httputil.UserIDCtxKey, identifier)
+			ctx = context.WithValue(ctx, isAuthenticatedKey, isAuthenticated)
+		}
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

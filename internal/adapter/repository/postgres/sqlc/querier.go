@@ -6,6 +6,7 @@ package sqlc
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -14,6 +15,7 @@ type Querier interface {
 	AddCodeToUser(ctx context.Context, arg AddCodeToUserParams) error
 	AssignRoleToUser(ctx context.Context, arg AssignRoleToUserParams) error
 	AssignUserRole(ctx context.Context, arg AssignUserRoleParams) error
+	CountReports(ctx context.Context, status sql.NullString) (int64, error)
 	CountUserUnreadNotifications(ctx context.Context, userID uuid.UUID) (int64, error)
 	CreateAlert(ctx context.Context, arg CreateAlertParams) error
 	CreateAlertNotification(ctx context.Context, arg CreateAlertNotificationParams) error
@@ -46,6 +48,7 @@ type Querier interface {
 	ListReportsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]Report, error)
 	ListReportsByStatus(ctx context.Context, status interface{}) ([]Report, error)
 	ListReportsByUser(ctx context.Context, userID uuid.UUID) ([]Report, error)
+	ListReportsWithPagination(ctx context.Context, arg ListReportsWithPaginationParams) ([]Report, error)
 	ListRiskTopics(ctx context.Context) ([]RiskTopic, error)
 	ListRiskTopicsByType(ctx context.Context, riskTypeID uuid.UUID) ([]RiskTopic, error)
 	ListRiskTypes(ctx context.Context) ([]RiskType, error)

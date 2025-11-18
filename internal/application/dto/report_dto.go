@@ -83,6 +83,50 @@ type UpdateReportLocationResponse struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
+// ListReportsQueryParams represents query parameters for listing reports with pagination
+type ListReportsQueryParams struct {
+	Page   int    `json:"page"`
+	Limit  int    `json:"limit"`
+	Status string `json:"status,omitempty"`
+	Sort   string `json:"sort,omitempty"`
+	Order  string `json:"order,omitempty"`
+}
+
+// PaginationMetadata represents pagination information
+type PaginationMetadata struct {
+	Page        int  `json:"page"`
+	Limit       int  `json:"limit"`
+	Total       int  `json:"total"`
+	TotalPages  int  `json:"total_pages"`
+	HasMore     bool `json:"has_more"`
+	HasPrevious bool `json:"has_previous"`
+}
+
+// ListReportsResponse represents the response for listing reports with pagination
+type ListReportsResponse struct {
+	Reports    []ReportDTO        `json:"data"`
+	Pagination PaginationMetadata `json:"pagination"`
+}
+
+// NearbyReportsQueryParams represents query parameters for nearby reports
+type NearbyReportsQueryParams struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Radius    float64 `json:"radius"`
+	Limit     int     `json:"limit,omitempty"`
+}
+
+// ReportWithDistance extends ReportDTO with distance information
+type ReportWithDistance struct {
+	ReportDTO
+	Distance float64 `json:"distance"` // Distance in meters
+}
+
+// NearbyReportsResponse represents the response for nearby reports
+type NearbyReportsResponse struct {
+	Reports []ReportWithDistance `json:"data"`
+}
+
 func ReportToDTO(r *model.Report) ReportDTO {
 	status := string(r.Status)
 	return ReportDTO{
@@ -103,5 +147,12 @@ func ReportToDTO(r *model.Report) ReportDTO {
 		ResolvedAt:   r.ResolvedAt,
 		CreatedAt:    r.CreatedAt,
 		UpdatedAt:    r.UpdatedAt,
+	}
+}
+
+func ReportToDTOWithDistance(r *model.Report, distance float64) ReportWithDistance {
+	return ReportWithDistance{
+		ReportDTO: ReportToDTO(r),
+		Distance:  distance,
 	}
 }

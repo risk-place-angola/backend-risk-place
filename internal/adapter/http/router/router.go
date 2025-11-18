@@ -14,39 +14,44 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	mw := NewMWSet(container)
 	g := NewGroups(mux, mw)
 
-	// Health
+	// ========================================
+	// PUBLIC ROUTES (No authentication)
+	// ========================================
 	g.Public.HandleFunc("GET /api/v1/health", healthCheckHandler)
 
-	// Anonymous Device Routes (Public)
+	// Anonymous Device Registration
 	g.Public.HandleFunc("POST /api/v1/devices/register", container.DeviceHandler.RegisterDevice)
 	g.Public.HandleFunc("PUT /api/v1/devices/location", container.DeviceHandler.UpdateDeviceLocation)
 
-	// Auth
+	// Authentication
 	g.Public.HandleFunc("POST /api/v1/auth/signup", container.UserHandler.Signup)
 	g.Public.HandleFunc("POST /api/v1/auth/login", container.UserHandler.Login)
 	g.Public.HandleFunc("POST /api/v1/auth/confirm", container.UserHandler.ConfirmSignup)
 	g.Public.HandleFunc("POST /api/v1/auth/password/forgot", container.UserHandler.ForgotPassword)
 	g.Public.HandleFunc("POST /api/v1/auth/password/reset", container.UserHandler.ResetPassword)
 
-	// User protected routes
+	// Risks
+	g.OptionalAuth.HandleFunc("GET /api/v1/risks/types", container.RiskHandler.ListRiskTypes)
+	g.OptionalAuth.HandleFunc("GET /api/v1/risks/types/{id}", container.RiskHandler.GetRiskType)
+	g.OptionalAuth.HandleFunc("GET /api/v1/risks/topics", container.RiskHandler.ListRiskTopics)
+	g.OptionalAuth.HandleFunc("GET /api/v1/risks/topics/{id}", container.RiskHandler.GetRiskTopic)
+
+	// User Management
 	g.ProtectedJWT.HandleFunc("GET /api/v1/users/me", container.UserHandler.Me)
 
-	// WebSocket connection
-	mux.HandleFunc("/ws/alerts", container.WSHandler.HandleWebSocket)
-
-	// Risks
-	g.ProtectedJWT.HandleFunc("GET /api/v1/risks/types", container.RiskHandler.ListRiskTypes)
-	g.ProtectedJWT.HandleFunc("GET /api/v1/risks/topics", container.RiskHandler.ListRiskTopics)
-
-	// Alert
+	// Alerts
 	g.ProtectedJWT.HandleFunc("POST /api/v1/alerts", container.AlertHandler.CreateAlert)
 
 	// Reports
+	g.OptionalAuth.HandleFunc("GET /api/v1/reports", container.ReportHandler.List)
 	g.ProtectedJWT.HandleFunc("POST /api/v1/reports", container.ReportHandler.Create)
-	g.ProtectedJWT.HandleFunc("GET /api/v1/reports/nearby", container.ReportHandler.ListNearby)
-	g.ProtectedJWT.HandleFunc("PUT /api/v1/reports/{id}/location", container.ReportHandler.UpdateLocation)
+	g.OptionalAuth.HandleFunc("GET /api/v1/reports/nearby", container.ReportHandler.ListNearby)
+	g.OptionalAuth.HandleFunc("PUT /api/v1/reports/{id}/location", container.ReportHandler.UpdateLocation)
 	g.ProtectedJWT.HandleFunc("POST /api/v1/reports/{id}/verify", container.ReportHandler.Verify)
 	g.ProtectedJWT.HandleFunc("POST /api/v1/reports/{id}/resolve", container.ReportHandler.Resolve)
+
+	// WebSocket connection
+	mux.HandleFunc("/ws/alerts", container.WSHandler.HandleWebSocket)
 
 	// Swagger documentation
 	mux.HandleFunc("/docs/", httpSwagger.WrapHandler)

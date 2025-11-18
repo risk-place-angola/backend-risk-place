@@ -71,3 +71,20 @@ ORDER BY created_at DESC;
 -- name: CreateReportNotification :exec
 INSERT INTO notifications (type, reference_id, user_id) VALUES ($1, $2, $3)
 ON CONFLICT (type, reference_id, user_id) DO NOTHING;
+
+-- name: ListReportsWithPagination :many
+SELECT
+    id, user_id, risk_type_id, risk_topic_id, description,
+    latitude, longitude, province, municipality, neighborhood,
+    address, image_url, status, reviewed_by, resolved_at,
+    created_at, updated_at
+FROM reports
+WHERE (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::report_status)
+ORDER BY
+    CASE WHEN $1 = 'desc' THEN created_at END DESC,
+    CASE WHEN $1 = 'asc' THEN created_at END ASC
+LIMIT $2 OFFSET $3;
+
+-- name: CountReports :one
+SELECT COUNT(*) FROM reports
+WHERE (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::report_status);

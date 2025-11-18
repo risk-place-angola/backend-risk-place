@@ -38,6 +38,35 @@ func (h *RiskHandler) ListRiskTypes(w http.ResponseWriter, r *http.Request) {
 	util.Response(w, riskTypes, http.StatusOK)
 }
 
+// GetRiskType godoc
+// @Summary Get a risk type by ID
+// @Description Retrieve a specific risk type by its UUID
+// @Tags risks
+// @Accept json
+// @Produce json
+// @Param id path string true "Risk Type ID (UUID)"
+// @Success 200 {object} dto.RiskTypeResponse
+// @Failure 400 {object} util.ErrorResponse
+// @Failure 404 {object} util.ErrorResponse
+// @Failure 500 {object} util.ErrorResponse
+// @Router /risks/types/{id} [get]
+func (h *RiskHandler) GetRiskType(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		util.Error(w, "risk type ID is required", http.StatusBadRequest)
+		return
+	}
+
+	riskType, err := h.app.RiskUseCase.GetRiskType(r.Context(), id)
+	if err != nil {
+		slog.Error("failed to get risk type", "id", id, "error", err)
+		util.Error(w, "risk type not found", http.StatusNotFound)
+		return
+	}
+
+	util.Response(w, riskType, http.StatusOK)
+}
+
 // ListRiskTopics godoc.
 // @Summary List risk topics.
 // @Description Retrieve risk topics, optionally filtered by risk_type_id query parameter.
@@ -64,4 +93,33 @@ func (h *RiskHandler) ListRiskTopics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	util.Response(w, riskTopics, http.StatusOK)
+}
+
+// GetRiskTopic godoc
+// @Summary Get a risk topic by ID
+// @Description Retrieve a specific risk topic by its UUID
+// @Tags risks
+// @Accept json
+// @Produce json
+// @Param id path string true "Risk Topic ID (UUID)"
+// @Success 200 {object} dto.RiskTopicResponse
+// @Failure 400 {object} util.ErrorResponse
+// @Failure 404 {object} util.ErrorResponse
+// @Failure 500 {object} util.ErrorResponse
+// @Router /risks/topics/{id} [get]
+func (h *RiskHandler) GetRiskTopic(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		util.Error(w, "risk topic ID is required", http.StatusBadRequest)
+		return
+	}
+
+	riskTopic, err := h.app.RiskUseCase.GetRiskTopic(r.Context(), id)
+	if err != nil {
+		slog.Error("failed to get risk topic", "id", id, "error", err)
+		util.Error(w, "risk topic not found", http.StatusNotFound)
+		return
+	}
+
+	util.Response(w, riskTopic, http.StatusOK)
 }
