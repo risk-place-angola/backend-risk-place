@@ -49,12 +49,43 @@ definitions:
       platform:
         type: string
     type: object
+  dto.ListReportsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.ReportDTO'
+        type: array
+      pagination:
+        $ref: '#/definitions/dto.PaginationMetadata'
+    type: object
   dto.LoginInput:
     properties:
       email:
         type: string
       password:
         type: string
+    type: object
+  dto.NearbyReportsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.ReportWithDistance'
+        type: array
+    type: object
+  dto.PaginationMetadata:
+    properties:
+      has_more:
+        type: boolean
+      has_previous:
+        type: boolean
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
     type: object
   dto.RegisterDeviceRequest:
     properties:
@@ -131,6 +162,46 @@ definitions:
         type: string
       description:
         type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      municipality:
+        type: string
+      neighborhood:
+        type: string
+      province:
+        type: string
+      resolved_at:
+        type: string
+      reviewed_by:
+        type: string
+      risk_topic_id:
+        type: string
+      risk_type_id:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  dto.ReportWithDistance:
+    properties:
+      address:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      distance:
+        description: Distance in meters
+        type: number
       id:
         type: string
       image_url:
@@ -593,6 +664,51 @@ paths:
       tags:
       - auth
   /reports:
+    get:
+      consumes:
+      - application/json
+      description: List all reports in the system with pagination and filters
+      parameters:
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 20, max: 100)'
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by status (pending, verified, resolved)
+        in: query
+        name: status
+        type: string
+      - description: 'Sort field (default: created_at)'
+        in: query
+        name: sort
+        type: string
+      - description: 'Sort order (asc, desc) (default: desc)'
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ListReportsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all reports with pagination
+      tags:
+      - reports
     post:
       consumes:
       - application/json
@@ -760,38 +876,45 @@ paths:
     get:
       consumes:
       - application/json
-      description: List reports near the specified location
+      description: List reports near the specified location with calculated distance
       parameters:
       - description: Latitude
         in: query
-        name: lat
+        name: latitude
         required: true
-        type: string
+        type: number
       - description: Longitude
         in: query
-        name: lon
+        name: longitude
         required: true
-        type: string
+        type: number
       - description: Radius in meters
         in: query
         name: radius
-        type: string
+        required: true
+        type: number
+      - description: 'Maximum number of results (default: 50)'
+        in: query
+        name: limit
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/dto.ReportDTO'
-            type: array
+            $ref: '#/definitions/dto.NearbyReportsResponse'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: List nearby reports
+      summary: List nearby reports with distance
       tags:
       - reports
   /risks/topics:
@@ -819,6 +942,39 @@ paths:
       summary: List risk topics.
       tags:
       - risks
+  /risks/topics/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific risk topic by its UUID
+      parameters:
+      - description: Risk Topic ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RiskTopicResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Get a risk topic by ID
+      tags:
+      - risks
   /risks/types:
     get:
       consumes:
@@ -836,6 +992,39 @@ paths:
           schema:
             $ref: '#/definitions/util.ErrorResponse'
       summary: List all risk types.
+      tags:
+      - risks
+  /risks/types/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific risk type by its UUID
+      parameters:
+      - description: Risk Type ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RiskTypeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Get a risk type by ID
       tags:
       - risks
   /users/me:
