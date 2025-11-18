@@ -47,6 +47,25 @@ func (uc *RiskUseCase) ListRiskTypes(ctx context.Context) (*dto.RiskTypesListRes
 	return response, nil
 }
 
+// GetRiskType retrieves a specific risk type by ID
+func (uc *RiskUseCase) GetRiskType(ctx context.Context, id string) (*dto.RiskTypeResponse, error) {
+	riskType, err := uc.riskTypesRepo.GetRiskTypeByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &dto.RiskTypeResponse{
+		ID:            riskType.ID,
+		Name:          riskType.Name,
+		Description:   riskType.Description,
+		DefaultRadius: riskType.DefaultRadiusMeters,
+		CreatedAt:     riskType.CreatedAt,
+		UpdatedAt:     riskType.UpdatedAt,
+	}
+
+	return response, nil
+}
+
 // ListRiskTopics retrieves risk topics, optionally filtered by risk type ID
 func (uc *RiskUseCase) ListRiskTopics(ctx context.Context, riskTypeID *string) (*dto.RiskTopicsListResponse, error) {
 	riskTopics, err := uc.riskTopicsRepo.ListRiskTopics(ctx, riskTypeID)
@@ -67,6 +86,25 @@ func (uc *RiskUseCase) ListRiskTopics(ctx context.Context, riskTypeID *string) (
 			CreatedAt:   rt.CreatedAt,
 			UpdatedAt:   rt.UpdatedAt,
 		})
+	}
+
+	return response, nil
+}
+
+// GetRiskTopic retrieves a specific risk topic by ID
+func (uc *RiskUseCase) GetRiskTopic(ctx context.Context, id string) (*dto.RiskTopicResponse, error) {
+	riskTopic, err := uc.riskTopicsRepo.GetRiskTopicByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &dto.RiskTopicResponse{
+		ID:          riskTopic.ID,
+		RiskTypeID:  riskTopic.RiskTypeID,
+		Name:        riskTopic.Name,
+		Description: riskTopic.Description,
+		CreatedAt:   riskTopic.CreatedAt,
+		UpdatedAt:   riskTopic.UpdatedAt,
 	}
 
 	return response, nil
