@@ -86,10 +86,10 @@ func (uc *ReportUseCase) Create(ctx context.Context, dto dto.ReportCreate) (*mod
 	for _, uid := range userIDs {
 		err := uc.repo.CreateReportNotification(ctx, report.ID, uuid.MustParse(uid))
 		if err != nil {
-			slog.Error("failed to create report notification", "error", err)
-			return nil, err
+			slog.Error("failed to create report notification", "error", err, "user_id", uid)
+			continue
 		}
-		slog.Info("created report notification", "report_id", report.ID)
+		slog.Info("created report notification", "report_id", report.ID, "user_id", uid)
 		uuidUserIDs = append(uuidUserIDs, uuid.MustParse(uid))
 	}
 
@@ -141,12 +141,111 @@ func (uc *ReportUseCase) Resolve(ctx context.Context, reportID, moderatorID stri
 	return nil
 }
 
+func (uc *ReportUseCase) List(ctx context.Context, params dto.ListReportsQueryParams) (*dto.ListReportsResponse, error) {
+	const (
+		defaultPage  = 1
+		defaultLimit = 20
+		maxLimit     = 100
+	)
+
+	// Validate and set defaults
+	if params.Page <= 0 {
+		params.Page = defaultPage
+	}
+	if params.Limit <= 0 {
+		params.Limit = defaultLimit
+	}
+	if params.Limit > maxLimit {
+		params.Limit = maxLimit
+	}
+	if params.Order == "" {
+		params.Order = "desc"
+	}
+	if params.Sort == "" {
+		params.Sort = "created_at"
+	}
+
+	// Call repository
+	reports, total, err := uc.repo.ListWithPagination(ctx, repository.ListReportsParams{
+		Page:   params.Page,
+		Limit:  params.Limit,
+		Status: params.Status,
+		Sort:   params.Sort,
+		Order:  params.Order,
+	})
+	if err != nil {
+		slog.Error("failed to list reports with pagination", "error", err)
+		return nil, err
+	}
+
+	// Convert to DTOs
+	reportDTOs := make([]dto.ReportDTO, 0, len(reports))
+	for _, report := range reports {
+		reportDTOs = append(reportDTOs, dto.ReportToDTO(report))
+	}
+
+	// Calculate pagination metadata
+	totalPages := (total + params.Limit - 1) / params.Limit
+	hasMore := params.Page < totalPages
+	hasPrevious := params.Page > 1
+
+	response := &dto.ListReportsResponse{
+		Reports: reportDTOs,
+		Pagination: dto.PaginationMetadata{
+			Page:        params.Page,
+			Limit:       params.Limit,
+			Total:       total,
+			TotalPages:  totalPages,
+			HasMore:     hasMore,
+			HasPrevious: hasPrevious,
+		},
+	}
+
+	return response, nil
+}
+
 func (uc *ReportUseCase) ListNearby(ctx context.Context, lat, lon, radius float64) ([]*model.Report, error) {
 	err := uc.geoService.ValidateCoordinates(lat, lon)
 	if err != nil {
 		return nil, err
 	}
 	return uc.repo.FindByRadius(ctx, lat, lon, radius)
+}
+
+func (uc *ReportUseCase) ListNearbyWithDistance(ctx context.Context, params dto.NearbyReportsQueryParams) (*dto.NearbyReportsResponse, error) {
+	// Validate coordinates
+	err := uc.geoService.ValidateCoordinates(params.Latitude, params.Longitude)
+	if err != nil {
+		slog.Error("invalid coordinates", "error", err)
+		return nil, err
+	}
+
+	// Set defaults
+	if params.Radius <= 0 {
+		params.Radius = 500 // 500 meters default
+	}
+	if params.Limit <= 0 {
+		params.Limit = 50
+	}
+
+	// Call repository with distance calculation
+	reportsWithDist, err := uc.repo.FindByRadiusWithDistance(ctx, params.Latitude, params.Longitude, params.Radius, params.Limit)
+	if err != nil {
+		slog.Error("failed to find reports nearby with distance", "error", err)
+		return nil, err
+	}
+
+	// Convert to DTOs
+	reportDTOs := make([]dto.ReportWithDistance, 0, len(reportsWithDist))
+	for _, rwd := range reportsWithDist {
+		reportDTOs = append(reportDTOs, dto.ReportToDTOWithDistance(rwd.Report, rwd.Distance))
+	}
+
+	response := &dto.NearbyReportsResponse{
+		Reports: reportDTOs,
+	}
+
+	return response, nil
 }
 
 func (uc *ReportUseCase) UpdateLocation(ctx context.Context, reportID string, req dto.UpdateReportLocationRequest) error {

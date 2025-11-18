@@ -13,6 +13,18 @@ import (
 	"github.com/lib/pq"
 )
 
+const countReports = `-- name: CountReports :one
+SELECT COUNT(*) FROM reports
+WHERE ($1::text IS NULL OR status = $1::report_status)
+`
+
+func (q *Queries) CountReports(ctx context.Context, status sql.NullString) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countReports, status)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createReport = `-- name: CreateReport :one
 INSERT INTO reports (
     user_id, risk_type_id, risk_topic_id, description,
@@ -215,6 +227,73 @@ SELECT id, user_id, risk_type_id, risk_topic_id, description, latitude, longitud
 
 func (q *Queries) ListReportsByUser(ctx context.Context, userID uuid.UUID) ([]Report, error) {
 	rows, err := q.db.QueryContext(ctx, listReportsByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Report{}
+	for rows.Next() {
+		var i Report
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.RiskTypeID,
+			&i.RiskTopicID,
+			&i.Description,
+			&i.Latitude,
+			&i.Longitude,
+			&i.Province,
+			&i.Municipality,
+			&i.Neighborhood,
+			&i.Address,
+			&i.ImageUrl,
+			&i.Status,
+			&i.ReviewedBy,
+			&i.ResolvedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listReportsWithPagination = `-- name: ListReportsWithPagination :many
+SELECT
+    id, user_id, risk_type_id, risk_topic_id, description,
+    latitude, longitude, province, municipality, neighborhood,
+    address, image_url, status, reviewed_by, resolved_at,
+    created_at, updated_at
+FROM reports
+WHERE ($4::text IS NULL OR status = $4::report_status)
+ORDER BY
+    CASE WHEN $1 = 'desc' THEN created_at END DESC,
+    CASE WHEN $1 = 'asc' THEN created_at END ASC
+LIMIT $2 OFFSET $3
+`
+
+type ListReportsWithPaginationParams struct {
+	Column1 interface{}    `json:"column_1"`
+	Limit   int32          `json:"limit"`
+	Offset  int32          `json:"offset"`
+	Status  sql.NullString `json:"status"`
+}
+
+func (q *Queries) ListReportsWithPagination(ctx context.Context, arg ListReportsWithPaginationParams) ([]Report, error) {
+	rows, err := q.db.QueryContext(ctx, listReportsWithPagination,
+		arg.Column1,
+		arg.Limit,
+		arg.Offset,
+		arg.Status,
+	)
 	if err != nil {
 		return nil, err
 	}

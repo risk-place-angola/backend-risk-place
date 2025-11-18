@@ -61,50 +61,147 @@ func (h *ReportHandler) Create(w http.ResponseWriter, r *http.Request) {
 	util.Response(w, res, http.StatusCreated)
 }
 
-// ListNearby godoc
-// @Summary List nearby reports
-// @Description List reports near the specified location
+// List godoc
+// @Summary List all reports with pagination
+// @Description List all reports in the system with pagination and filters
 // @Tags reports
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param lat query string true "Latitude"
-// @Param lon query string true "Longitude"
-// @Param radius query string false "Radius in meters"
-// @Success 200 {array} dto.ReportDTO
+// @Param page query int false "Page number (default: 1)"
+// @Param limit query int false "Items per page (default: 20, max: 100)"
+// @Param status query string false "Filter by status (pending, verified, resolved)"
+// @Param sort query string false "Sort field (default: created_at)"
+// @Param order query string false "Sort order (asc, desc) (default: desc)"
+// @Success 200 {object} dto.ListReportsResponse
 // @Failure 400 {object} util.ErrorResponse
+// @Failure 500 {object} util.ErrorResponse
+// @Router /reports [get]
+func (h *ReportHandler) List(w http.ResponseWriter, r *http.Request) {
+	// Parse query parameters
+	pageStr := r.URL.Query().Get("page")
+	limitStr := r.URL.Query().Get("limit")
+	status := r.URL.Query().Get("status")
+	sort := r.URL.Query().Get("sort")
+	order := r.URL.Query().Get("order")
+
+	// Convert to int with defaults
+	page := 1
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	limit := 20
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	// Validate status if provided
+	if status != "" && status != "pending" && status != "verified" && status != "resolved" {
+		util.Error(w, "Invalid status. Must be: pending, verified, or resolved", http.StatusBadRequest)
+		return
+	}
+
+	// Call use case
+	params := dto.ListReportsQueryParams{
+		Page:   page,
+		Limit:  limit,
+		Status: status,
+		Sort:   sort,
+		Order:  order,
+	}
+
+	response, err := h.reportUseCase.ReportUseCase.List(r.Context(), params)
+	if err != nil {
+		slog.Error("failed to list reports", "error", err)
+		util.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	util.Response(w, response, http.StatusOK)
+}
+
+// ListNearby godoc
+// @Summary List nearby reports with distance
+// @Description List reports near the specified location with calculated distance
+// @Tags reports
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param latitude query number true "Latitude"
+// @Param longitude query number true "Longitude"
+// @Param radius query number true "Radius in meters"
+// @Param limit query int false "Maximum number of results (default: 50)"
+// @Success 200 {object} dto.NearbyReportsResponse
+// @Failure 400 {object} util.ErrorResponse
+// @Failure 500 {object} util.ErrorResponse
 // @Router /reports/nearby [get]
 func (h *ReportHandler) ListNearby(w http.ResponseWriter, r *http.Request) {
-	latStr := r.URL.Query().Get("lat")
-	lonStr := r.URL.Query().Get("lon")
+	latStr := r.URL.Query().Get("latitude")
+	lonStr := r.URL.Query().Get("longitude")
 	radiusStr := r.URL.Query().Get("radius")
+	limitStr := r.URL.Query().Get("limit")
 
+	// Validate required parameters
+	if latStr == "" {
+		util.Error(w, "latitude is required", http.StatusBadRequest)
+		return
+	}
+	if lonStr == "" {
+		util.Error(w, "longitude is required", http.StatusBadRequest)
+		return
+	}
+	if radiusStr == "" {
+		util.Error(w, "radius is required", http.StatusBadRequest)
+		return
+	}
+
+	// Parse parameters
 	lat, err := strconv.ParseFloat(latStr, 64)
 	if err != nil {
 		util.Error(w, "Invalid latitude", http.StatusBadRequest)
 		return
 	}
+
 	lon, err := strconv.ParseFloat(lonStr, 64)
 	if err != nil {
 		util.Error(w, "Invalid longitude", http.StatusBadRequest)
 		return
 	}
+
 	radius, err := strconv.ParseFloat(radiusStr, 64)
 	if err != nil {
-		radius = 500 // default
+		util.Error(w, "Invalid radius", http.StatusBadRequest)
+		return
 	}
 
-	list, err := h.reportUseCase.ReportUseCase.ListNearby(r.Context(), lat, lon, radius)
+	// Parse optional limit
+	limit := 50
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	// Call use case
+	params := dto.NearbyReportsQueryParams{
+		Latitude:  lat,
+		Longitude: lon,
+		Radius:    radius,
+		Limit:     limit,
+	}
+
+	response, err := h.reportUseCase.ReportUseCase.ListNearbyWithDistance(r.Context(), params)
 	if err != nil {
 		slog.Error("failed to list nearby reports", "error", err)
 		util.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	response := make([]dto.ReportDTO, 0, len(list))
-	for _, v := range list {
-		response = append(response, dto.ReportToDTO(v))
-	}
 	util.Response(w, response, http.StatusOK)
 }
 
