@@ -133,7 +133,22 @@ CREATE TABLE anonymous_sessions (
     device_language TEXT DEFAULT 'pt',
     last_seen TIMESTAMP DEFAULT NOW(),
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at TIMESTAMP DEFAULT NOW(),
+    migrated_to_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    migrated_at TIMESTAMP,
+    is_active BOOLEAN DEFAULT true
+);
+
+CREATE TABLE emergency_contacts (
+                                    id UUID PRIMARY KEY,
+                                    user_id UUID NOT NULL,
+                                    name VARCHAR(255) NOT NULL,
+                                    phone VARCHAR(20) NOT NULL,
+                                    relation VARCHAR(50) NOT NULL CHECK (relation IN ('family', 'friend', 'colleague', 'neighbor', 'other')),
+                                    is_priority BOOLEAN NOT NULL DEFAULT false,
+                                    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                                    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS location_sharings (
@@ -199,6 +214,8 @@ CREATE TABLE reports (
 CREATE TABLE alerts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    anonymous_session_id UUID REFERENCES anonymous_sessions(id) ON DELETE SET NULL,
+    device_id TEXT,
     risk_type_id UUID NOT NULL REFERENCES risk_types(id),
     risk_topic_id UUID REFERENCES risk_topics(id),
     message TEXT NOT NULL,
@@ -213,8 +230,28 @@ CREATE TABLE alerts (
     status alert_status DEFAULT 'active',
     created_at TIMESTAMP DEFAULT NOW(),
     expires_at TIMESTAMP,
-    resolved_at TIMESTAMP
+    resolved_at TIMESTAMP,
+    CONSTRAINT alerts_creator_check CHECK (
+        (created_by IS NOT NULL AND anonymous_session_id IS NULL AND device_id IS NULL) OR
+        (created_by IS NULL AND anonymous_session_id IS NOT NULL AND device_id IS NOT NULL)
+    )
 );
+
+CREATE TABLE alert_subscriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    alert_id UUID NOT NULL REFERENCES alerts(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    anonymous_session_id UUID REFERENCES anonymous_sessions(id) ON DELETE CASCADE,
+    device_id TEXT,
+    subscribed_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT alert_subscriptions_subscriber_check CHECK (
+        (user_id IS NOT NULL AND anonymous_session_id IS NULL AND device_id IS NULL) OR
+        (user_id IS NULL AND anonymous_session_id IS NOT NULL AND device_id IS NOT NULL)
+    )
+);
+
+CREATE UNIQUE INDEX idx_alert_subscriptions_unique_user ON alert_subscriptions(alert_id, user_id) WHERE user_id IS NOT NULL;
+CREATE UNIQUE INDEX idx_alert_subscriptions_unique_device ON alert_subscriptions(alert_id, device_id) WHERE device_id IS NOT NULL;
 
 CREATE TABLE notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -310,3 +347,177 @@ CREATE INDEX idx_location_sharings_anonymous_session_id ON location_sharings(ano
 CREATE INDEX idx_location_sharings_device_id ON location_sharings(device_id);
 CREATE INDEX idx_location_sharings_expires_at ON location_sharings(expires_at);
 CREATE INDEX idx_location_sharings_is_active ON location_sharings(is_active);
+
+-- Emergency Contacts Table and Indexes
+CREATE INDEX idx_emergency_contacts_user_id ON emergency_contacts(user_id);
+CREATE INDEX idx_emergency_contacts_priority ON emergency_contacts(user_id, is_priority) WHERE is_priority = true;
+
+-- Alert Subscriptions Table and Indexes
+CREATE INDEX idx_alert_subscriptions_alert_id ON alert_subscriptions(alert_id);
+CREATE INDEX idx_alert_subscriptions_user_id ON alert_subscriptions(user_id);
+CREATE INDEX idx_alert_subscriptions_subscribed_at ON alert_subscriptions(subscribed_at DESC);
+
+
+-- User Safety Settings Table
+CREATE TABLE user_safety_settings (
+                                      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                                      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                                      anonymous_session_id UUID REFERENCES anonymous_sessions(id) ON DELETE CASCADE,
+                                      device_id TEXT,
+
+    -- Notification Settings
+                                      notifications_enabled BOOLEAN DEFAULT true,
+                                      notification_alert_types TEXT[] DEFAULT ARRAY['high', 'critical'],
+                                      notification_alert_radius_mins INT DEFAULT 1000,
+                                      notification_report_types TEXT[] DEFAULT ARRAY['verified'],
+                                      notification_report_radius_mins INT DEFAULT 500,
+
+    -- Tracking Settings
+                                      location_sharing_enabled BOOLEAN DEFAULT false,
+                                      location_history_enabled BOOLEAN DEFAULT true,
+
+    -- Privacy Settings
+                                      profile_visibility TEXT DEFAULT 'public' CHECK (profile_visibility IN ('public', 'friends', 'private')),
+                                      anonymous_reports BOOLEAN DEFAULT false,
+                                      show_online_status BOOLEAN DEFAULT true,
+
+    -- Auto Alert Settings
+                                      auto_alerts_enabled BOOLEAN DEFAULT false,
+                                      danger_zones_enabled BOOLEAN DEFAULT true,
+                                      time_based_alerts_enabled BOOLEAN DEFAULT false,
+                                      high_risk_start_time TIME DEFAULT '22:00',
+                                      high_risk_end_time TIME DEFAULT '06:00',
+
+    -- Night Mode Settings
+                                      night_mode_enabled BOOLEAN DEFAULT false,
+                                      night_mode_start_time TIME DEFAULT '22:00',
+                                      night_mode_end_time TIME DEFAULT '06:00',
+
+                                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                      
+    CONSTRAINT user_safety_settings_owner_check CHECK (
+        (user_id IS NOT NULL AND anonymous_session_id IS NULL AND device_id IS NULL) OR
+        (user_id IS NULL AND anonymous_session_id IS NOT NULL AND device_id IS NOT NULL)
+    )
+);
+
+-- User Safety Settings Indexes
+CREATE UNIQUE INDEX idx_safety_settings_unique_user ON user_safety_settings(user_id) WHERE user_id IS NOT NULL;
+CREATE UNIQUE INDEX idx_safety_settings_unique_device ON user_safety_settings(device_id) WHERE device_id IS NOT NULL;
+CREATE INDEX idx_user_safety_settings_user_id ON user_safety_settings(user_id);
+CREATE INDEX idx_safety_settings_anonymous_session_id ON user_safety_settings(anonymous_session_id) WHERE anonymous_session_id IS NOT NULL;
+CREATE INDEX idx_safety_settings_device_id ON user_safety_settings(device_id) WHERE device_id IS NOT NULL;
+CREATE INDEX idx_user_safety_settings_updated_at ON user_safety_settings(updated_at DESC);
+
+-- ============================================================================
+-- ANONYMOUS USER TO AUTHENTICATED USER MIGRATION SUPPORT
+-- ============================================================================
+
+-- Add indexes for alerts anonymous support
+CREATE INDEX idx_alerts_anonymous_session_id ON alerts(anonymous_session_id) WHERE anonymous_session_id IS NOT NULL;
+CREATE INDEX idx_alerts_device_id ON alerts(device_id) WHERE device_id IS NOT NULL;
+
+-- Add indexes for alert_subscriptions anonymous support
+CREATE INDEX idx_alert_subscriptions_anonymous_session_id ON alert_subscriptions(anonymous_session_id) WHERE anonymous_session_id IS NOT NULL;
+CREATE INDEX idx_alert_subscriptions_device_id ON alert_subscriptions(device_id) WHERE device_id IS NOT NULL;
+
+-- Add indexes for anonymous_sessions migration tracking
+CREATE INDEX idx_anonymous_sessions_migrated_user ON anonymous_sessions(migrated_to_user_id) WHERE migrated_to_user_id IS NOT NULL;
+CREATE INDEX idx_anonymous_sessions_is_active ON anonymous_sessions(is_active) WHERE is_active = true;
+
+-- Add linked device to users table
+ALTER TABLE users ADD COLUMN IF NOT EXISTS linked_device_id TEXT;
+CREATE INDEX idx_users_linked_device_id ON users(linked_device_id) WHERE linked_device_id IS NOT NULL;
+
+-- Device-User Mapping Table (Audit Trail and Re-linking)
+CREATE TABLE device_user_mappings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    device_id TEXT NOT NULL,
+    anonymous_session_id UUID NOT NULL REFERENCES anonymous_sessions(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    mapped_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    unmapped_at TIMESTAMP,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    
+    CONSTRAINT device_user_mapping_active_check CHECK (
+        (is_active = true AND unmapped_at IS NULL) OR
+        (is_active = false AND unmapped_at IS NOT NULL)
+    )
+);
+
+CREATE UNIQUE INDEX idx_device_user_mappings_active ON device_user_mappings(device_id, user_id) WHERE is_active = true;
+CREATE INDEX idx_device_user_mappings_device_id ON device_user_mappings(device_id);
+CREATE INDEX idx_device_user_mappings_user_id ON device_user_mappings(user_id);
+CREATE INDEX idx_device_user_mappings_anonymous_session_id ON device_user_mappings(anonymous_session_id);
+
+-- Migration Audit Log
+CREATE TABLE anonymous_user_migrations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    anonymous_session_id UUID NOT NULL REFERENCES anonymous_sessions(id) ON DELETE CASCADE,
+    device_id TEXT NOT NULL,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    
+    -- Counters
+    alerts_migrated INT NOT NULL DEFAULT 0,
+    subscriptions_migrated INT NOT NULL DEFAULT 0,
+    settings_migrated BOOLEAN NOT NULL DEFAULT false,
+    location_sharings_migrated INT NOT NULL DEFAULT 0,
+    
+    -- Metadata
+    migration_type VARCHAR(20) NOT NULL CHECK (migration_type IN ('signup', 'login', 'manual')),
+    started_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMP,
+    failed_at TIMESTAMP,
+    error_message TEXT,
+    
+    CONSTRAINT migration_completion_check CHECK (
+        (completed_at IS NOT NULL AND failed_at IS NULL) OR
+        (completed_at IS NULL AND failed_at IS NOT NULL) OR
+        (completed_at IS NULL AND failed_at IS NULL)
+    )
+);
+
+CREATE INDEX idx_migrations_anonymous_session_id ON anonymous_user_migrations(anonymous_session_id);
+CREATE INDEX idx_migrations_user_id ON anonymous_user_migrations(user_id);
+CREATE INDEX idx_migrations_device_id ON anonymous_user_migrations(device_id);
+CREATE INDEX idx_migrations_started_at ON anonymous_user_migrations(started_at DESC);
+
+-- ============================================================================
+-- FUNCTIONS AND TRIGGERS FOR ANONYMOUS USER SUPPORT
+-- ============================================================================
+
+-- Auto-expire anonymous alerts after 2 hours
+CREATE OR REPLACE FUNCTION auto_expire_anonymous_alerts()
+RETURNS void AS $$
+BEGIN
+    UPDATE alerts
+    SET status = 'expired'
+    WHERE anonymous_session_id IS NOT NULL
+      AND status = 'active'
+      AND created_at < NOW() - INTERVAL '2 hours';
+END;
+$$ LANGUAGE plpgsql;
+
+-- Update anonymous_sessions.last_seen when activity occurs
+CREATE OR REPLACE FUNCTION update_anonymous_session_last_seen()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE anonymous_sessions
+    SET last_seen = NOW()
+    WHERE id = NEW.anonymous_session_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_last_seen_on_alert
+    AFTER INSERT OR UPDATE ON alerts
+    FOR EACH ROW
+    WHEN (NEW.anonymous_session_id IS NOT NULL)
+EXECUTE FUNCTION update_anonymous_session_last_seen();
+
+CREATE TRIGGER trigger_update_last_seen_on_subscription
+    AFTER INSERT OR UPDATE ON alert_subscriptions
+    FOR EACH ROW
+    WHEN (NEW.anonymous_session_id IS NOT NULL)
+EXECUTE FUNCTION update_anonymous_session_last_seen();
