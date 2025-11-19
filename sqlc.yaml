@@ -3,7 +3,10 @@ version: 2
 sql:
 
   - engine: postgresql
-    schema: migrations/000001_init_schema.up.sql
+    schema: 
+      - migrations/000001_init_schema.up.sql
+      - migrations/000002_add_anonymous_sessions.up.sql
+      - migrations/000003_add_location_sharing.up.sql
     queries: [internal/adapter/repository/postgres/queries]
     gen:
       go:
