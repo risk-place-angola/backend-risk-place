@@ -63,6 +63,257 @@
                 }
             }
         },
+        "/alerts/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an alert created by the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "my-alerts"
+                ],
+                "summary": "Update an alert",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Alert ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated alert data",
+                        "name": "alert",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateAlertInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MyAlertResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete an alert created by the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "my-alerts"
+                ],
+                "summary": "Delete an alert",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Alert ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/alerts/{id}/subscribe": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Subscribe to receive notifications for an alert",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "my-alerts"
+                ],
+                "summary": "Subscribe to an alert",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Alert ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AlertSubscriptionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/alerts/{id}/unsubscribe": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Unsubscribe from receiving notifications for an alert",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "my-alerts"
+                ],
+                "summary": "Unsubscribe from an alert",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Alert ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AlertSubscriptionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/devices/location": {
             "put": {
                 "description": "Update the location of an anonymous device for proximity-based notifications",
@@ -408,7 +659,7 @@
         },
         "/auth/login": {
             "post": {
-                "description": "Login a user",
+                "description": "Login a user. If X-Device-ID header is provided, anonymous user data will be migrated to the authenticated account.",
                 "consumes": [
                     "application/json"
                 ],
@@ -420,6 +671,12 @@
                 ],
                 "summary": "Login a user",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous data migration",
+                        "name": "X-Device-ID",
+                        "in": "header"
+                    },
                     {
                         "description": "User login credentials",
                         "name": "credentials",
@@ -441,6 +698,34 @@
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Logout user and invalidate session",
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout user",
+                "responses": {
+                    "200": {
+                        "description": "logout successful",
+                        "schema": {
+                            "type": "string"
                         }
                     },
                     "401": {
@@ -557,9 +842,108 @@
                 }
             }
         },
+        "/auth/refresh": {
+            "post": {
+                "description": "Get new access and refresh tokens using refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh access token",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "refresh_token",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "refresh_token": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserSignInDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/resend-code": {
+            "post": {
+                "description": "Resend verification code to user's phone (SMS) or email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Resend verification code",
+                "parameters": [
+                    {
+                        "description": "Email",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/signup": {
             "post": {
-                "description": "Register a new user",
+                "description": "Register a new user. If X-Device-ID header is provided, anonymous user data will be migrated to the new account.",
                 "consumes": [
                     "application/json"
                 ],
@@ -571,6 +955,12 @@
                 ],
                 "summary": "Register a new user",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous data migration",
+                        "name": "X-Device-ID",
+                        "in": "header"
+                    },
                     {
                         "description": "User registration data",
                         "name": "user",
@@ -590,6 +980,63 @@
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/emergency/alert": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Send an emergency SMS alert with location to all priority emergency contacts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emergency"
+                ],
+                "summary": "Send emergency alert to all priority contacts",
+                "parameters": [
+                    {
+                        "description": "Emergency alert data with location",
+                        "name": "alert",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.EmergencyAlertInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.EmergencyAlertResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -1367,6 +1814,396 @@
                 }
             }
         },
+        "/users/me/alerts/created": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all alerts that were created by the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "my-alerts"
+                ],
+                "summary": "Get all alerts created by the current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.MyAlertResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me/alerts/subscribed": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all alerts that the authenticated user has subscribed to",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "my-alerts"
+                ],
+                "summary": "Get all alerts the user is subscribed to",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.MyAlertResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me/emergency-contacts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all emergency contacts configured by the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emergency-contacts"
+                ],
+                "summary": "Get all emergency contacts for the current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.EmergencyContactResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a new emergency contact for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emergency-contacts"
+                ],
+                "summary": "Create a new emergency contact",
+                "parameters": [
+                    {
+                        "description": "Emergency contact data",
+                        "name": "contact",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateEmergencyContactInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.EmergencyContactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me/emergency-contacts/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing emergency contact for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emergency-contacts"
+                ],
+                "summary": "Update an emergency contact",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Emergency Contact ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated emergency contact data",
+                        "name": "contact",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateEmergencyContactInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.EmergencyContactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete an emergency contact for the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emergency-contacts"
+                ],
+                "summary": "Delete an emergency contact",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Emergency Contact ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me/settings": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve safety settings for the authenticated user. Creates default settings if none exist.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "safety-settings"
+                ],
+                "summary": "Get user safety settings",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SafetySettingsResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update safety settings for the authenticated user. All fields are optional.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "safety-settings"
+                ],
+                "summary": "Update user safety settings",
+                "parameters": [
+                    {
+                        "description": "Updated settings",
+                        "name": "settings",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateSafetySettingsInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SafetySettingsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/profile": {
             "put": {
                 "security": [
@@ -1520,6 +2357,46 @@
                 }
             }
         },
+        "dto.AlertSubscriptionResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.CreateEmergencyContactInput": {
+            "type": "object",
+            "required": [
+                "name",
+                "phone",
+                "relation"
+            ],
+            "properties": {
+                "is_priority": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "relation": {
+                    "type": "string",
+                    "enum": [
+                        "family",
+                        "friend",
+                        "colleague",
+                        "neighbor",
+                        "other"
+                    ]
+                }
+            }
+        },
         "dto.CreateLocationSharingRequest": {
             "type": "object",
             "required": [
@@ -1563,6 +2440,73 @@
                     "type": "string"
                 },
                 "platform": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.EmergencyAlertInput": {
+            "type": "object",
+            "required": [
+                "latitude",
+                "longitude"
+            ],
+            "properties": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.EmergencyAlertResponse": {
+            "type": "object",
+            "properties": {
+                "contacts_notified": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "notified_contacts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.EmergencyContactResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_priority": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "relation": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -1638,6 +2582,65 @@
                 },
                 "password": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.MyAlertResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_subscribed": {
+                    "type": "boolean"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "municipality": {
+                    "type": "string"
+                },
+                "neighborhood": {
+                    "type": "string"
+                },
+                "province": {
+                    "type": "string"
+                },
+                "radius_meters": {
+                    "type": "integer"
+                },
+                "resolved_at": {
+                    "type": "string"
+                },
+                "risk_topic_name": {
+                    "type": "string"
+                },
+                "risk_type_name": {
+                    "type": "string"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "subscribers": {
+                    "type": "integer"
                 }
             }
         },
@@ -2059,6 +3062,115 @@
                 }
             }
         },
+        "dto.SafetySettingsResponse": {
+            "type": "object",
+            "properties": {
+                "anonymous_reports": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "auto_alerts_enabled": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "danger_zones_enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "high_risk_end_time": {
+                    "type": "string",
+                    "example": "06:00"
+                },
+                "high_risk_start_time": {
+                    "type": "string",
+                    "example": "22:00"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "location_history_enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "location_sharing_enabled": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "night_mode_enabled": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "night_mode_end_time": {
+                    "type": "string",
+                    "example": "06:00"
+                },
+                "night_mode_start_time": {
+                    "type": "string",
+                    "example": "22:00"
+                },
+                "notification_alert_radius_mins": {
+                    "type": "integer",
+                    "example": 1000
+                },
+                "notification_alert_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "high",
+                        "critical"
+                    ]
+                },
+                "notification_report_radius_mins": {
+                    "type": "integer",
+                    "example": 500
+                },
+                "notification_report_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "verified"
+                    ]
+                },
+                "notifications_enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "profile_visibility": {
+                    "type": "string",
+                    "enum": [
+                        "public",
+                        "friends",
+                        "private"
+                    ],
+                    "example": "public"
+                },
+                "show_online_status": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "time_based_alerts_enabled": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440001"
+                }
+            }
+        },
         "dto.SavedLocationDTO": {
             "type": "object",
             "properties": {
@@ -2073,6 +3185,33 @@
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.UpdateAlertInput": {
+            "type": "object",
+            "required": [
+                "message",
+                "radius_meters",
+                "severity"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "radius_meters": {
+                    "type": "integer",
+                    "maximum": 10000,
+                    "minimum": 100
+                },
+                "severity": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high",
+                        "critical"
+                    ]
                 }
             }
         },
@@ -2092,6 +3231,35 @@
                 },
                 "longitude": {
                     "type": "number"
+                }
+            }
+        },
+        "dto.UpdateEmergencyContactInput": {
+            "type": "object",
+            "required": [
+                "name",
+                "phone",
+                "relation"
+            ],
+            "properties": {
+                "is_priority": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "relation": {
+                    "type": "string",
+                    "enum": [
+                        "family",
+                        "friend",
+                        "colleague",
+                        "neighbor",
+                        "other"
+                    ]
                 }
             }
         },
@@ -2163,6 +3331,80 @@
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.UpdateSafetySettingsInput": {
+            "type": "object",
+            "properties": {
+                "anonymous_reports": {
+                    "type": "boolean"
+                },
+                "auto_alerts_enabled": {
+                    "type": "boolean"
+                },
+                "danger_zones_enabled": {
+                    "type": "boolean"
+                },
+                "high_risk_end_time": {
+                    "type": "string",
+                    "example": "06:00"
+                },
+                "high_risk_start_time": {
+                    "type": "string",
+                    "example": "22:00"
+                },
+                "location_history_enabled": {
+                    "type": "boolean"
+                },
+                "location_sharing_enabled": {
+                    "type": "boolean"
+                },
+                "night_mode_enabled": {
+                    "type": "boolean"
+                },
+                "night_mode_end_time": {
+                    "type": "string",
+                    "example": "06:00"
+                },
+                "night_mode_start_time": {
+                    "type": "string",
+                    "example": "22:00"
+                },
+                "notification_alert_radius_mins": {
+                    "type": "integer"
+                },
+                "notification_alert_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "notification_report_radius_mins": {
+                    "type": "integer"
+                },
+                "notification_report_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "notifications_enabled": {
+                    "type": "boolean"
+                },
+                "profile_visibility": {
+                    "type": "string",
+                    "enum": [
+                        "public",
+                        "friends",
+                        "private"
+                    ]
+                },
+                "show_online_status": {
+                    "type": "boolean"
+                },
+                "time_based_alerts_enabled": {
+                    "type": "boolean"
                 }
             }
         },
