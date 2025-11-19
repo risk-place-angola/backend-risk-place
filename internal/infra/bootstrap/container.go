@@ -24,12 +24,14 @@ import (
 type Container struct {
 	Cfg *config.Config
 
-	UserHandler   *handler.UserHandler
-	WSHandler     *websocket.WSHandler
-	AlertHandler  *handler.AlertHandler
-	ReportHandler *handler.ReportHandler
-	RiskHandler   *handler.RiskHandler
-	DeviceHandler *handler.DeviceHandler
+	UserHandler            *handler.UserHandler
+	WSHandler              *websocket.WSHandler
+	AlertHandler           *handler.AlertHandler
+	ReportHandler          *handler.ReportHandler
+	RiskHandler            *handler.RiskHandler
+	DeviceHandler          *handler.DeviceHandler
+	LocationSharingHandler *handler.LocationSharingHandler
+	SafeRouteHandler       *handler.SafeRouteHandler
 
 	UserApp *application.Application
 
@@ -57,6 +59,8 @@ func NewContainer() (*Container, error) {
 	riskTopicRepoPG := postgres.NewRiskTopicRepoPG(database)
 	reportRepoPG := postgres.NewReportRepoPG(database, locationStore)
 	anonymousSessionRepoPG := postgres.NewAnonymousSessionRepository(database)
+	locationSharingRepoPG := postgres.NewLocationSharingRepository(database)
+	safeRouteRepoPG := postgres.NewSafeRouteRepoPG(database)
 
 	emailService := notifier.NewSmtpEmailService(cfg)
 	tokenService := service.NewJwtTokenService(cfg)
@@ -87,6 +91,9 @@ func NewContainer() (*Container, error) {
 		riskTypeRepoPG,
 		riskTopicRepoPG,
 		reportRepoPG,
+		locationSharingRepoPG,
+		anonymousSessionRepoPG,
+		safeRouteRepoPG,
 		tokenService,
 		hashService,
 		emailService,
@@ -108,6 +115,8 @@ func NewContainer() (*Container, error) {
 	reportHandler := handler.NewReportHandler(userApp)
 	riskHandler := handler.NewRiskHandler(userApp)
 	deviceHandler := handler.NewDeviceHandler(registerDeviceUC, updateDeviceLocationUC)
+	locationSharingHandler := handler.NewLocationSharingHandler(userApp)
+	safeRouteHandler := handler.NewSafeRouteHandler(userApp)
 
 	return &Container{
 		UserApp:                userApp,
@@ -121,5 +130,7 @@ func NewContainer() (*Container, error) {
 		ReportHandler:          reportHandler,
 		RiskHandler:            riskHandler,
 		DeviceHandler:          deviceHandler,
+		LocationSharingHandler: locationSharingHandler,
+		SafeRouteHandler:       safeRouteHandler,
 	}, nil
 }

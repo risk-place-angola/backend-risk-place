@@ -3,18 +3,22 @@ package application
 import (
 	"github.com/risk-place-angola/backend-risk-place/internal/application/port"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/alert"
+	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/locationsharing"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/report"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/risk"
+	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/saferoute"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/user"
 	"github.com/risk-place-angola/backend-risk-place/internal/config"
 	domainrepository "github.com/risk-place-angola/backend-risk-place/internal/domain/repository"
 )
 
 type Application struct {
-	UserUseCase   *user.UserUseCase
-	AlertUseCase  *alert.AlertUseCase
-	ReportUseCase *report.ReportUseCase
-	RiskUseCase   *risk.RiskUseCase
+	UserUseCase            *user.UserUseCase
+	AlertUseCase           *alert.AlertUseCase
+	ReportUseCase          *report.ReportUseCase
+	RiskUseCase            *risk.RiskUseCase
+	LocationSharingUseCase *locationsharing.LocationSharingUseCase
+	SafeRouteUseCase       *saferoute.SafeRouteUseCase
 }
 
 func NewUserApplication(
@@ -24,6 +28,9 @@ func NewUserApplication(
 	riskTypeRepo domainrepository.RiskTypesRepository,
 	riskTopicRepo domainrepository.RiskTopicsRepository,
 	reportRepo domainrepository.ReportRepository,
+	locationSharingRepo domainrepository.LocationSharingRepository,
+	anonymousSessionRepo domainrepository.AnonymousSessionRepository,
+	safeRouteRepo domainrepository.SafeRouteRepository,
 
 	token port.TokenGenerator,
 	hasher port.PasswordHasher,
@@ -59,6 +66,17 @@ func NewUserApplication(
 		RiskUseCase: risk.NewRiskUseCase(
 			riskTypeRepo,
 			riskTopicRepo,
+		),
+		LocationSharingUseCase: locationsharing.NewLocationSharingUseCase(
+			locationSharingRepo,
+			userRepo,
+			anonymousSessionRepo,
+			geoService,
+			config,
+		),
+		SafeRouteUseCase: saferoute.NewSafeRouteUseCase(
+			safeRouteRepo,
+			userRepo,
 		),
 	}
 }

@@ -38,9 +38,22 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 
 	// User Management
 	g.ProtectedJWT.HandleFunc("GET /api/v1/users/me", container.UserHandler.Me)
+	g.ProtectedJWT.HandleFunc("PUT /api/v1/users/profile", container.UserHandler.UpdateProfile)
 
 	// Alerts
 	g.ProtectedJWT.HandleFunc("POST /api/v1/alerts", container.AlertHandler.CreateAlert)
+
+	// Location Sharing
+	g.OptionalAuth.HandleFunc("POST /api/v1/location-sharing", container.LocationSharingHandler.CreateLocationSharing)
+	g.OptionalAuth.HandleFunc("PUT /api/v1/location-sharing/{id}/location", container.LocationSharingHandler.UpdateLocationSharing)
+	g.OptionalAuth.HandleFunc("DELETE /api/v1/location-sharing/{id}", container.LocationSharingHandler.DeleteLocationSharing)
+	g.Public.HandleFunc("GET /share/{token}", container.LocationSharingHandler.GetPublicLocationSharing)
+
+	// Safe Routes
+	g.OptionalAuth.HandleFunc("POST /api/v1/routes/safe-route", container.SafeRouteHandler.CalculateSafeRoute)
+	g.OptionalAuth.HandleFunc("POST /api/v1/routes/incidents-heatmap", container.SafeRouteHandler.GetIncidentsHeatmap)
+	g.ProtectedJWT.HandleFunc("POST /api/v1/routes/navigate-home", container.SafeRouteHandler.NavigateToHome)
+	g.ProtectedJWT.HandleFunc("POST /api/v1/routes/navigate-work", container.SafeRouteHandler.NavigateToWork)
 
 	// Reports
 	g.OptionalAuth.HandleFunc("GET /api/v1/reports", container.ReportHandler.List)
