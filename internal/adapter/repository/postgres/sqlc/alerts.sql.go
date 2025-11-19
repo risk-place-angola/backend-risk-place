@@ -8,9 +8,21 @@ package sqlc
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+const countAlertSubscribers = `-- name: CountAlertSubscribers :one
+SELECT COUNT(*) FROM alert_subscriptions WHERE alert_id = $1
+`
+
+func (q *Queries) CountAlertSubscribers(ctx context.Context, alertID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countAlertSubscribers, alertID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
 
 const createAlert = `-- name: CreateAlert :exec
 INSERT INTO alerts (
@@ -58,6 +70,70 @@ func (q *Queries) CreateAlert(ctx context.Context, arg CreateAlertParams) error 
 	return err
 }
 
+const createAnonymousAlert = `-- name: CreateAnonymousAlert :exec
+
+INSERT INTO alerts (
+    id, anonymous_session_id, device_id, risk_type_id, risk_topic_id, message,
+    latitude, longitude, province, municipality, neighborhood, address,
+    radius_meters, severity, expires_at
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+`
+
+type CreateAnonymousAlertParams struct {
+	ID                 uuid.UUID      `json:"id"`
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+	RiskTypeID         uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID        uuid.NullUUID  `json:"risk_topic_id"`
+	Message            string         `json:"message"`
+	Latitude           float64        `json:"latitude"`
+	Longitude          float64        `json:"longitude"`
+	Province           sql.NullString `json:"province"`
+	Municipality       sql.NullString `json:"municipality"`
+	Neighborhood       sql.NullString `json:"neighborhood"`
+	Address            sql.NullString `json:"address"`
+	RadiusMeters       int32          `json:"radius_meters"`
+	Severity           interface{}    `json:"severity"`
+	ExpiresAt          sql.NullTime   `json:"expires_at"`
+}
+
+// Anonymous User Queries
+func (q *Queries) CreateAnonymousAlert(ctx context.Context, arg CreateAnonymousAlertParams) error {
+	_, err := q.db.ExecContext(ctx, createAnonymousAlert,
+		arg.ID,
+		arg.AnonymousSessionID,
+		arg.DeviceID,
+		arg.RiskTypeID,
+		arg.RiskTopicID,
+		arg.Message,
+		arg.Latitude,
+		arg.Longitude,
+		arg.Province,
+		arg.Municipality,
+		arg.Neighborhood,
+		arg.Address,
+		arg.RadiusMeters,
+		arg.Severity,
+		arg.ExpiresAt,
+	)
+	return err
+}
+
+const deleteAlert = `-- name: DeleteAlert :exec
+DELETE FROM alerts WHERE id = $1 AND created_by = $2
+`
+
+type DeleteAlertParams struct {
+	ID        uuid.UUID     `json:"id"`
+	CreatedBy uuid.NullUUID `json:"created_by"`
+}
+
+func (q *Queries) DeleteAlert(ctx context.Context, arg DeleteAlertParams) error {
+	_, err := q.db.ExecContext(ctx, deleteAlert, arg.ID, arg.CreatedBy)
+	return err
+}
+
 const expireAlert = `-- name: ExpireAlert :exec
 UPDATE alerts
 SET status = 'expired'
@@ -69,8 +145,286 @@ func (q *Queries) ExpireAlert(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getAlertByID = `-- name: GetAlertByID :one
+SELECT id, created_by, anonymous_session_id, device_id, risk_type_id, risk_topic_id, message, latitude, longitude, province, municipality, neighborhood, address, radius_meters, severity, status, created_at, expires_at, resolved_at FROM alerts WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetAlertByID(ctx context.Context, id uuid.UUID) (Alert, error) {
+	row := q.db.QueryRowContext(ctx, getAlertByID, id)
+	var i Alert
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedBy,
+		&i.AnonymousSessionID,
+		&i.DeviceID,
+		&i.RiskTypeID,
+		&i.RiskTopicID,
+		&i.Message,
+		&i.Latitude,
+		&i.Longitude,
+		&i.Province,
+		&i.Municipality,
+		&i.Neighborhood,
+		&i.Address,
+		&i.RadiusMeters,
+		&i.Severity,
+		&i.Status,
+		&i.CreatedAt,
+		&i.ExpiresAt,
+		&i.ResolvedAt,
+	)
+	return i, err
+}
+
+const getAlertsByAnonymousSessionID = `-- name: GetAlertsByAnonymousSessionID :many
+SELECT id, created_by, anonymous_session_id, device_id, risk_type_id, risk_topic_id, message, latitude, longitude, province, municipality, neighborhood, address, radius_meters, severity, status, created_at, expires_at, resolved_at FROM alerts
+WHERE anonymous_session_id = $1 AND device_id = $2
+ORDER BY created_at DESC
+`
+
+type GetAlertsByAnonymousSessionIDParams struct {
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+}
+
+func (q *Queries) GetAlertsByAnonymousSessionID(ctx context.Context, arg GetAlertsByAnonymousSessionIDParams) ([]Alert, error) {
+	rows, err := q.db.QueryContext(ctx, getAlertsByAnonymousSessionID, arg.AnonymousSessionID, arg.DeviceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Alert{}
+	for rows.Next() {
+		var i Alert
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedBy,
+			&i.AnonymousSessionID,
+			&i.DeviceID,
+			&i.RiskTypeID,
+			&i.RiskTopicID,
+			&i.Message,
+			&i.Latitude,
+			&i.Longitude,
+			&i.Province,
+			&i.Municipality,
+			&i.Neighborhood,
+			&i.Address,
+			&i.RadiusMeters,
+			&i.Severity,
+			&i.Status,
+			&i.CreatedAt,
+			&i.ExpiresAt,
+			&i.ResolvedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAlertsByUserID = `-- name: GetAlertsByUserID :many
+SELECT id, created_by, anonymous_session_id, device_id, risk_type_id, risk_topic_id, message, latitude, longitude, province, municipality, neighborhood, address, radius_meters, severity, status, created_at, expires_at, resolved_at FROM alerts
+WHERE created_by = $1
+ORDER BY created_at DESC
+`
+
+func (q *Queries) GetAlertsByUserID(ctx context.Context, createdBy uuid.NullUUID) ([]Alert, error) {
+	rows, err := q.db.QueryContext(ctx, getAlertsByUserID, createdBy)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Alert{}
+	for rows.Next() {
+		var i Alert
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedBy,
+			&i.AnonymousSessionID,
+			&i.DeviceID,
+			&i.RiskTypeID,
+			&i.RiskTopicID,
+			&i.Message,
+			&i.Latitude,
+			&i.Longitude,
+			&i.Province,
+			&i.Municipality,
+			&i.Neighborhood,
+			&i.Address,
+			&i.RadiusMeters,
+			&i.Severity,
+			&i.Status,
+			&i.CreatedAt,
+			&i.ExpiresAt,
+			&i.ResolvedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSubscribedAlerts = `-- name: GetSubscribedAlerts :many
+SELECT a.id, a.created_by, a.anonymous_session_id, a.device_id, a.risk_type_id, a.risk_topic_id, a.message, a.latitude, a.longitude, a.province, a.municipality, a.neighborhood, a.address, a.radius_meters, a.severity, a.status, a.created_at, a.expires_at, a.resolved_at FROM alerts a
+INNER JOIN alert_subscriptions s ON a.id = s.alert_id
+WHERE s.user_id = $1
+ORDER BY s.subscribed_at DESC
+`
+
+func (q *Queries) GetSubscribedAlerts(ctx context.Context, userID uuid.NullUUID) ([]Alert, error) {
+	rows, err := q.db.QueryContext(ctx, getSubscribedAlerts, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Alert{}
+	for rows.Next() {
+		var i Alert
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedBy,
+			&i.AnonymousSessionID,
+			&i.DeviceID,
+			&i.RiskTypeID,
+			&i.RiskTopicID,
+			&i.Message,
+			&i.Latitude,
+			&i.Longitude,
+			&i.Province,
+			&i.Municipality,
+			&i.Neighborhood,
+			&i.Address,
+			&i.RadiusMeters,
+			&i.Severity,
+			&i.Status,
+			&i.CreatedAt,
+			&i.ExpiresAt,
+			&i.ResolvedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSubscribedAlertsAnonymous = `-- name: GetSubscribedAlertsAnonymous :many
+SELECT a.id, a.created_by, a.anonymous_session_id, a.device_id, a.risk_type_id, a.risk_topic_id, a.message, a.latitude, a.longitude, a.province, a.municipality, a.neighborhood, a.address, a.radius_meters, a.severity, a.status, a.created_at, a.expires_at, a.resolved_at FROM alerts a
+INNER JOIN alert_subscriptions s ON a.id = s.alert_id
+WHERE s.anonymous_session_id = $1 AND s.device_id = $2
+ORDER BY s.subscribed_at DESC
+`
+
+type GetSubscribedAlertsAnonymousParams struct {
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+}
+
+func (q *Queries) GetSubscribedAlertsAnonymous(ctx context.Context, arg GetSubscribedAlertsAnonymousParams) ([]Alert, error) {
+	rows, err := q.db.QueryContext(ctx, getSubscribedAlertsAnonymous, arg.AnonymousSessionID, arg.DeviceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Alert{}
+	for rows.Next() {
+		var i Alert
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedBy,
+			&i.AnonymousSessionID,
+			&i.DeviceID,
+			&i.RiskTypeID,
+			&i.RiskTopicID,
+			&i.Message,
+			&i.Latitude,
+			&i.Longitude,
+			&i.Province,
+			&i.Municipality,
+			&i.Neighborhood,
+			&i.Address,
+			&i.RadiusMeters,
+			&i.Severity,
+			&i.Status,
+			&i.CreatedAt,
+			&i.ExpiresAt,
+			&i.ResolvedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const isAnonymousSubscribed = `-- name: IsAnonymousSubscribed :one
+SELECT EXISTS(
+    SELECT 1 FROM alert_subscriptions
+    WHERE alert_id = $1 AND anonymous_session_id = $2 AND device_id = $3
+) AS is_subscribed
+`
+
+type IsAnonymousSubscribedParams struct {
+	AlertID            uuid.UUID      `json:"alert_id"`
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+}
+
+func (q *Queries) IsAnonymousSubscribed(ctx context.Context, arg IsAnonymousSubscribedParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isAnonymousSubscribed, arg.AlertID, arg.AnonymousSessionID, arg.DeviceID)
+	var is_subscribed bool
+	err := row.Scan(&is_subscribed)
+	return is_subscribed, err
+}
+
+const isUserSubscribed = `-- name: IsUserSubscribed :one
+SELECT EXISTS(
+    SELECT 1 FROM alert_subscriptions
+    WHERE alert_id = $1 AND user_id = $2
+) AS is_subscribed
+`
+
+type IsUserSubscribedParams struct {
+	AlertID uuid.UUID     `json:"alert_id"`
+	UserID  uuid.NullUUID `json:"user_id"`
+}
+
+func (q *Queries) IsUserSubscribed(ctx context.Context, arg IsUserSubscribedParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isUserSubscribed, arg.AlertID, arg.UserID)
+	var is_subscribed bool
+	err := row.Scan(&is_subscribed)
+	return is_subscribed, err
+}
+
 const listActiveAlerts = `-- name: ListActiveAlerts :many
-SELECT id, created_by, risk_type_id, risk_topic_id, message, latitude, longitude, province, municipality, neighborhood, address, radius_meters, severity, status, created_at, expires_at, resolved_at FROM alerts
+SELECT id, created_by, anonymous_session_id, device_id, risk_type_id, risk_topic_id, message, latitude, longitude, province, municipality, neighborhood, address, radius_meters, severity, status, created_at, expires_at, resolved_at FROM alerts
 WHERE status = 'active' AND (expires_at IS NULL OR expires_at > NOW())
 ORDER BY created_at DESC
 `
@@ -87,6 +441,8 @@ func (q *Queries) ListActiveAlerts(ctx context.Context) ([]Alert, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedBy,
+			&i.AnonymousSessionID,
+			&i.DeviceID,
 			&i.RiskTypeID,
 			&i.RiskTopicID,
 			&i.Message,
@@ -124,5 +480,139 @@ WHERE id = $1
 
 func (q *Queries) ResolveAlert(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, resolveAlert, id)
+	return err
+}
+
+const subscribeAnonymousToAlert = `-- name: SubscribeAnonymousToAlert :exec
+INSERT INTO alert_subscriptions (id, alert_id, anonymous_session_id, device_id, subscribed_at)
+VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT (alert_id, device_id) DO NOTHING
+`
+
+type SubscribeAnonymousToAlertParams struct {
+	ID                 uuid.UUID      `json:"id"`
+	AlertID            uuid.UUID      `json:"alert_id"`
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+	SubscribedAt       time.Time      `json:"subscribed_at"`
+}
+
+func (q *Queries) SubscribeAnonymousToAlert(ctx context.Context, arg SubscribeAnonymousToAlertParams) error {
+	_, err := q.db.ExecContext(ctx, subscribeAnonymousToAlert,
+		arg.ID,
+		arg.AlertID,
+		arg.AnonymousSessionID,
+		arg.DeviceID,
+		arg.SubscribedAt,
+	)
+	return err
+}
+
+const subscribeToAlert = `-- name: SubscribeToAlert :exec
+INSERT INTO alert_subscriptions (id, alert_id, user_id, subscribed_at)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (alert_id, user_id) DO NOTHING
+`
+
+type SubscribeToAlertParams struct {
+	ID           uuid.UUID     `json:"id"`
+	AlertID      uuid.UUID     `json:"alert_id"`
+	UserID       uuid.NullUUID `json:"user_id"`
+	SubscribedAt time.Time     `json:"subscribed_at"`
+}
+
+func (q *Queries) SubscribeToAlert(ctx context.Context, arg SubscribeToAlertParams) error {
+	_, err := q.db.ExecContext(ctx, subscribeToAlert,
+		arg.ID,
+		arg.AlertID,
+		arg.UserID,
+		arg.SubscribedAt,
+	)
+	return err
+}
+
+const unsubscribeAnonymousFromAlert = `-- name: UnsubscribeAnonymousFromAlert :exec
+DELETE FROM alert_subscriptions WHERE alert_id = $1 AND anonymous_session_id = $2 AND device_id = $3
+`
+
+type UnsubscribeAnonymousFromAlertParams struct {
+	AlertID            uuid.UUID      `json:"alert_id"`
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+}
+
+func (q *Queries) UnsubscribeAnonymousFromAlert(ctx context.Context, arg UnsubscribeAnonymousFromAlertParams) error {
+	_, err := q.db.ExecContext(ctx, unsubscribeAnonymousFromAlert, arg.AlertID, arg.AnonymousSessionID, arg.DeviceID)
+	return err
+}
+
+const unsubscribeFromAlert = `-- name: UnsubscribeFromAlert :exec
+DELETE FROM alert_subscriptions WHERE alert_id = $1 AND user_id = $2
+`
+
+type UnsubscribeFromAlertParams struct {
+	AlertID uuid.UUID     `json:"alert_id"`
+	UserID  uuid.NullUUID `json:"user_id"`
+}
+
+func (q *Queries) UnsubscribeFromAlert(ctx context.Context, arg UnsubscribeFromAlertParams) error {
+	_, err := q.db.ExecContext(ctx, unsubscribeFromAlert, arg.AlertID, arg.UserID)
+	return err
+}
+
+const updateAlert = `-- name: UpdateAlert :exec
+UPDATE alerts
+SET message = $2, severity = $3, radius_meters = $4
+WHERE id = $1 AND created_by = $5
+`
+
+type UpdateAlertParams struct {
+	ID           uuid.UUID     `json:"id"`
+	Message      string        `json:"message"`
+	Severity     interface{}   `json:"severity"`
+	RadiusMeters int32         `json:"radius_meters"`
+	CreatedBy    uuid.NullUUID `json:"created_by"`
+}
+
+func (q *Queries) UpdateAlert(ctx context.Context, arg UpdateAlertParams) error {
+	_, err := q.db.ExecContext(ctx, updateAlert,
+		arg.ID,
+		arg.Message,
+		arg.Severity,
+		arg.RadiusMeters,
+		arg.CreatedBy,
+	)
+	return err
+}
+
+const updateAlertAnonymousToUser = `-- name: UpdateAlertAnonymousToUser :exec
+UPDATE alerts
+SET created_by = $2, anonymous_session_id = NULL, device_id = NULL
+WHERE anonymous_session_id = $1
+`
+
+type UpdateAlertAnonymousToUserParams struct {
+	AnonymousSessionID uuid.NullUUID `json:"anonymous_session_id"`
+	CreatedBy          uuid.NullUUID `json:"created_by"`
+}
+
+func (q *Queries) UpdateAlertAnonymousToUser(ctx context.Context, arg UpdateAlertAnonymousToUserParams) error {
+	_, err := q.db.ExecContext(ctx, updateAlertAnonymousToUser, arg.AnonymousSessionID, arg.CreatedBy)
+	return err
+}
+
+const updateAlertSubscriptionsAnonymousToUser = `-- name: UpdateAlertSubscriptionsAnonymousToUser :exec
+UPDATE alert_subscriptions
+SET user_id = $2, anonymous_session_id = NULL, device_id = NULL
+WHERE anonymous_session_id = $1
+`
+
+type UpdateAlertSubscriptionsAnonymousToUserParams struct {
+	AnonymousSessionID uuid.NullUUID `json:"anonymous_session_id"`
+	UserID             uuid.NullUUID `json:"user_id"`
+}
+
+func (q *Queries) UpdateAlertSubscriptionsAnonymousToUser(ctx context.Context, arg UpdateAlertSubscriptionsAnonymousToUserParams) error {
+	_, err := q.db.ExecContext(ctx, updateAlertSubscriptionsAnonymousToUser, arg.AnonymousSessionID, arg.UserID)
 	return err
 }

@@ -39,6 +39,7 @@ func NewAlertUseCase(
 
 // TriggerAlert sends an alert notification to all users within the specified radius.
 func (uc *AlertUseCase) TriggerAlert(ctx context.Context, alert dto.Alert) error {
+	createdBy := uuid.MustParse(alert.UserID)
 	alrt := &model.Alert{
 		ID:           uuid.New(),
 		RiskTypeID:   uuid.MustParse(alert.RiskTypeID),
@@ -46,7 +47,7 @@ func (uc *AlertUseCase) TriggerAlert(ctx context.Context, alert dto.Alert) error
 		Message:      alert.Message,
 		Latitude:     alert.Latitude,
 		Longitude:    alert.Longitude,
-		CreatedBy:    uuid.MustParse(alert.UserID),
+		CreatedBy:    &createdBy,
 		RadiusMeters: int(alert.Radius),
 		Severity:     model.Severity(alert.Severity),
 		Status:       model.AlertStatusActive,

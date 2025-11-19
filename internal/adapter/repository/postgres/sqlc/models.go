@@ -56,23 +56,34 @@ func (ns NullNotificationType) Value() (driver.Value, error) {
 }
 
 type Alert struct {
-	ID           uuid.UUID      `json:"id"`
-	CreatedBy    uuid.NullUUID  `json:"created_by"`
-	RiskTypeID   uuid.UUID      `json:"risk_type_id"`
-	RiskTopicID  uuid.NullUUID  `json:"risk_topic_id"`
-	Message      string         `json:"message"`
-	Latitude     float64        `json:"latitude"`
-	Longitude    float64        `json:"longitude"`
-	Province     sql.NullString `json:"province"`
-	Municipality sql.NullString `json:"municipality"`
-	Neighborhood sql.NullString `json:"neighborhood"`
-	Address      sql.NullString `json:"address"`
-	RadiusMeters int32          `json:"radius_meters"`
-	Severity     interface{}    `json:"severity"`
-	Status       interface{}    `json:"status"`
-	CreatedAt    sql.NullTime   `json:"created_at"`
-	ExpiresAt    sql.NullTime   `json:"expires_at"`
-	ResolvedAt   sql.NullTime   `json:"resolved_at"`
+	ID                 uuid.UUID      `json:"id"`
+	CreatedBy          uuid.NullUUID  `json:"created_by"`
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+	RiskTypeID         uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID        uuid.NullUUID  `json:"risk_topic_id"`
+	Message            string         `json:"message"`
+	Latitude           float64        `json:"latitude"`
+	Longitude          float64        `json:"longitude"`
+	Province           sql.NullString `json:"province"`
+	Municipality       sql.NullString `json:"municipality"`
+	Neighborhood       sql.NullString `json:"neighborhood"`
+	Address            sql.NullString `json:"address"`
+	RadiusMeters       int32          `json:"radius_meters"`
+	Severity           interface{}    `json:"severity"`
+	Status             interface{}    `json:"status"`
+	CreatedAt          sql.NullTime   `json:"created_at"`
+	ExpiresAt          sql.NullTime   `json:"expires_at"`
+	ResolvedAt         sql.NullTime   `json:"resolved_at"`
+}
+
+type AlertSubscription struct {
+	ID                 uuid.UUID      `json:"id"`
+	AlertID            uuid.UUID      `json:"alert_id"`
+	UserID             uuid.NullUUID  `json:"user_id"`
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+	SubscribedAt       time.Time      `json:"subscribed_at"`
 }
 
 type AnonymousSession struct {
@@ -88,6 +99,46 @@ type AnonymousSession struct {
 	LastSeen          sql.NullTime    `json:"last_seen"`
 	CreatedAt         sql.NullTime    `json:"created_at"`
 	UpdatedAt         sql.NullTime    `json:"updated_at"`
+	MigratedToUserID  uuid.NullUUID   `json:"migrated_to_user_id"`
+	MigratedAt        sql.NullTime    `json:"migrated_at"`
+	IsActive          sql.NullBool    `json:"is_active"`
+}
+
+type AnonymousUserMigration struct {
+	ID                       uuid.UUID      `json:"id"`
+	AnonymousSessionID       uuid.UUID      `json:"anonymous_session_id"`
+	DeviceID                 string         `json:"device_id"`
+	UserID                   uuid.UUID      `json:"user_id"`
+	AlertsMigrated           int32          `json:"alerts_migrated"`
+	SubscriptionsMigrated    int32          `json:"subscriptions_migrated"`
+	SettingsMigrated         bool           `json:"settings_migrated"`
+	LocationSharingsMigrated int32          `json:"location_sharings_migrated"`
+	MigrationType            string         `json:"migration_type"`
+	StartedAt                time.Time      `json:"started_at"`
+	CompletedAt              sql.NullTime   `json:"completed_at"`
+	FailedAt                 sql.NullTime   `json:"failed_at"`
+	ErrorMessage             sql.NullString `json:"error_message"`
+}
+
+type DeviceUserMapping struct {
+	ID                 uuid.UUID    `json:"id"`
+	DeviceID           string       `json:"device_id"`
+	AnonymousSessionID uuid.UUID    `json:"anonymous_session_id"`
+	UserID             uuid.UUID    `json:"user_id"`
+	MappedAt           time.Time    `json:"mapped_at"`
+	UnmappedAt         sql.NullTime `json:"unmapped_at"`
+	IsActive           bool         `json:"is_active"`
+}
+
+type EmergencyContact struct {
+	ID         uuid.UUID `json:"id"`
+	UserID     uuid.UUID `json:"user_id"`
+	Name       string    `json:"name"`
+	Phone      string    `json:"phone"`
+	Relation   string    `json:"relation"`
+	IsPriority bool      `json:"is_priority"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type Entity struct {
@@ -207,13 +258,6 @@ type User struct {
 	ZipCode                    sql.NullString  `json:"zip_code"`
 	Country                    sql.NullString  `json:"country"`
 	LastLogin                  sql.NullTime    `json:"last_login"`
-	FailedAttempts             sql.NullInt32   `json:"failed_attempts"`
-	LockedUntil                sql.NullTime    `json:"locked_until"`
-	DeviceFcmToken             sql.NullString  `json:"device_fcm_token"`
-	DeviceLanguage             sql.NullString  `json:"device_language"`
-	CreatedAt                  sql.NullTime    `json:"created_at"`
-	UpdatedAt                  sql.NullTime    `json:"updated_at"`
-	DeletedAt                  sql.NullTime    `json:"deleted_at"`
 	HomeAddressName            sql.NullString  `json:"home_address_name"`
 	HomeAddressAddress         sql.NullString  `json:"home_address_address"`
 	HomeAddressLat             sql.NullFloat64 `json:"home_address_lat"`
@@ -222,6 +266,14 @@ type User struct {
 	WorkAddressAddress         sql.NullString  `json:"work_address_address"`
 	WorkAddressLat             sql.NullFloat64 `json:"work_address_lat"`
 	WorkAddressLon             sql.NullFloat64 `json:"work_address_lon"`
+	FailedAttempts             sql.NullInt32   `json:"failed_attempts"`
+	LockedUntil                sql.NullTime    `json:"locked_until"`
+	DeviceFcmToken             sql.NullString  `json:"device_fcm_token"`
+	DeviceLanguage             sql.NullString  `json:"device_language"`
+	CreatedAt                  sql.NullTime    `json:"created_at"`
+	UpdatedAt                  sql.NullTime    `json:"updated_at"`
+	DeletedAt                  sql.NullTime    `json:"deleted_at"`
+	LinkedDeviceID             sql.NullString  `json:"linked_device_id"`
 }
 
 type UserRole struct {
@@ -229,4 +281,31 @@ type UserRole struct {
 	UserID     uuid.UUID    `json:"user_id"`
 	RoleID     uuid.UUID    `json:"role_id"`
 	AssignedAt sql.NullTime `json:"assigned_at"`
+}
+
+type UserSafetySetting struct {
+	ID                           uuid.UUID      `json:"id"`
+	UserID                       uuid.NullUUID  `json:"user_id"`
+	AnonymousSessionID           uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID                     sql.NullString `json:"device_id"`
+	NotificationsEnabled         sql.NullBool   `json:"notifications_enabled"`
+	NotificationAlertTypes       []string       `json:"notification_alert_types"`
+	NotificationAlertRadiusMins  sql.NullInt32  `json:"notification_alert_radius_mins"`
+	NotificationReportTypes      []string       `json:"notification_report_types"`
+	NotificationReportRadiusMins sql.NullInt32  `json:"notification_report_radius_mins"`
+	LocationSharingEnabled       sql.NullBool   `json:"location_sharing_enabled"`
+	LocationHistoryEnabled       sql.NullBool   `json:"location_history_enabled"`
+	ProfileVisibility            sql.NullString `json:"profile_visibility"`
+	AnonymousReports             sql.NullBool   `json:"anonymous_reports"`
+	ShowOnlineStatus             sql.NullBool   `json:"show_online_status"`
+	AutoAlertsEnabled            sql.NullBool   `json:"auto_alerts_enabled"`
+	DangerZonesEnabled           sql.NullBool   `json:"danger_zones_enabled"`
+	TimeBasedAlertsEnabled       sql.NullBool   `json:"time_based_alerts_enabled"`
+	HighRiskStartTime            sql.NullTime   `json:"high_risk_start_time"`
+	HighRiskEndTime              sql.NullTime   `json:"high_risk_end_time"`
+	NightModeEnabled             sql.NullBool   `json:"night_mode_enabled"`
+	NightModeStartTime           sql.NullTime   `json:"night_mode_start_time"`
+	NightModeEndTime             sql.NullTime   `json:"night_mode_end_time"`
+	CreatedAt                    sql.NullTime   `json:"created_at"`
+	UpdatedAt                    sql.NullTime   `json:"updated_at"`
 }

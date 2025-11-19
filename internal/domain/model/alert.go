@@ -24,23 +24,35 @@ const (
 )
 
 type Alert struct {
-	ID           uuid.UUID
-	CreatedBy    uuid.UUID
-	RiskTypeID   uuid.UUID
-	RiskTopicID  uuid.UUID
-	Message      string
-	Latitude     float64
-	Longitude    float64
-	Province     string
-	Municipality string
-	Neighborhood string
-	Address      string
-	RadiusMeters int
-	Status       AlertStatus
-	Severity     Severity
-	CreatedAt    time.Time
-	ExpiresAt    time.Time
-	ResolvedAt   time.Time
+	ID                 uuid.UUID
+	CreatedBy          *uuid.UUID // Nullable - either CreatedBy OR (AnonymousSessionID + DeviceID)
+	AnonymousSessionID *uuid.UUID // Set for anonymous users
+	DeviceID           *string    // Set for anonymous users
+	RiskTypeID         uuid.UUID
+	RiskTopicID        uuid.UUID
+	Message            string
+	Latitude           float64
+	Longitude          float64
+	Province           string
+	Municipality       string
+	Neighborhood       string
+	Address            string
+	RadiusMeters       int
+	Status             AlertStatus
+	Severity           Severity
+	CreatedAt          time.Time
+	ExpiresAt          time.Time
+	ResolvedAt         time.Time
+}
+
+// IsAnonymous returns true if this alert was created by an anonymous user
+func (a *Alert) IsAnonymous() bool {
+	return a.AnonymousSessionID != nil && a.DeviceID != nil
+}
+
+// IsAuthenticated returns true if this alert was created by an authenticated user
+func (a *Alert) IsAuthenticated() bool {
+	return a.CreatedBy != nil
 }
 
 type Notification struct {

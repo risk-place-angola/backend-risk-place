@@ -14,48 +14,54 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	mw := NewMWSet(container)
 	g := NewGroups(mux, mw)
 
-	// ========================================
-	// PUBLIC ROUTES (No authentication)
-	// ========================================
 	g.Public.HandleFunc("GET /api/v1/health", healthCheckHandler)
-
-	// Anonymous Device Registration
 	g.Public.HandleFunc("POST /api/v1/devices/register", container.DeviceHandler.RegisterDevice)
 	g.Public.HandleFunc("PUT /api/v1/devices/location", container.DeviceHandler.UpdateDeviceLocation)
 
-	// Authentication
 	g.Public.HandleFunc("POST /api/v1/auth/signup", container.UserHandler.Signup)
 	g.Public.HandleFunc("POST /api/v1/auth/login", container.UserHandler.Login)
+	g.Public.HandleFunc("POST /api/v1/auth/refresh", container.UserHandler.RefreshToken)
 	g.Public.HandleFunc("POST /api/v1/auth/confirm", container.UserHandler.ConfirmSignup)
+	g.Public.HandleFunc("POST /api/v1/auth/resend-code", container.UserHandler.ResendCode)
 	g.Public.HandleFunc("POST /api/v1/auth/password/forgot", container.UserHandler.ForgotPassword)
 	g.Public.HandleFunc("POST /api/v1/auth/password/reset", container.UserHandler.ResetPassword)
+	g.ProtectedJWT.HandleFunc("POST /api/v1/auth/logout", container.UserHandler.Logout)
 
-	// Risks
 	g.OptionalAuth.HandleFunc("GET /api/v1/risks/types", container.RiskHandler.ListRiskTypes)
 	g.OptionalAuth.HandleFunc("GET /api/v1/risks/types/{id}", container.RiskHandler.GetRiskType)
 	g.OptionalAuth.HandleFunc("GET /api/v1/risks/topics", container.RiskHandler.ListRiskTopics)
 	g.OptionalAuth.HandleFunc("GET /api/v1/risks/topics/{id}", container.RiskHandler.GetRiskTopic)
 
-	// User Management
 	g.ProtectedJWT.HandleFunc("GET /api/v1/users/me", container.UserHandler.Me)
 	g.ProtectedJWT.HandleFunc("PUT /api/v1/users/profile", container.UserHandler.UpdateProfile)
 
-	// Alerts
-	g.ProtectedJWT.HandleFunc("POST /api/v1/alerts", container.AlertHandler.CreateAlert)
+	g.ProtectedJWT.HandleFunc("GET /api/v1/users/me/emergency-contacts", container.EmergencyContactHandler.GetEmergencyContacts)
+	g.ProtectedJWT.HandleFunc("POST /api/v1/users/me/emergency-contacts", container.EmergencyContactHandler.CreateEmergencyContact)
+	g.ProtectedJWT.HandleFunc("PUT /api/v1/users/me/emergency-contacts/{id}", container.EmergencyContactHandler.UpdateEmergencyContact)
+	g.ProtectedJWT.HandleFunc("DELETE /api/v1/users/me/emergency-contacts/{id}", container.EmergencyContactHandler.DeleteEmergencyContact)
+	g.ProtectedJWT.HandleFunc("POST /api/v1/emergency/alert", container.EmergencyContactHandler.SendEmergencyAlert)
 
-	// Location Sharing
+	g.OptionalAuth.HandleFunc("GET /api/v1/users/me/settings", container.SafetySettingsHandler.GetSettings)
+	g.OptionalAuth.HandleFunc("PUT /api/v1/users/me/settings", container.SafetySettingsHandler.UpdateSettings)
+
+	g.OptionalAuth.HandleFunc("POST /api/v1/alerts", container.AlertHandler.CreateAlert)
+	g.OptionalAuth.HandleFunc("POST /api/v1/alerts/{id}/subscribe", container.MyAlertsHandler.SubscribeToAlert)
+	g.OptionalAuth.HandleFunc("DELETE /api/v1/alerts/{id}/unsubscribe", container.MyAlertsHandler.UnsubscribeFromAlert)
+	g.OptionalAuth.HandleFunc("GET /api/v1/users/me/alerts/created", container.MyAlertsHandler.GetMyCreatedAlerts)
+	g.OptionalAuth.HandleFunc("GET /api/v1/users/me/alerts/subscribed", container.MyAlertsHandler.GetMySubscribedAlerts)
+	g.ProtectedJWT.HandleFunc("PUT /api/v1/alerts/{id}", container.MyAlertsHandler.UpdateAlert)
+	g.ProtectedJWT.HandleFunc("DELETE /api/v1/alerts/{id}", container.MyAlertsHandler.DeleteAlert)
+
 	g.OptionalAuth.HandleFunc("POST /api/v1/location-sharing", container.LocationSharingHandler.CreateLocationSharing)
 	g.OptionalAuth.HandleFunc("PUT /api/v1/location-sharing/{id}/location", container.LocationSharingHandler.UpdateLocationSharing)
 	g.OptionalAuth.HandleFunc("DELETE /api/v1/location-sharing/{id}", container.LocationSharingHandler.DeleteLocationSharing)
 	g.Public.HandleFunc("GET /share/{token}", container.LocationSharingHandler.GetPublicLocationSharing)
 
-	// Safe Routes
 	g.OptionalAuth.HandleFunc("POST /api/v1/routes/safe-route", container.SafeRouteHandler.CalculateSafeRoute)
 	g.OptionalAuth.HandleFunc("POST /api/v1/routes/incidents-heatmap", container.SafeRouteHandler.GetIncidentsHeatmap)
 	g.ProtectedJWT.HandleFunc("POST /api/v1/routes/navigate-home", container.SafeRouteHandler.NavigateToHome)
 	g.ProtectedJWT.HandleFunc("POST /api/v1/routes/navigate-work", container.SafeRouteHandler.NavigateToWork)
 
-	// Reports
 	g.OptionalAuth.HandleFunc("GET /api/v1/reports", container.ReportHandler.List)
 	g.ProtectedJWT.HandleFunc("POST /api/v1/reports", container.ReportHandler.Create)
 	g.OptionalAuth.HandleFunc("GET /api/v1/reports/nearby", container.ReportHandler.ListNearby)
@@ -63,10 +69,7 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	g.ProtectedJWT.HandleFunc("POST /api/v1/reports/{id}/verify", container.ReportHandler.Verify)
 	g.ProtectedJWT.HandleFunc("POST /api/v1/reports/{id}/resolve", container.ReportHandler.Resolve)
 
-	// WebSocket connection
 	mux.HandleFunc("/ws/alerts", container.WSHandler.HandleWebSocket)
-
-	// Swagger documentation
 	mux.HandleFunc("/docs/", httpSwagger.WrapHandler)
 
 	return mux

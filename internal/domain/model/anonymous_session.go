@@ -17,6 +17,9 @@ type AnonymousSession struct {
 	Longitude         float64
 	AlertRadiusMeters int
 	DeviceLanguage    string
+	MigratedToUserID  *uuid.UUID
+	MigratedAt        *time.Time
+	IsActive          bool
 	LastSeen          time.Time
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
@@ -36,6 +39,7 @@ func NewAnonymousSession(deviceID, fcmToken, platform, model string) (*Anonymous
 		DeviceModel:       model,
 		AlertRadiusMeters: DefaultAnonymousAlertRadiusMeters,
 		DeviceLanguage:    "pt",
+		IsActive:          true,
 		LastSeen:          time.Now(),
 		CreatedAt:         time.Now(),
 		UpdatedAt:         time.Now(),
@@ -91,4 +95,16 @@ func (s *AnonymousSession) UpdateFCMToken(token string) {
 func (s *AnonymousSession) TouchLastSeen() {
 	s.LastSeen = time.Now()
 	s.UpdatedAt = time.Now()
+}
+
+func (s *AnonymousSession) MigrateTo(userID uuid.UUID) {
+	s.MigratedToUserID = &userID
+	now := time.Now()
+	s.MigratedAt = &now
+	s.IsActive = false
+	s.UpdatedAt = time.Now()
+}
+
+func (s *AnonymousSession) IsMigrated() bool {
+	return s.MigratedToUserID != nil
 }

@@ -24,14 +24,17 @@ import (
 type Container struct {
 	Cfg *config.Config
 
-	UserHandler            *handler.UserHandler
-	WSHandler              *websocket.WSHandler
-	AlertHandler           *handler.AlertHandler
-	ReportHandler          *handler.ReportHandler
-	RiskHandler            *handler.RiskHandler
-	DeviceHandler          *handler.DeviceHandler
-	LocationSharingHandler *handler.LocationSharingHandler
-	SafeRouteHandler       *handler.SafeRouteHandler
+	UserHandler             *handler.UserHandler
+	WSHandler               *websocket.WSHandler
+	AlertHandler            *handler.AlertHandler
+	ReportHandler           *handler.ReportHandler
+	RiskHandler             *handler.RiskHandler
+	DeviceHandler           *handler.DeviceHandler
+	LocationSharingHandler  *handler.LocationSharingHandler
+	SafeRouteHandler        *handler.SafeRouteHandler
+	EmergencyContactHandler *handler.EmergencyContactHandler
+	MyAlertsHandler         *handler.MyAlertsHandler
+	SafetySettingsHandler   *handler.SafetySettingsHandler
 
 	UserApp *application.Application
 
@@ -61,11 +64,24 @@ func NewContainer() (*Container, error) {
 	anonymousSessionRepoPG := postgres.NewAnonymousSessionRepository(database)
 	locationSharingRepoPG := postgres.NewLocationSharingRepository(database)
 	safeRouteRepoPG := postgres.NewSafeRouteRepoPG(database)
+	emergencyContactRepoPG := postgres.NewEmergencyContactRepository(database)
+	safetySettingsRepoPG := postgres.NewSafetySettingsRepository(database)
+	deviceMappingRepoPG := postgres.NewDeviceUserMappingRepository(database)
+	migrationRepoPG := postgres.NewAnonymousMigrationRepository(database)
 
 	emailService := notifier.NewSmtpEmailService(cfg)
 	tokenService := service.NewJwtTokenService(cfg)
 	hashService := service.NewBcryptHasher()
 	geoService := domainService.NewGeolocationService()
+
+	migrationService := service.NewAnonymousMigrationService(
+		deviceMappingRepoPG,
+		migrationRepoPG,
+		anonymousSessionRepoPG,
+		alertRepoPG,
+		safetySettingsRepoPG,
+		locationSharingRepoPG,
+	)
 
 	dispatcher := event.NewEventDispatcher()
 
@@ -74,6 +90,13 @@ func NewContainer() (*Container, error) {
 
 	notifierFCM := notifier.NewFCMNotifier(firebaseApp)
 	notifierSMS := notifier.NewSMSNotifier(twilioSMS, cfg.TwilioConfig)
+
+	verificationService := service.NewVerificationService(
+		rdb,
+		notifierSMS,
+		emailService,
+		cfg.FrontendURL,
+	)
 
 	eventlistener.RegisterEventListeners(
 		dispatcher,
@@ -94,13 +117,18 @@ func NewContainer() (*Container, error) {
 		locationSharingRepoPG,
 		anonymousSessionRepoPG,
 		safeRouteRepoPG,
+		emergencyContactRepoPG,
+		safetySettingsRepoPG,
 		tokenService,
 		hashService,
 		emailService,
+		notifierSMS,
 		&cfg,
 		locationStore,
 		geoService,
 		dispatcher,
+		migrationService,
+		verificationService,
 	)
 
 	authMW := middleware.NewAuthMiddleware(cfg)
@@ -117,20 +145,26 @@ func NewContainer() (*Container, error) {
 	deviceHandler := handler.NewDeviceHandler(registerDeviceUC, updateDeviceLocationUC)
 	locationSharingHandler := handler.NewLocationSharingHandler(userApp)
 	safeRouteHandler := handler.NewSafeRouteHandler(userApp)
+	emergencyContactHandler := handler.NewEmergencyContactHandler(userApp)
+	myAlertsHandler := handler.NewMyAlertsHandler(userApp)
+	safetySettingsHandler := handler.NewSafetySettingsHandler(userApp)
 
 	return &Container{
-		UserApp:                userApp,
-		UserHandler:            userHandler,
-		AuthMiddleware:         authMW,
-		OptionalAuthMiddleware: optionalAuthMW,
-		WSHandler:              wsHandler,
-		Hub:                    hub,
-		Cfg:                    &cfg,
-		AlertHandler:           alertHandler,
-		ReportHandler:          reportHandler,
-		RiskHandler:            riskHandler,
-		DeviceHandler:          deviceHandler,
-		LocationSharingHandler: locationSharingHandler,
-		SafeRouteHandler:       safeRouteHandler,
+		UserApp:                 userApp,
+		UserHandler:             userHandler,
+		AuthMiddleware:          authMW,
+		OptionalAuthMiddleware:  optionalAuthMW,
+		WSHandler:               wsHandler,
+		Hub:                     hub,
+		Cfg:                     &cfg,
+		AlertHandler:            alertHandler,
+		ReportHandler:           reportHandler,
+		RiskHandler:             riskHandler,
+		DeviceHandler:           deviceHandler,
+		LocationSharingHandler:  locationSharingHandler,
+		SafeRouteHandler:        safeRouteHandler,
+		EmergencyContactHandler: emergencyContactHandler,
+		MyAlertsHandler:         myAlertsHandler,
+		SafetySettingsHandler:   safetySettingsHandler,
 	}, nil
 }
