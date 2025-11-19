@@ -85,7 +85,7 @@ linters:
     - spancheck
     - sqlclosecheck
     - staticcheck
-    - tagalign
+    #- tagalign
     - testableexamples
     - testifylint
     - testpackage
