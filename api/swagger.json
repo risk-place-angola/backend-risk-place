@@ -158,6 +158,200 @@
                 }
             }
         },
+        "/api/v1/location-sharing": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new location sharing session with expiration time (supports both authenticated and anonymous users)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "location-sharing"
+                ],
+                "summary": "Create location sharing session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-ID",
+                        "in": "header"
+                    },
+                    {
+                        "description": "Location Sharing Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateLocationSharingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.LocationSharingResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/location-sharing/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deactivate an active location sharing session (supports both authenticated and anonymous users)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "location-sharing"
+                ],
+                "summary": "Stop location sharing",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-ID",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Location Sharing ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/location-sharing/{id}/location": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update the current coordinates of an active location sharing session (supports both authenticated and anonymous users)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "location-sharing"
+                ],
+                "summary": "Update shared location coordinates",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-ID",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Location Sharing ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Location Update Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateLocationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/confirm": {
             "post": {
                 "description": "Confirm user signup using the verification code",
@@ -963,6 +1157,176 @@
                 }
             }
         },
+        "/routes/navigate-home": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Calculate a safe route from current location to the user's saved home address",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "routes"
+                ],
+                "summary": "Calculate safe route to home address",
+                "parameters": [
+                    {
+                        "description": "Current location coordinates",
+                        "name": "location",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.NavigateToSavedLocationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Safe route calculated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SafeRouteResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - missing or invalid JWT token",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Home address not configured",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to calculate route",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/routes/navigate-work": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Calculate a safe route from current location to the user's saved work address",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "routes"
+                ],
+                "summary": "Calculate safe route to work address",
+                "parameters": [
+                    {
+                        "description": "Current location coordinates",
+                        "name": "location",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.NavigateToSavedLocationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Safe route calculated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SafeRouteResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - missing or invalid JWT token",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Work address not configured",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to calculate route",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/share/{token}": {
+            "get": {
+                "description": "Retrieve public location information using share token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "location-sharing"
+                ],
+                "summary": "Get shared location by token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Share Token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PublicLocationResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "410": {
+                        "description": "Gone",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/me": {
             "get": {
                 "security": [
@@ -996,6 +1360,72 @@
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/profile": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update user profile to save home and work addresses for navigation",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update user profile with saved locations",
+                "parameters": [
+                    {
+                        "description": "Profile update with home/work addresses",
+                        "name": "profile",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - missing or invalid JWT token",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -1090,6 +1520,27 @@
                 }
             }
         },
+        "dto.CreateLocationSharingRequest": {
+            "type": "object",
+            "required": [
+                "duration_minutes",
+                "latitude",
+                "longitude"
+            ],
+            "properties": {
+                "duration_minutes": {
+                    "type": "integer",
+                    "maximum": 1440,
+                    "minimum": 1
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        },
         "dto.DeviceResponse": {
             "type": "object",
             "properties": {
@@ -1116,6 +1567,38 @@
                 }
             }
         },
+        "dto.IncidentDTO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "days_ago": {
+                    "type": "integer"
+                },
+                "distance_km": {
+                    "type": "number"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "report_id": {
+                    "type": "string"
+                },
+                "risk_topic": {
+                    "type": "string"
+                },
+                "risk_type": {
+                    "type": "string"
+                },
+                "weight_factor": {
+                    "type": "number"
+                }
+            }
+        },
         "dto.ListReportsResponse": {
             "type": "object",
             "properties": {
@@ -1130,6 +1613,23 @@
                 }
             }
         },
+        "dto.LocationSharingResponse": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "share_link": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.LoginInput": {
             "type": "object",
             "properties": {
@@ -1138,6 +1638,21 @@
                 },
                 "password": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.NavigateToSavedLocationRequest": {
+            "type": "object",
+            "required": [
+                "current_lat",
+                "current_lon"
+            ],
+            "properties": {
+                "current_lat": {
+                    "type": "number"
+                },
+                "current_lon": {
+                    "type": "number"
                 }
             }
         },
@@ -1172,6 +1687,29 @@
                 },
                 "total_pages": {
                     "type": "integer"
+                }
+            }
+        },
+        "dto.PublicLocationResponse": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "last_updated": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "user_name": {
+                    "type": "string"
                 }
             }
         },
@@ -1471,6 +2009,73 @@
                 }
             }
         },
+        "dto.SafeRouteResponse": {
+            "type": "object",
+            "properties": {
+                "calculated_at": {
+                    "type": "string"
+                },
+                "destination_lat": {
+                    "type": "number"
+                },
+                "destination_lon": {
+                    "type": "number"
+                },
+                "distance_km": {
+                    "type": "number"
+                },
+                "estimated_duration_minutes": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "incident_count": {
+                    "type": "integer"
+                },
+                "incidents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.IncidentDTO"
+                    }
+                },
+                "origin_lat": {
+                    "type": "number"
+                },
+                "origin_lon": {
+                    "type": "number"
+                },
+                "risk_level": {
+                    "type": "string"
+                },
+                "safety_score": {
+                    "type": "number"
+                },
+                "waypoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.WaypointDTO"
+                    }
+                }
+            }
+        },
+        "dto.SavedLocationDTO": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.UpdateDeviceLocationRequest": {
             "type": "object",
             "required": [
@@ -1487,6 +2092,32 @@
                 },
                 "longitude": {
                     "type": "number"
+                }
+            }
+        },
+        "dto.UpdateLocationRequest": {
+            "type": "object",
+            "required": [
+                "latitude",
+                "longitude"
+            ],
+            "properties": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        },
+        "dto.UpdateProfileRequest": {
+            "type": "object",
+            "properties": {
+                "home_address": {
+                    "$ref": "#/definitions/dto.SavedLocationDTO"
+                },
+                "work_address": {
+                    "$ref": "#/definitions/dto.SavedLocationDTO"
                 }
             }
         },
@@ -1544,6 +2175,9 @@
                 "email": {
                     "type": "string"
                 },
+                "home_address": {
+                    "$ref": "#/definitions/dto.SavedLocationDTO"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -1561,6 +2195,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "work_address": {
+                    "$ref": "#/definitions/dto.SavedLocationDTO"
                 }
             }
         },
@@ -1618,6 +2255,20 @@
                 }
             }
         },
+        "dto.WaypointDTO": {
+            "type": "object",
+            "properties": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "sequence": {
+                    "type": "integer"
+                }
+            }
+        },
         "util.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -1638,8 +2289,15 @@
     },
     "securityDefinitions": {
         "BearerAuth": {
+            "description": "Type \"Bearer\" followed by a space and JWT token.",
             "type": "apiKey",
             "name": "Authorization",
+            "in": "header"
+        },
+        "DeviceID": {
+            "description": "Unique device identifier for tracking and analytics.",
+            "type": "apiKey",
+            "name": "X-Device-ID",
             "in": "header"
         }
     }

@@ -22,6 +22,11 @@ import "github.com/risk-place-angola/backend-risk-place/api"
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
+// @securityDefinitions.apikey DeviceID
+// @in header
+// @name X-Device-ID
+// @description Unique device identifier for tracking and analytics.
 func Swagger() {
 	api.SwaggerInfo.Schemes = []string{"http", "https"}
 }

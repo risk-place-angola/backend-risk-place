@@ -32,6 +32,21 @@ definitions:
       user_id:
         type: string
     type: object
+  dto.CreateLocationSharingRequest:
+    properties:
+      duration_minutes:
+        maximum: 1440
+        minimum: 1
+        type: integer
+      latitude:
+        type: number
+      longitude:
+        type: number
+    required:
+    - duration_minutes
+    - latitude
+    - longitude
+    type: object
   dto.DeviceResponse:
     properties:
       alert_radius_meters:
@@ -49,6 +64,27 @@ definitions:
       platform:
         type: string
     type: object
+  dto.IncidentDTO:
+    properties:
+      created_at:
+        type: string
+      days_ago:
+        type: integer
+      distance_km:
+        type: number
+      latitude:
+        type: number
+      longitude:
+        type: number
+      report_id:
+        type: string
+      risk_topic:
+        type: string
+      risk_type:
+        type: string
+      weight_factor:
+        type: number
+    type: object
   dto.ListReportsResponse:
     properties:
       data:
@@ -58,12 +94,33 @@ definitions:
       pagination:
         $ref: '#/definitions/dto.PaginationMetadata'
     type: object
+  dto.LocationSharingResponse:
+    properties:
+      expires_at:
+        type: string
+      id:
+        type: string
+      share_link:
+        type: string
+      token:
+        type: string
+    type: object
   dto.LoginInput:
     properties:
       email:
         type: string
       password:
         type: string
+    type: object
+  dto.NavigateToSavedLocationRequest:
+    properties:
+      current_lat:
+        type: number
+      current_lon:
+        type: number
+    required:
+    - current_lat
+    - current_lon
     type: object
   dto.NearbyReportsResponse:
     properties:
@@ -86,6 +143,21 @@ definitions:
         type: integer
       total_pages:
         type: integer
+    type: object
+  dto.PublicLocationResponse:
+    properties:
+      expires_at:
+        type: string
+      is_active:
+        type: boolean
+      last_updated:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      user_name:
+        type: string
     type: object
   dto.RegisterDeviceRequest:
     properties:
@@ -282,6 +354,50 @@ definitions:
           $ref: '#/definitions/dto.RiskTypeResponse'
         type: array
     type: object
+  dto.SafeRouteResponse:
+    properties:
+      calculated_at:
+        type: string
+      destination_lat:
+        type: number
+      destination_lon:
+        type: number
+      distance_km:
+        type: number
+      estimated_duration_minutes:
+        type: integer
+      id:
+        type: string
+      incident_count:
+        type: integer
+      incidents:
+        items:
+          $ref: '#/definitions/dto.IncidentDTO'
+        type: array
+      origin_lat:
+        type: number
+      origin_lon:
+        type: number
+      risk_level:
+        type: string
+      safety_score:
+        type: number
+      waypoints:
+        items:
+          $ref: '#/definitions/dto.WaypointDTO'
+        type: array
+    type: object
+  dto.SavedLocationDTO:
+    properties:
+      address:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      name:
+        type: string
+    type: object
   dto.UpdateDeviceLocationRequest:
     properties:
       device_id:
@@ -294,6 +410,23 @@ definitions:
     - device_id
     - latitude
     - longitude
+    type: object
+  dto.UpdateLocationRequest:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    required:
+    - latitude
+    - longitude
+    type: object
+  dto.UpdateProfileRequest:
+    properties:
+      home_address:
+        $ref: '#/definitions/dto.SavedLocationDTO'
+      work_address:
+        $ref: '#/definitions/dto.SavedLocationDTO'
     type: object
   dto.UpdateReportLocationRequest:
     properties:
@@ -332,6 +465,8 @@ definitions:
         $ref: '#/definitions/dto.AddressDTO'
       email:
         type: string
+      home_address:
+        $ref: '#/definitions/dto.SavedLocationDTO'
       id:
         type: string
       name:
@@ -344,6 +479,8 @@ definitions:
         items:
           type: string
         type: array
+      work_address:
+        $ref: '#/definitions/dto.SavedLocationDTO'
     type: object
   dto.UserProfileResponse:
     properties:
@@ -379,6 +516,15 @@ definitions:
         type: string
     required:
     - moderator_id
+    type: object
+  dto.WaypointDTO:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+      sequence:
+        type: integer
     type: object
   util.ErrorResponse:
     properties:
@@ -504,6 +650,133 @@ paths:
       summary: Register anonymous device
       tags:
       - devices
+  /api/v1/location-sharing:
+    post:
+      consumes:
+      - application/json
+      description: Create a new location sharing session with expiration time (supports
+        both authenticated and anonymous users)
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location Sharing Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateLocationSharingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.LocationSharingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create location sharing session
+      tags:
+      - location-sharing
+  /api/v1/location-sharing/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deactivate an active location sharing session (supports both authenticated
+        and anonymous users)
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location Sharing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Stop location sharing
+      tags:
+      - location-sharing
+  /api/v1/location-sharing/{id}/location:
+    put:
+      consumes:
+      - application/json
+      description: Update the current coordinates of an active location sharing session
+        (supports both authenticated and anonymous users)
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location Sharing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Location Update Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update shared location coordinates
+      tags:
+      - location-sharing
   /auth/confirm:
     post:
       consumes:
@@ -1027,6 +1300,117 @@ paths:
       summary: Get a risk type by ID
       tags:
       - risks
+  /routes/navigate-home:
+    post:
+      consumes:
+      - application/json
+      description: Calculate a safe route from current location to the user's saved
+        home address
+      parameters:
+      - description: Current location coordinates
+        in: body
+        name: location
+        required: true
+        schema:
+          $ref: '#/definitions/dto.NavigateToSavedLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Safe route calculated successfully
+          schema:
+            $ref: '#/definitions/dto.SafeRouteResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid JWT token
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Home address not configured
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Failed to calculate route
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Calculate safe route to home address
+      tags:
+      - routes
+  /routes/navigate-work:
+    post:
+      consumes:
+      - application/json
+      description: Calculate a safe route from current location to the user's saved
+        work address
+      parameters:
+      - description: Current location coordinates
+        in: body
+        name: location
+        required: true
+        schema:
+          $ref: '#/definitions/dto.NavigateToSavedLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Safe route calculated successfully
+          schema:
+            $ref: '#/definitions/dto.SafeRouteResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid JWT token
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Work address not configured
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Failed to calculate route
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Calculate safe route to work address
+      tags:
+      - routes
+  /share/{token}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve public location information using share token
+      parameters:
+      - description: Share Token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.PublicLocationResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "410":
+          description: Gone
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Get shared location by token
+      tags:
+      - location-sharing
   /users/me:
     get:
       consumes:
@@ -1050,6 +1434,48 @@ paths:
       security:
       - BearerAuth: []
       summary: Get current user info
+      tags:
+      - users
+  /users/profile:
+    put:
+      consumes:
+      - application/json
+      description: Update user profile to save home and work addresses for navigation
+      parameters:
+      - description: Profile update with home/work addresses
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profile updated successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid JWT token
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user profile with saved locations
       tags:
       - users
   /ws/alerts:
@@ -1077,7 +1503,13 @@ paths:
       - websocket
 securityDefinitions:
   BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
     in: header
     name: Authorization
+    type: apiKey
+  DeviceID:
+    description: Unique device identifier for tracking and analytics.
+    in: header
+    name: X-Device-ID
     type: apiKey
 swagger: "2.0"
