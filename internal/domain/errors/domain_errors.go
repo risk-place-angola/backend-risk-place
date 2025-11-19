@@ -2,7 +2,6 @@ package errors
 
 import "errors"
 
-// Domain-specific errors
 var (
 	ErrInvalidCredentials     = errors.New("invalid email or password")
 	ErrEmailAlreadyExists     = errors.New("email already registered")
@@ -18,6 +17,6 @@ var (
 	ErrAlreadyVerified        = errors.New("email already verified, no action needed")
 	ErrRateLimited            = errors.New("rate limit exceeded, please try again later")
 	ErrInvalidCurrentPassword = errors.New("current password is incorrect")
-
-	ErrNoRolesAssigned = errors.New("no roles assigned to the user")
+	ErrNoRolesAssigned        = errors.New("no roles assigned to the user")
+	ErrAlertNotFound          = errors.New("alert not found")
 )

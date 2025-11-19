@@ -63,7 +63,7 @@ func dbToModel(r sqlc.Report) *model.Report {
 }
 
 func (r *ReportPG) Create(ctx context.Context, m *model.Report) error {
-	// Cria o report no PostgreSQL e obtém o ID gerado
+	// Creates o report no PostgreSQL e obtém o ID gerado
 	reportID, err := r.q.CreateReport(ctx, sqlc.CreateReportParams{
 		UserID:       m.UserID,
 		RiskTypeID:   m.RiskTypeID,
@@ -323,7 +323,7 @@ func (r *ReportPG) FindByRadiusWithDistance(ctx context.Context, lat float64, lo
 	}
 
 	// 5. Monta resultado final mantendo a ordem do Redis (já ordenada por distância)
-	// Cria um mapa para lookup rápido O(1)
+	// Creates um mapa para lookup rápido O(1)
 	reportMap := make(map[string]*model.Report, len(items))
 	for _, item := range items {
 		reportMap[item.ID.String()] = dbToModel(item)
