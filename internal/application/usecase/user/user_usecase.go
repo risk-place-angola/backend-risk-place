@@ -4,6 +4,9 @@ import (
 	"context"
 	stdErrors "errors"
 	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/dto"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/port"
@@ -11,8 +14,6 @@ import (
 	domainErrors "github.com/risk-place-angola/backend-risk-place/internal/domain/errors"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/model"
 	domainrepository "github.com/risk-place-angola/backend-risk-place/internal/domain/repository"
-	"log/slog"
-	"time"
 )
 
 type UserUseCase struct {
@@ -454,4 +455,44 @@ func (uc *UserUseCase) ChangePassword(ctx context.Context, userID uuid.UUID, cur
 // DeleteUser deletes a user by their ID.
 func (uc *UserUseCase) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 	return uc.userRepo.Delete(ctx, userID.String())
+}
+
+func (uc *UserUseCase) UpdateUserProfile(ctx context.Context, userID uuid.UUID, req *dto.UpdateProfileRequest) error {
+	user, err := uc.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		slog.Error("User not found", "user_id", userID, "error", err)
+		return domainErrors.ErrUserNotFound
+	}
+
+	if user == nil || user.ID == uuid.Nil {
+		return domainErrors.ErrUserNotFound
+	}
+
+	var homeAddress *model.SavedLocation
+	var workAddress *model.SavedLocation
+
+	if req.HomeAddress != nil {
+		homeAddress = &model.SavedLocation{
+			Name:      req.HomeAddress.Name,
+			Address:   req.HomeAddress.Address,
+			Latitude:  req.HomeAddress.Latitude,
+			Longitude: req.HomeAddress.Longitude,
+		}
+	}
+
+	if req.WorkAddress != nil {
+		workAddress = &model.SavedLocation{
+			Name:      req.WorkAddress.Name,
+			Address:   req.WorkAddress.Address,
+			Latitude:  req.WorkAddress.Latitude,
+			Longitude: req.WorkAddress.Longitude,
+		}
+	}
+
+	if err := uc.userRepo.UpdateSavedLocations(ctx, userID, homeAddress, workAddress); err != nil {
+		slog.Error("Error updating saved locations", "user_id", userID, "error", err)
+		return err
+	}
+
+	return nil
 }

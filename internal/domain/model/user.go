@@ -29,6 +29,13 @@ type Address struct {
 	ZipCode      string
 }
 
+type SavedLocation struct {
+	Name      string
+	Address   string
+	Latitude  float64
+	Longitude float64
+}
+
 type User struct {
 	ID                uuid.UUID
 	Name              string
@@ -40,6 +47,8 @@ type User struct {
 	AlertRadiusMeters int
 	Nif               string
 	Address           Address
+	HomeAddress       *SavedLocation
+	WorkAddress       *SavedLocation
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	DeletedAt         *time.Time

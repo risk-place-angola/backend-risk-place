@@ -17,4 +17,5 @@ type UserRepository interface {
 	ListAllDeviceTokensExceptUser(ctx context.Context, excludeUserID uuid.UUID) ([]string, error)
 	UpdateUserDeviceInfo(ctx context.Context, userID uuid.UUID, fcmToken string, language string) error
 	ListDeviceTokensByUserIDs(ctx context.Context, userIDs []uuid.UUID) ([]string, error)
+	UpdateSavedLocations(ctx context.Context, userID uuid.UUID, homeAddress, workAddress *model.SavedLocation) error
 }

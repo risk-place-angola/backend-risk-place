@@ -67,3 +67,16 @@ FROM users
 WHERE deleted_at IS NULL
   AND device_fcm_token IS NOT NULL
   AND id IN (SELECT UNNEST($1::uuid[]));
+
+-- name: UpdateUserSavedLocations :exec
+UPDATE users
+SET home_address_name = $2,
+    home_address_address = $3,
+    home_address_lat = $4,
+    home_address_lon = $5,
+    work_address_name = $6,
+    work_address_address = $7,
+    work_address_lat = $8,
+    work_address_lon = $9,
+    updated_at = NOW()
+WHERE id = $1;

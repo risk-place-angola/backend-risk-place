@@ -242,3 +242,51 @@ func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
 
 	util.Response(w, userOut, http.StatusOK)
 }
+
+// UpdateProfile godoc
+// @Summary Update user profile with saved locations
+// @Description Update user profile to save home and work addresses for navigation
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param profile body dto.UpdateProfileRequest true "Profile update with home/work addresses"
+// @Success 200 {object} map[string]string "Profile updated successfully"
+// @Failure 400 {object} util.ErrorResponse "Invalid request body"
+// @Failure 401 {object} util.ErrorResponse "Unauthorized - missing or invalid JWT token"
+// @Failure 404 {object} util.ErrorResponse "User not found"
+// @Failure 500 {object} util.ErrorResponse "Internal server error"
+// @Router /users/profile [put]
+func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	userIDStr, ok := util.GetUserIDFromContext(r.Context())
+	if !ok {
+		slog.Error("failed to get user ID from context")
+		util.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := dto.ParseUUID(userIDStr)
+	if err != nil {
+		slog.Error("invalid user ID in context", slog.Any("error", err))
+		util.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req dto.UpdateProfileRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		util.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.userUseCase.UserUseCase.UpdateUserProfile(r.Context(), userID, &req); err != nil {
+		if errors.Is(err, domainErrors.ErrUserNotFound) {
+			util.Error(w, "user not found", http.StatusNotFound)
+			return
+		}
+		slog.Error("failed to update user profile", "error", err)
+		util.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	util.Response(w, map[string]string{"message": "profile updated successfully"}, http.StatusOK)
+}

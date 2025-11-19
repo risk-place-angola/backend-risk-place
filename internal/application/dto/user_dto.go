@@ -18,13 +18,15 @@ type RegisterUserOutput struct {
 }
 
 type UserProfileOutput struct {
-	ID       uuid.UUID  `json:"id"`
-	Name     string     `json:"name"`
-	Email    string     `json:"email"`
-	Phone    string     `json:"phone"`
-	Nif      string     `json:"nif,omitempty"`
-	RoleName []string   `json:"role_name,omitempty"`
-	Address  AddressDTO `json:"address,omitempty"`
+	ID          uuid.UUID         `json:"id"`
+	Name        string            `json:"name"`
+	Email       string            `json:"email"`
+	Phone       string            `json:"phone"`
+	Nif         string            `json:"nif,omitempty"`
+	RoleName    []string          `json:"role_name,omitempty"`
+	Address     AddressDTO        `json:"address,omitempty"`
+	HomeAddress *SavedLocationDTO `json:"home_address,omitempty"`
+	WorkAddress *SavedLocationDTO `json:"work_address,omitempty"`
 }
 
 type UpdateUserInput struct {
@@ -43,6 +45,23 @@ type AddressDTO struct {
 	Municipality string
 	Neighborhood string
 	ZipCode      string
+}
+
+type SavedLocationDTO struct {
+	Name      string  `json:"name"`
+	Address   string  `json:"address"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
+type UpdateProfileRequest struct {
+	HomeAddress *SavedLocationDTO `json:"home_address,omitempty"`
+	WorkAddress *SavedLocationDTO `json:"work_address,omitempty"`
+}
+
+type NavigateToSavedLocationRequest struct {
+	CurrentLat float64 `json:"current_lat" validate:"required,latitude"`
+	CurrentLon float64 `json:"current_lon" validate:"required,longitude"`
 }
 
 type LoginInput struct {

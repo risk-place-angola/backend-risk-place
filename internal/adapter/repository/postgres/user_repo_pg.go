@@ -152,6 +152,53 @@ func (u *userRepoPG) UserHasPermission(ctx context.Context, userID uuid.UUID, pe
 	panic("implement me")
 }
 
+func (u *userRepoPG) UpdateSavedLocations(ctx context.Context, userID uuid.UUID, homeAddress, workAddress *model.SavedLocation) error {
+	var homeNamePtr, homeAddressPtr *string
+	var homeLatPtr, homeLonPtr *float64
+	var workNamePtr, workAddressPtr *string
+	var workLatPtr, workLonPtr *float64
+
+	if homeAddress != nil {
+		homeNamePtr = &homeAddress.Name
+		homeAddressPtr = &homeAddress.Address
+		homeLatPtr = &homeAddress.Latitude
+		homeLonPtr = &homeAddress.Longitude
+	}
+
+	if workAddress != nil {
+		workNamePtr = &workAddress.Name
+		workAddressPtr = &workAddress.Address
+		workLatPtr = &workAddress.Latitude
+		workLonPtr = &workAddress.Longitude
+	}
+
+	return u.q.UpdateUserSavedLocations(ctx, sqlc.UpdateUserSavedLocationsParams{
+		ID:                 userID,
+		HomeAddressName:    sql.NullString{String: strOrEmpty(homeNamePtr), Valid: homeNamePtr != nil},
+		HomeAddressAddress: sql.NullString{String: strOrEmpty(homeAddressPtr), Valid: homeAddressPtr != nil},
+		HomeAddressLat:     sql.NullFloat64{Float64: floatOrZero(homeLatPtr), Valid: homeLatPtr != nil},
+		HomeAddressLon:     sql.NullFloat64{Float64: floatOrZero(homeLonPtr), Valid: homeLonPtr != nil},
+		WorkAddressName:    sql.NullString{String: strOrEmpty(workNamePtr), Valid: workNamePtr != nil},
+		WorkAddressAddress: sql.NullString{String: strOrEmpty(workAddressPtr), Valid: workAddressPtr != nil},
+		WorkAddressLat:     sql.NullFloat64{Float64: floatOrZero(workLatPtr), Valid: workLatPtr != nil},
+		WorkAddressLon:     sql.NullFloat64{Float64: floatOrZero(workLonPtr), Valid: workLonPtr != nil},
+	})
+}
+
+func strOrEmpty(ptr *string) string {
+	if ptr != nil {
+		return *ptr
+	}
+	return ""
+}
+
+func floatOrZero(ptr *float64) float64 {
+	if ptr != nil {
+		return *ptr
+	}
+	return 0
+}
+
 func NewUserRepoPG(db *sql.DB) repository.UserRepository {
 	return &userRepoPG{
 		q: sqlc.New(db),
