@@ -488,6 +488,24 @@ go install github.com/kyleconroy/sqlc/cmd/sqlc@latest
 make sqlc
 ```
 
+## Architecture Decision Records (ADRs)
+
+This directory contains the Architecture Decision Records (ADRs) for the Risk Place Backend project.
+An Architecture Decision Record documents an important architectural decision made during the development of the project. Each ADR describes:
+
+- **Context**: The problem or situation that motivated the decision
+- **Decision**: The decision made and how it was implemented
+- **Consequences**: The positive, negative, and neutral impacts of the decision
+- **Alternatives**: Other options considered and why they were rejected
+
+### List of ADRs
+
+- [ADR-001](./001-optimize-nearby-reports-geospatial-query.md) - Optimize Nearby Reports Geospatial Query Performance
+
+### Format
+
+We follow the format proposed by Michael Nygard in his article [Documenting Architecture Decisions](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions).
+
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

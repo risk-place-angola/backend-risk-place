@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/risk-place-angola/backend-risk-place/internal/application/port"
 	"github.com/risk-place-angola/backend-risk-place/internal/config"
 )
 
@@ -160,6 +161,33 @@ func (r *Redis) GeoSearch(ctx context.Context, key string, longitude float64, la
 		members[i] = loc
 	}
 	return members, nil
+}
+
+// GeoSearchWithDistance performs a geospatial search returning members with their distances.
+// Results are already sorted by distance (ASC) by Redis.
+func (r *Redis) GeoSearchWithDistance(ctx context.Context, key string, longitude float64, latitude float64, radiusMeters float64) ([]port.GeoResult, error) {
+	// Usando GeoRadius com WITHDIST para obter distâncias calculadas pelo Redis
+	res, err := r.client.GeoRadius(ctx, key, longitude, latitude, &redis.GeoRadiusQuery{
+		Radius:    radiusMeters,
+		Unit:      "m",
+		WithDist:  true,  // Retorna distâncias
+		Sort:      "ASC", // Já ordena por distância
+		Store:     "",
+		StoreDist: "",
+	}).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]port.GeoResult, len(res))
+	for i, loc := range res {
+		results[i] = port.GeoResult{
+			Member:   loc.Name,
+			Distance: loc.Dist,
+		}
+	}
+
+	return results, nil
 }
 
 // GeoRemove removes a geospatial member from the geospatial index stored at key.

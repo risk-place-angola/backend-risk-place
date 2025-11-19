@@ -7,6 +7,7 @@ package sqlc
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -20,18 +21,23 @@ type Querier interface {
 	CreateAlert(ctx context.Context, arg CreateAlertParams) error
 	CreateAlertNotification(ctx context.Context, arg CreateAlertNotificationParams) error
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (Entity, error)
+	CreateLocationSharing(ctx context.Context, arg CreateLocationSharingParams) error
 	CreateReport(ctx context.Context, arg CreateReportParams) (uuid.UUID, error)
 	CreateReportNotification(ctx context.Context, arg CreateReportNotificationParams) error
 	CreateRiskTopic(ctx context.Context, arg CreateRiskTopicParams) (RiskTopic, error)
 	CreateRiskType(ctx context.Context, arg CreateRiskTypeParams) error
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) error
+	DeactivateExpiredLocationSharings(ctx context.Context, expiresAt time.Time) error
 	DeleteEntity(ctx context.Context, id uuid.UUID) error
+	DeleteLocationSharing(ctx context.Context, id uuid.UUID) error
 	DeleteReport(ctx context.Context, id uuid.UUID) error
 	DeleteRiskTopic(ctx context.Context, id uuid.UUID) error
 	DeleteRiskType(ctx context.Context, id uuid.UUID) error
 	ExpireAlert(ctx context.Context, id uuid.UUID) error
 	GetEntitiesByType(ctx context.Context, entityType interface{}) ([]Entity, error)
+	GetLocationSharingByID(ctx context.Context, id uuid.UUID) (LocationSharing, error)
+	GetLocationSharingByToken(ctx context.Context, token string) (LocationSharing, error)
 	GetReportByID(ctx context.Context, id uuid.UUID) (Report, error)
 	GetRiskTopicByID(ctx context.Context, id uuid.UUID) (RiskTopic, error)
 	GetRiskTypeByID(ctx context.Context, id uuid.UUID) (RiskType, error)
@@ -41,7 +47,10 @@ type Querier interface {
 	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]Role, error)
 	GetUsersByRole(ctx context.Context, roleID uuid.UUID) ([]GetUsersByRoleRow, error)
 	ListActiveAlerts(ctx context.Context) ([]Alert, error)
+	ListActiveLocationSharingsByDeviceID(ctx context.Context, deviceID sql.NullString) ([]LocationSharing, error)
+	ListActiveLocationSharingsByUserID(ctx context.Context, userID uuid.NullUUID) ([]LocationSharing, error)
 	ListAllDeviceTokensExceptUser(ctx context.Context, id uuid.UUID) ([]ListAllDeviceTokensExceptUserRow, error)
+	ListAllLocationSharings(ctx context.Context) ([]LocationSharing, error)
 	ListDeviceTokensByUserIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]ListDeviceTokensByUserIDsRow, error)
 	ListEntities(ctx context.Context) ([]Entity, error)
 	ListNearbyUsers(ctx context.Context) ([]User, error)
@@ -61,12 +70,14 @@ type Querier interface {
 	ResolveReport(ctx context.Context, id uuid.UUID) error
 	UpdateAlertRadius(ctx context.Context, arg UpdateAlertRadiusParams) error
 	UpdateEmailVerificationCode(ctx context.Context, arg UpdateEmailVerificationCodeParams) error
+	UpdateLocationSharing(ctx context.Context, arg UpdateLocationSharingParams) error
 	UpdateReport(ctx context.Context, arg UpdateReportParams) error
 	UpdateReportLocation(ctx context.Context, arg UpdateReportLocationParams) (UpdateReportLocationRow, error)
 	UpdateRiskType(ctx context.Context, arg UpdateRiskTypeParams) error
 	UpdateUserDeviceInfo(ctx context.Context, arg UpdateUserDeviceInfoParams) error
 	UpdateUserLocation(ctx context.Context, arg UpdateUserLocationParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	UpdateUserSavedLocations(ctx context.Context, arg UpdateUserSavedLocationsParams) error
 	VerifyReport(ctx context.Context, arg VerifyReportParams) error
 }
 

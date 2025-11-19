@@ -6,12 +6,20 @@ import (
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/service"
 )
 
+// GeoResult represents a geospatial search result with distance
+type GeoResult struct {
+	Member   string  // ID do report ou user
+	Distance float64 // Distância em metros
+}
+
 type LocationStore interface {
 	UpdateUserLocation(ctx context.Context, userID string, lat float64, lon float64) error
 	FindUsersInRadius(ctx context.Context, lat float64, lon float64, radiusMeters float64) ([]string, error)
 	RemoveReportLocation(ctx context.Context, reportID string) error
 	UpdateReportLocation(ctx context.Context, reportID string, lat, lon float64) error
 	FindReportsInRadius(ctx context.Context, lat, lon float64, radiusMeters float64) ([]string, error)
+	// Nova função otimizada que retorna IDs + distâncias já ordenadas
+	FindReportsInRadiusWithDistance(ctx context.Context, lat, lon float64, radiusMeters float64) ([]GeoResult, error)
 }
 
 type GeolocationService interface {

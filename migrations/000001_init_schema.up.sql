@@ -70,6 +70,14 @@ CREATE TABLE users (
     zip_code TEXT,
     country TEXT,
     last_login TIMESTAMP,
+    home_address_name VARCHAR(255),
+    home_address_address TEXT,
+    home_address_lat DOUBLE PRECISION,
+    home_address_lon DOUBLE PRECISION,
+    work_address_name VARCHAR(255),
+    work_address_address TEXT,
+    work_address_lat DOUBLE PRECISION,
+    work_address_lon DOUBLE PRECISION,
     failed_attempts INT DEFAULT 0,
     locked_until TIMESTAMP,
     device_fcm_token TEXT,
@@ -111,6 +119,42 @@ CREATE TABLE user_roles
     role_id     uuid NOT NULL REFERENCES roles (id) ON DELETE CASCADE,
     assigned_at TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (user_id, role_id)
+);
+
+CREATE TABLE anonymous_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    device_id TEXT UNIQUE NOT NULL,
+    device_fcm_token TEXT,
+    device_platform TEXT,
+    device_model TEXT,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    alert_radius_meters INT DEFAULT 1000,
+    device_language TEXT DEFAULT 'pt',
+    last_seen TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS location_sharings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    anonymous_session_id UUID REFERENCES anonymous_sessions(id) ON DELETE CASCADE,
+    device_id TEXT,
+    owner_name VARCHAR(255),
+    token VARCHAR(255) NOT NULL UNIQUE,
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    duration_minutes INTEGER NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    last_updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT location_sharing_owner_check CHECK (
+        (user_id IS NOT NULL AND anonymous_session_id IS NULL AND device_id IS NULL) OR
+        (user_id IS NULL AND anonymous_session_id IS NOT NULL AND device_id IS NOT NULL)
+    )
 );
 
 CREATE TABLE risk_types (
@@ -195,6 +239,7 @@ CREATE TABLE entities (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Users Table and Indexes
 CREATE OR REPLACE FUNCTION trigger_set_timestamp()
     RETURNS TRIGGER AS $$
 BEGIN
@@ -212,10 +257,12 @@ EXECUTE PROCEDURE trigger_set_timestamp();
 CREATE INDEX IF NOT EXISTS idx_users_email_trgm ON users USING gin (email gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_users_geo ON users (latitude, longitude);
 
+-- Roles and Permissions Table and Indexes
 CREATE INDEX IF NOT EXISTS idx_roles_priority ON roles (priority DESC);
 CREATE INDEX IF NOT EXISTS idx_user_roles_user ON user_roles (user_id);
 CREATE INDEX IF NOT EXISTS idx_role_permissions_role ON role_permissions (role_id);
 
+-- Reports Table and Indexes
 CREATE TRIGGER set_timestamp_reports
     BEFORE UPDATE ON reports
     FOR EACH ROW
@@ -227,3 +274,39 @@ CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_reports_geo ON reports USING GIST (geography(ST_MakePoint(longitude, latitude)));
 
 CREATE INDEX IF NOT EXISTS idx_reports_user ON reports(user_id);
+
+-- Anonymous Sessions Table and Indexes
+CREATE INDEX idx_anonymous_sessions_location ON anonymous_sessions(latitude, longitude);
+CREATE INDEX idx_anonymous_sessions_device_id ON anonymous_sessions(device_id);
+CREATE INDEX idx_anonymous_sessions_last_seen ON anonymous_sessions(last_seen);
+
+CREATE TRIGGER set_timestamp_anonymous_sessions
+    BEFORE UPDATE ON anonymous_sessions
+    FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+CREATE OR REPLACE FUNCTION cleanup_old_anonymous_sessions()
+RETURNS void AS $$
+BEGIN
+    DELETE FROM anonymous_sessions
+    WHERE last_seen < NOW() - INTERVAL '30 days';
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- Users Table - Saved Locations Indexes
+CREATE INDEX IF NOT EXISTS idx_users_home_location ON users USING GIST (
+    ST_SetSRID(ST_MakePoint(home_address_lon, home_address_lat), 4326)
+) WHERE home_address_lat IS NOT NULL AND home_address_lon IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_users_work_location ON users USING GIST (
+    ST_SetSRID(ST_MakePoint(work_address_lon, work_address_lat), 4326)
+) WHERE work_address_lat IS NOT NULL AND work_address_lon IS NOT NULL;
+
+-- Location Sharings Table and Indexes
+CREATE INDEX idx_location_sharings_token ON location_sharings(token);
+CREATE INDEX idx_location_sharings_user_id ON location_sharings(user_id);
+CREATE INDEX idx_location_sharings_anonymous_session_id ON location_sharings(anonymous_session_id);
+CREATE INDEX idx_location_sharings_device_id ON location_sharings(device_id);
+CREATE INDEX idx_location_sharings_expires_at ON location_sharings(expires_at);
+CREATE INDEX idx_location_sharings_is_active ON location_sharings(is_active);

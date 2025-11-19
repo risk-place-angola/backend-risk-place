@@ -75,6 +75,21 @@ type Alert struct {
 	ResolvedAt   sql.NullTime   `json:"resolved_at"`
 }
 
+type AnonymousSession struct {
+	ID                uuid.UUID       `json:"id"`
+	DeviceID          string          `json:"device_id"`
+	DeviceFcmToken    sql.NullString  `json:"device_fcm_token"`
+	DevicePlatform    sql.NullString  `json:"device_platform"`
+	DeviceModel       sql.NullString  `json:"device_model"`
+	Latitude          sql.NullFloat64 `json:"latitude"`
+	Longitude         sql.NullFloat64 `json:"longitude"`
+	AlertRadiusMeters sql.NullInt32   `json:"alert_radius_meters"`
+	DeviceLanguage    sql.NullString  `json:"device_language"`
+	LastSeen          sql.NullTime    `json:"last_seen"`
+	CreatedAt         sql.NullTime    `json:"created_at"`
+	UpdatedAt         sql.NullTime    `json:"updated_at"`
+}
+
 type Entity struct {
 	ID           uuid.UUID       `json:"id"`
 	Name         string          `json:"name"`
@@ -86,6 +101,23 @@ type Entity struct {
 	ContactEmail sql.NullString  `json:"contact_email"`
 	ContactPhone sql.NullString  `json:"contact_phone"`
 	CreatedAt    sql.NullTime    `json:"created_at"`
+}
+
+type LocationSharing struct {
+	ID                 uuid.UUID      `json:"id"`
+	UserID             uuid.NullUUID  `json:"user_id"`
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+	OwnerName          sql.NullString `json:"owner_name"`
+	Token              string         `json:"token"`
+	Latitude           float64        `json:"latitude"`
+	Longitude          float64        `json:"longitude"`
+	DurationMinutes    int32          `json:"duration_minutes"`
+	ExpiresAt          time.Time      `json:"expires_at"`
+	LastUpdatedAt      time.Time      `json:"last_updated_at"`
+	IsActive           bool           `json:"is_active"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
 }
 
 type Notification struct {
@@ -182,6 +214,14 @@ type User struct {
 	CreatedAt                  sql.NullTime    `json:"created_at"`
 	UpdatedAt                  sql.NullTime    `json:"updated_at"`
 	DeletedAt                  sql.NullTime    `json:"deleted_at"`
+	HomeAddressName            sql.NullString  `json:"home_address_name"`
+	HomeAddressAddress         sql.NullString  `json:"home_address_address"`
+	HomeAddressLat             sql.NullFloat64 `json:"home_address_lat"`
+	HomeAddressLon             sql.NullFloat64 `json:"home_address_lon"`
+	WorkAddressName            sql.NullString  `json:"work_address_name"`
+	WorkAddressAddress         sql.NullString  `json:"work_address_address"`
+	WorkAddressLat             sql.NullFloat64 `json:"work_address_lat"`
+	WorkAddressLon             sql.NullFloat64 `json:"work_address_lon"`
 }
 
 type UserRole struct {

@@ -61,7 +61,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, last_login, failed_attempts, locked_until, device_fcm_token, device_language, created_at, updated_at, deleted_at FROM users WHERE email = $1 AND deleted_at IS NULL LIMIT 1
+SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, last_login, failed_attempts, locked_until, device_fcm_token, device_language, created_at, updated_at, deleted_at, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon FROM users WHERE email = $1 AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -94,12 +94,20 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.HomeAddressName,
+		&i.HomeAddressAddress,
+		&i.HomeAddressLat,
+		&i.HomeAddressLon,
+		&i.WorkAddressName,
+		&i.WorkAddressAddress,
+		&i.WorkAddressLat,
+		&i.WorkAddressLon,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, last_login, failed_attempts, locked_until, device_fcm_token, device_language, created_at, updated_at, deleted_at FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1
+SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, last_login, failed_attempts, locked_until, device_fcm_token, device_language, created_at, updated_at, deleted_at, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
@@ -132,6 +140,14 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.HomeAddressName,
+		&i.HomeAddressAddress,
+		&i.HomeAddressLat,
+		&i.HomeAddressLon,
+		&i.WorkAddressName,
+		&i.WorkAddressAddress,
+		&i.WorkAddressLat,
+		&i.WorkAddressLon,
 	)
 	return i, err
 }
@@ -209,7 +225,7 @@ func (q *Queries) ListDeviceTokensByUserIDs(ctx context.Context, dollar_1 []uuid
 }
 
 const listNearbyUsers = `-- name: ListNearbyUsers :many
-SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, last_login, failed_attempts, locked_until, device_fcm_token, device_language, created_at, updated_at, deleted_at
+SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, last_login, failed_attempts, locked_until, device_fcm_token, device_language, created_at, updated_at, deleted_at, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon
 FROM users
 WHERE deleted_at IS NULL
   AND (latitude IS NOT NULL AND longitude IS NOT NULL)
@@ -251,6 +267,14 @@ func (q *Queries) ListNearbyUsers(ctx context.Context) ([]User, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.HomeAddressName,
+			&i.HomeAddressAddress,
+			&i.HomeAddressLat,
+			&i.HomeAddressLon,
+			&i.WorkAddressName,
+			&i.WorkAddressAddress,
+			&i.WorkAddressLat,
+			&i.WorkAddressLon,
 		); err != nil {
 			return nil, err
 		}
@@ -373,5 +397,46 @@ type UpdateUserPasswordParams struct {
 
 func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
 	_, err := q.db.ExecContext(ctx, updateUserPassword, arg.ID, arg.Password)
+	return err
+}
+
+const updateUserSavedLocations = `-- name: UpdateUserSavedLocations :exec
+UPDATE users
+SET home_address_name = $2,
+    home_address_address = $3,
+    home_address_lat = $4,
+    home_address_lon = $5,
+    work_address_name = $6,
+    work_address_address = $7,
+    work_address_lat = $8,
+    work_address_lon = $9,
+    updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateUserSavedLocationsParams struct {
+	ID                 uuid.UUID       `json:"id"`
+	HomeAddressName    sql.NullString  `json:"home_address_name"`
+	HomeAddressAddress sql.NullString  `json:"home_address_address"`
+	HomeAddressLat     sql.NullFloat64 `json:"home_address_lat"`
+	HomeAddressLon     sql.NullFloat64 `json:"home_address_lon"`
+	WorkAddressName    sql.NullString  `json:"work_address_name"`
+	WorkAddressAddress sql.NullString  `json:"work_address_address"`
+	WorkAddressLat     sql.NullFloat64 `json:"work_address_lat"`
+	WorkAddressLon     sql.NullFloat64 `json:"work_address_lon"`
+}
+
+func (q *Queries) UpdateUserSavedLocations(ctx context.Context, arg UpdateUserSavedLocationsParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserSavedLocations,
+		arg.ID,
+		arg.HomeAddressName,
+		arg.HomeAddressAddress,
+		arg.HomeAddressLat,
+		arg.HomeAddressLon,
+		arg.WorkAddressName,
+		arg.WorkAddressAddress,
+		arg.WorkAddressLat,
+		arg.WorkAddressLon,
+	)
 	return err
 }
