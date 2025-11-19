@@ -15,7 +15,6 @@ func SeedUsers(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
-	// First insert users
 	insertUsersQuery := `
 		INSERT INTO users (id, name, email, password, phone, latitude, longitude, email_verified, country, province, municipality, neighborhood)
 		VALUES
@@ -24,6 +23,7 @@ func SeedUsers(ctx context.Context, db *sql.DB) error {
 		('a11fd8dc-55d0-4e07-b0db-23f659ed3201', 'Maria João', 'maria@example.com', $3, '+244923333333', -8.828765, 13.247865, TRUE, 'Angola', 'Luanda', 'Talatona', 'Gamek'),
 		('cc772485-bb16-4584-a8a4-3fd366478931', 'Carlos Domingos', 'carlos@example.com', $4, '+244923444444', -8.842560, 13.300120, TRUE, 'Angola', 'Luanda', 'Samba', 'Morro Bento'),
 		('51bfcbfd-c896-4a7a-ae6a-79a0df2aab30', 'Ana Ferreira', 'ana@example.com', $5, '+244923555555', -8.903290, 13.312540, TRUE, 'Angola', 'Luanda', 'Cacuaco', 'Sequele')
+		ON CONFLICT (id) DO NOTHING
 	`
 
 	_, err = db.ExecContext(ctx, insertUsersQuery,
@@ -37,7 +37,6 @@ func SeedUsers(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
-	// Then insert user roles
 	insertUserRolesQuery := `
 		INSERT INTO user_roles (user_id, role_id)
 		SELECT id, (SELECT id FROM roles WHERE name='citizen' LIMIT 1)
@@ -49,6 +48,7 @@ func SeedUsers(ctx context.Context, db *sql.DB) error {
 			'cc772485-bb16-4584-a8a4-3fd366478931',
 			'51bfcbfd-c896-4a7a-ae6a-79a0df2aab30'
 		)
+		ON CONFLICT (user_id, role_id) DO NOTHING
 	`
 
 	_, err = db.ExecContext(ctx, insertUserRolesQuery)

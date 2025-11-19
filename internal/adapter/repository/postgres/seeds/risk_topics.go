@@ -7,62 +7,181 @@ import (
 
 func SeedRiskTopics(ctx context.Context, db *sql.DB) error {
 	_, err := db.ExecContext(ctx, `
-	-- Crime
 	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'roubo', 'Roubo em residências, comércio ou público' FROM risk_types WHERE name = 'crime';
+	SELECT id, 'assalto_mao_armada', 'Assalto com arma de fogo ou branca' FROM risk_types WHERE name = 'crime'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
 	
 	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'assalto', 'Assalto com violência, sequestro ou agressão' FROM risk_types WHERE name = 'crime';
+	SELECT id, 'roubo_residencia', 'Invasão e roubo em residências' FROM risk_types WHERE name = 'crime'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
 	
 	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'furtos', 'Furtos sem violência, como bolsas ou celulares' FROM risk_types WHERE name = 'crime';
+	SELECT id, 'roubo_veiculo', 'Roubo de veículos ou carjacking' FROM risk_types WHERE name = 'crime'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
 	
 	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'vandalismo', 'Destruição de propriedade pública ou privada' FROM risk_types WHERE name = 'crime';
-	
-	-- Acidentes
-	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'acidente_transito', 'Acidente de trânsito envolvendo veículos ou pedestres' FROM risk_types WHERE name = 'accident';
+	SELECT id, 'furto_carteira', 'Furto de carteiras e pertences' FROM risk_types WHERE name = 'crime'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
 	
 	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'acidente_trabalho', 'Acidente em ambiente de trabalho ou obra' FROM risk_types WHERE name = 'accident';
+	SELECT id, 'furto_telemovel', 'Furto de telemóveis' FROM risk_types WHERE name = 'crime'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
 	
 	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'queda', 'Quedas de pessoas em locais públicos ou privados' FROM risk_types WHERE name = 'accident';
-	
-	-- Desastres Naturais
-	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'enchente', 'Inundações e enchentes urbanas ou rurais' FROM risk_types WHERE name = 'natural_disaster';
+	SELECT id, 'vandalismo', 'Destruição de propriedade' FROM risk_types WHERE name = 'crime'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
 	
 	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'deslizamento', 'Deslizamentos de terra ou barrancos' FROM risk_types WHERE name = 'natural_disaster';
+	SELECT id, 'sequestro', 'Sequestro ou rapto' FROM risk_types WHERE name = 'violence'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
 	
 	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'tempestade', 'Tempestades fortes, ventos e raios' FROM risk_types WHERE name = 'natural_disaster';
+	SELECT id, 'violencia_domestica', 'Agressão doméstica' FROM risk_types WHERE name = 'violence'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
 	
 	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'incendio_florestal', 'Incêndios em áreas florestais ou savanas' FROM risk_types WHERE name = 'fire';
-	
-	-- Saúde
-	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'doenca_infecciosa', 'Surtos de doenças transmissíveis' FROM risk_types WHERE name = 'health';
+	SELECT id, 'agressao_fisica', 'Agressão física ou luta' FROM risk_types WHERE name = 'violence'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
 	
 	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'emergencia_medica', 'Situações médicas graves como parada cardíaca' FROM risk_types WHERE name = 'health';
-	
-	-- Infraestrutura
-	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'queda_ponte', 'Desabamento ou problemas em pontes e viadutos' FROM risk_types WHERE name = 'infrastructure';
+	SELECT id, 'tiroteio', 'Disparos de arma de fogo' FROM risk_types WHERE name = 'violence'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
 	
 	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'queda_energia', 'Falhas ou interrupção de fornecimento elétrico' FROM risk_types WHERE name = 'infrastructure';
-	
-	-- Meio ambiente
-	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'poluicao', 'Poluição do ar, água ou solo' FROM risk_types WHERE name = 'environment';
+	SELECT id, 'acidente_viacao', 'Acidente de viação com vítimas' FROM risk_types WHERE name = 'accident'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
 	
 	INSERT INTO risk_topics (risk_type_id, name, description)
-	SELECT id, 'vazamento_quimico', 'Vazamento de produtos químicos ou tóxicos' FROM risk_types WHERE name = 'environment';
+	SELECT id, 'colisao_transito', 'Colisão entre veículos' FROM risk_types WHERE name = 'accident'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'atropelamento', 'Atropelamento de pedestre' FROM risk_types WHERE name = 'accident'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'capotamento', 'Veículo capotado' FROM risk_types WHERE name = 'accident'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'inundacao', 'Inundação de vias ou residências' FROM risk_types WHERE name = 'natural_disaster'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'deslizamento_terra', 'Deslizamento de terra ou musseque' FROM risk_types WHERE name = 'natural_disaster'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'tempestade', 'Tempestade ou ventos fortes' FROM risk_types WHERE name = 'natural_disaster'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'raio', 'Queda de raio' FROM risk_types WHERE name = 'natural_disaster'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'incendio_residencial', 'Incêndio em residência' FROM risk_types WHERE name = 'fire'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'incendio_comercial', 'Incêndio em estabelecimento comercial' FROM risk_types WHERE name = 'fire'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'incendio_mercado', 'Incêndio em mercado' FROM risk_types WHERE name = 'fire'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'incendio_veiculo', 'Veículo em chamas' FROM risk_types WHERE name = 'fire'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'emergencia_medica', 'Pessoa com mal súbito' FROM risk_types WHERE name = 'health'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'surto_doenca', 'Surto de doença infecciosa' FROM risk_types WHERE name = 'health'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'acidente_trabalho', 'Acidente em obra ou local de trabalho' FROM risk_types WHERE name = 'health'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'queda_energia', 'Falta de energia elétrica' FROM risk_types WHERE name = 'infrastructure'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'queda_agua', 'Falta de água' FROM risk_types WHERE name = 'infrastructure'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'buraco_via', 'Buraco ou cratera na via' FROM risk_types WHERE name = 'infrastructure'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'semaforo_avariado', 'Semáforo avariado ou desligado' FROM risk_types WHERE name = 'infrastructure'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'cabo_solto', 'Cabo elétrico caído ou solto' FROM risk_types WHERE name = 'infrastructure'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'estrutura_risco', 'Estrutura com risco de colapso' FROM risk_types WHERE name = 'infrastructure'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'lixo_acumulado', 'Lixo acumulado na via' FROM risk_types WHERE name = 'environment'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'esgoto_aberto', 'Esgoto a céu aberto' FROM risk_types WHERE name = 'environment'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'poluicao_ar', 'Poluição do ar ou fumo tóxico' FROM risk_types WHERE name = 'environment'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'vazamento_agua', 'Vazamento de água potável' FROM risk_types WHERE name = 'environment'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'rua_escura', 'Via sem iluminação pública' FROM risk_types WHERE name = 'public_safety'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'zona_assalto', 'Local conhecido por assaltos frequentes' FROM risk_types WHERE name = 'public_safety'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'vigilancia_necessaria', 'Local que necessita vigilância policial' FROM risk_types WHERE name = 'public_safety'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'congestionamento', 'Trânsito intenso ou congestionamento' FROM risk_types WHERE name = 'traffic'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'via_bloqueada', 'Via bloqueada ou interditada' FROM risk_types WHERE name = 'traffic'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'manifestacao', 'Manifestação ou protesto' FROM risk_types WHERE name = 'traffic'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'operacao_policial', 'Operação policial em curso' FROM risk_types WHERE name = 'public_safety'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'animal_solto', 'Animal perigoso ou gado solto na via' FROM risk_types WHERE name = 'urban_issue'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description)
+	SELECT id, 'obra_sinalizacao', 'Obra sem sinalização adequada' FROM risk_types WHERE name = 'urban_issue'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
 	`)
 	return err
 }

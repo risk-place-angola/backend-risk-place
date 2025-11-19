@@ -14,7 +14,8 @@ func SeedPermissions(ctx context.Context, db *sql.DB) error {
 		('user', 'delete'),
 		('report', 'create'),
 		('report', 'update'),
-		('report', 'delete');
+		('report', 'delete')
+	ON CONFLICT (resource, action) DO NOTHING;
 	`)
 	return err
 }
