@@ -1,8 +1,12 @@
 package util
 
-import "context"
+import (
+	"context"
+	"net/http"
 
-// ContextKey is a type for context keys to avoid collisions.
+	"github.com/google/uuid"
+)
+
 type ContextKey string
 
 const (
@@ -18,6 +22,38 @@ func GetUserIDFromContext(ctx context.Context) (string, bool) {
 		return "", false
 	}
 	return userID, true
+}
+
+func ExtractAndValidateUserID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+	userID, ok := r.Context().Value("user_id").(string)
+	if !ok || userID == "" {
+		Error(w, "unauthorized", http.StatusUnauthorized)
+		return uuid.Nil, false
+	}
+
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		Error(w, "invalid user ID", http.StatusBadRequest)
+		return uuid.Nil, false
+	}
+
+	return uid, true
+}
+
+func ExtractAndValidatePathID(w http.ResponseWriter, r *http.Request, paramName, entityName string) (uuid.UUID, bool) {
+	id := r.PathValue(paramName)
+	if id == "" {
+		Error(w, entityName+" ID is required", http.StatusBadRequest)
+		return uuid.Nil, false
+	}
+
+	parsed, err := uuid.Parse(id)
+	if err != nil {
+		Error(w, "invalid "+entityName+" ID", http.StatusBadRequest)
+		return uuid.Nil, false
+	}
+
+	return parsed, true
 }
 
 func GetIdentifierFromContext(ctx context.Context) (string, bool) {

@@ -14,15 +14,17 @@ import (
 	domainErrors "github.com/risk-place-angola/backend-risk-place/internal/domain/errors"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/model"
 	domainrepository "github.com/risk-place-angola/backend-risk-place/internal/domain/repository"
+	domainService "github.com/risk-place-angola/backend-risk-place/internal/domain/service"
 )
 
 type UserUseCase struct {
-	userRepo     domainrepository.UserRepository
-	roleRepo     domainrepository.RoleRepository
-	token        port.TokenGenerator
-	hasher       port.PasswordHasher
-	emailService port.EmailService
-	config       *config.Config
+	userRepo            domainrepository.UserRepository
+	roleRepo            domainrepository.RoleRepository
+	token               port.TokenGenerator
+	hasher              port.PasswordHasher
+	config              *config.Config
+	migrationService    domainService.AnonymousMigrationService
+	verificationService domainService.VerificationService
 }
 
 func NewUserUseCase(
@@ -30,20 +32,22 @@ func NewUserUseCase(
 	roleRepo domainrepository.RoleRepository,
 	token port.TokenGenerator,
 	hasher port.PasswordHasher,
-	emailService port.EmailService,
 	config *config.Config,
+	migrationService domainService.AnonymousMigrationService,
+	verificationService domainService.VerificationService,
 ) *UserUseCase {
 	return &UserUseCase{
-		userRepo:     userRepo,
-		roleRepo:     roleRepo,
-		token:        token,
-		hasher:       hasher,
-		emailService: emailService,
-		config:       config,
+		userRepo:            userRepo,
+		roleRepo:            roleRepo,
+		token:               token,
+		hasher:              hasher,
+		config:              config,
+		migrationService:    migrationService,
+		verificationService: verificationService,
 	}
 }
 
-func (uc *UserUseCase) Signup(ctx context.Context, input dto.RegisterUserInput) (*dto.RegisterUserOutput, error) {
+func (uc *UserUseCase) Signup(ctx context.Context, input dto.RegisterUserInput, deviceID string) (*dto.RegisterUserOutput, error) {
 	user, err := model.NewUser(input.Name, input.Phone, input.Email, input.Password)
 	if err != nil {
 		slog.Error("Error creating new user model", "email", input.Email, "error", err)
@@ -57,8 +61,6 @@ func (uc *UserUseCase) Signup(ctx context.Context, input dto.RegisterUserInput) 
 
 	user.Password = hashed
 
-	// code := user.GenerateVerificationCode()
-
 	err = uc.userRepo.Save(ctx, user)
 	if err != nil {
 		slog.Error("Error saving new user", "email", input.Email, "error", err)
@@ -71,25 +73,35 @@ func (uc *UserUseCase) Signup(ctx context.Context, input dto.RegisterUserInput) 
 		return nil, err
 	}
 
-	/*
-			verificationLink := fmt.Sprintf("%s/verify-email?email=%s&code=%s", uc.config.FrontendURL, user.Email, code)
-			htmlBody := fmt.Sprintf(`
-		        <h2>Bem-vindo(a) à Risk Place Angola!</h2>
-		        <p>Para ativar sua conta, clique no link abaixo:</p>
-		        <a href="%s">Verificar Email</a>
-		        <p>Ou use este código: <strong>%s</strong></p>
-		        <p>O código expira em %d minutos.</p>
-		    `, verificationLink, code, int(config.CodeExpirationDuration.Minutes()))
+	if err := uc.verificationService.SendCode(ctx, user.ID, user.Phone, user.Email); err != nil {
+		slog.Error("Failed to send verification code", "user_id", user.ID, "error", err)
+		return nil, fmt.Errorf("failed to send verification code: %w", err)
+	}
 
-			if err := uc.emailService.SendHtml(user.Email, "Verifique seu email", htmlBody); err != nil {
-				return nil, fmt.Errorf("erro ao enviar email de verificação: %w", err)
+	if deviceID != "" && uc.migrationService != nil {
+		go func(bgCtx context.Context, devID string, usrID uuid.UUID) {
+			if err := uc.migrationService.MigrateAnonymousData(
+				bgCtx,
+				devID,
+				usrID,
+				"signup",
+			); err != nil {
+				slog.Error("Anonymous data migration failed but signup succeeded",
+					"user_id", usrID,
+					"device_id", devID,
+					"error", err)
+			} else {
+				slog.Info("Anonymous data migrated successfully after signup",
+					"user_id", usrID,
+					"device_id", devID)
 			}
-	*/
+		}(context.WithoutCancel(ctx), deviceID, user.ID)
+	}
 
 	return &dto.RegisterUserOutput{ID: user.ID}, nil
 }
 
-func (uc *UserUseCase) Login(ctx context.Context, email, rawPassword string) (*dto.UserSignInDTO, error) {
+func (uc *UserUseCase) Login(ctx context.Context, email, rawPassword string, deviceID string) (*dto.UserSignInDTO, error) {
 	u, err := uc.userRepo.FindByEmail(ctx, email)
 	if err != nil || u == nil {
 		slog.Error("User not found", "email", email, "error", err)
@@ -132,6 +144,26 @@ func (uc *UserUseCase) Login(ctx context.Context, email, rawPassword string) (*d
 	if err != nil {
 		slog.Error("Error issuing refresh token", "user_id", u.ID, "error", err)
 		return nil, err
+	}
+
+	if deviceID != "" && uc.migrationService != nil {
+		go func(bgCtx context.Context, devID string, usrID uuid.UUID) {
+			if err := uc.migrationService.MigrateAnonymousData(
+				bgCtx,
+				devID,
+				usrID,
+				"login",
+			); err != nil {
+				slog.Error("Anonymous data migration failed but login succeeded",
+					"user_id", usrID,
+					"device_id", devID,
+					"error", err)
+			} else {
+				slog.Info("Anonymous data migrated successfully after login",
+					"user_id", usrID,
+					"device_id", devID)
+			}
+		}(context.WithoutCancel(ctx), deviceID, u.ID)
 	}
 
 	return &dto.UserSignInDTO{
@@ -206,6 +238,10 @@ func (uc *UserUseCase) Refresh(ctx context.Context, refreshToken string) (*dto.U
 	}, nil
 }
 
+func (uc *UserUseCase) Logout(ctx context.Context, userID uuid.UUID) error {
+	return nil
+}
+
 func (uc *UserUseCase) ForgotPassword(ctx context.Context, email string) error {
 	getAccount, err := uc.userRepo.FindByEmail(ctx, email)
 	if err != nil {
@@ -221,21 +257,9 @@ func (uc *UserUseCase) ForgotPassword(ctx context.Context, email string) error {
 		return domainErrors.ErrUserAccountNotExists
 	}
 
-	code := model.GenerateConfirmationCode()
-	if err := getAccount.SetGeneratedCode(); err != nil {
-		slog.Error("Error setting generated code", "user_id", getAccount.ID, "error", err)
-		return err
-	}
-
-	err = uc.userRepo.AddCodeToUser(ctx, getAccount.ID, getAccount.EmailVerification.Code, time.Now().Add(config.CodeExpirationDuration))
-	if err != nil {
-		slog.Error("Error adding code to user", "user_id", getAccount.ID, "error", err)
-		return fmt.Errorf("error adding code to user: %w", err)
-	}
-
-	if err := uc.emailService.SendEmail(ctx, email, "Password Reset Code",
-		fmt.Sprintf("Your password reset code is: %s", code)); err != nil {
-		return fmt.Errorf("failed to send email: %w", err)
+	if err := uc.verificationService.SendCode(ctx, getAccount.ID, getAccount.Phone, getAccount.Email); err != nil {
+		slog.Error("Failed to send password reset code", "user_id", getAccount.ID, "error", err)
+		return fmt.Errorf("failed to send password reset code: %w", err)
 	}
 
 	return nil
@@ -290,17 +314,19 @@ func (uc *UserUseCase) VerifyCode(ctx context.Context, email, code string) error
 		return domainErrors.ErrUserAccountNotExists
 	}
 
-	if user.EmailVerification.Code != code {
-		slog.Error("Invalid verification code for user", "user_id", user.ID)
-		return domainErrors.ErrInvalidCode
-	}
-
-	if time.Now().After(user.EmailVerification.ExpiresAt) {
-		slog.Error("Verification code expired for user", "user_id", user.ID)
+	valid, err := uc.verificationService.VerifyCode(ctx, user.ID, code)
+	if err != nil {
+		slog.Error("Failed to verify code", "user_id", user.ID, "error", err)
 		return domainErrors.ErrExpiredCode
 	}
 
+	if !valid {
+		slog.Error("Invalid verification code", "user_id", user.ID)
+		return domainErrors.ErrInvalidCode
+	}
+
 	user.EmailVerification.CodeVerified = true
+	user.EmailVerification.Verified = true
 
 	err = uc.userRepo.Save(ctx, user)
 	if err != nil {
@@ -309,6 +335,19 @@ func (uc *UserUseCase) VerifyCode(ctx context.Context, email, code string) error
 	}
 
 	return nil
+}
+
+func (uc *UserUseCase) ResendVerificationCode(ctx context.Context, email string) error {
+	user, err := uc.userRepo.FindByEmail(ctx, email)
+	if err != nil {
+		return err
+	}
+
+	if user.EmailVerification.Verified {
+		return fmt.Errorf("user already verified")
+	}
+
+	return uc.verificationService.ResendCode(ctx, user.ID, user.Phone, user.Email)
 }
 
 // FindUserByID retrieves a user's profile by their ID.

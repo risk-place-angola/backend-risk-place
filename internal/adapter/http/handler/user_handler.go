@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/http/util"
 	"github.com/risk-place-angola/backend-risk-place/internal/application"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/dto"
@@ -24,10 +25,11 @@ func NewUserHandler(userUseCase *application.Application) *UserHandler {
 
 // Signup godoc
 // @Summary Register a new user
-// @Description Register a new user
+// @Description Register a new user. If X-Device-ID header is provided, anonymous user data will be migrated to the new account.
 // @Tags auth
 // @Accept json
 // @Produce json
+// @Param X-Device-ID header string false "Device ID for anonymous data migration"
 // @Param user body dto.RegisterUserInput true "User registration data"
 // @Success 201 {object} dto.RegisterUserOutput
 // @Failure 400 {object} util.ErrorResponse
@@ -44,7 +46,12 @@ func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userOut, err := h.userUseCase.UserUseCase.Signup(r.Context(), req)
+	deviceID := r.Header.Get("X-Device-Id")
+	if deviceID == "" {
+		deviceID = r.Header.Get("Device-Id")
+	}
+
+	userOut, err := h.userUseCase.UserUseCase.Signup(r.Context(), req, deviceID)
 	if err != nil {
 		slog.Error("error during signup", slog.Any("error", err))
 		util.Error(w, err.Error(), http.StatusInternalServerError)
@@ -56,10 +63,11 @@ func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 
 // Login godoc
 // @Summary Login a user
-// @Description Login a user
+// @Description Login a user. If X-Device-ID header is provided, anonymous user data will be migrated to the authenticated account.
 // @Tags auth
 // @Accept json
 // @Produce json
+// @Param X-Device-ID header string false "Device ID for anonymous data migration"
 // @Param credentials body dto.LoginInput true "User login credentials"
 // @Success 200 {object} dto.UserSignInDTO
 // @Failure 400 {object} util.ErrorResponse
@@ -73,7 +81,12 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.userUseCase.UserUseCase.Login(r.Context(), req.Email, req.Password)
+	deviceID := r.Header.Get("X-Device-Id")
+	if deviceID == "" {
+		deviceID = r.Header.Get("Device-Id")
+	}
+
+	token, err := h.userUseCase.UserUseCase.Login(r.Context(), req.Email, req.Password, deviceID)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrInvalidCredentials):
@@ -87,6 +100,72 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	util.Response(w, token, http.StatusOK)
+}
+
+// RefreshToken godoc
+// @Summary Refresh access token
+// @Description Get new access and refresh tokens using refresh token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param refresh_token body object{refresh_token=string} true "Refresh token"
+// @Success 200 {object} dto.UserSignInDTO
+// @Failure 400 {object} util.ErrorResponse
+// @Failure 401 {object} util.ErrorResponse
+// @Router /auth/refresh [post]
+func (h *UserHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		util.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+
+	if req.RefreshToken == "" {
+		util.Error(w, "refresh token is required", http.StatusBadRequest)
+		return
+	}
+
+	token, err := h.userUseCase.UserUseCase.Refresh(r.Context(), req.RefreshToken)
+	if err != nil {
+		switch {
+		case errors.Is(err, domainErrors.ErrExpiredToken):
+			util.Error(w, "refresh token expired", http.StatusUnauthorized)
+		case errors.Is(err, domainErrors.ErrInvalidToken):
+			util.Error(w, "invalid refresh token", http.StatusUnauthorized)
+		case errors.Is(err, domainErrors.ErrEmailNotVerified):
+			util.Error(w, "email not verified", http.StatusForbidden)
+		default:
+			util.Error(w, "internal error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	util.Response(w, token, http.StatusOK)
+}
+
+// Logout godoc
+// @Summary Logout user
+// @Description Logout user and invalidate session
+// @Tags auth
+// @Security BearerAuth
+// @Success 200 {string} string "logout successful"
+// @Failure 401 {object} util.ErrorResponse
+// @Router /auth/logout [post]
+func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("user_id").(uuid.UUID)
+	if !ok {
+		util.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if err := h.userUseCase.UserUseCase.Logout(r.Context(), userID); err != nil {
+		util.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	util.Response(w, map[string]string{"message": "logout successful"}, http.StatusOK)
 }
 
 // ForgotPassword godoc
@@ -198,6 +277,35 @@ func (h *UserHandler) ConfirmSignup(w http.ResponseWriter, r *http.Request) {
 		default:
 			util.Error(w, "internal error", http.StatusInternalServerError)
 		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// ResendCode godoc
+// @Summary Resend verification code
+// @Description Resend verification code to user's phone (SMS) or email
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body object{email=string} true "Email"
+// @Success 204
+// @Failure 400 {object} util.ErrorResponse
+// @Failure 500 {object} util.ErrorResponse
+// @Router /auth/resend-code [post]
+func (h *UserHandler) ResendCode(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		util.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.userUseCase.UserUseCase.ResendVerificationCode(r.Context(), req.Email); err != nil {
+		slog.Error("Failed to resend verification code", "email", req.Email, "error", err)
+		util.Error(w, "failed to resend verification code", http.StatusInternalServerError)
 		return
 	}
 
