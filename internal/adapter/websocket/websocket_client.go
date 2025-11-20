@@ -10,11 +10,13 @@ import (
 )
 
 type Client struct {
-	UserID          string // Can be user_id (UUID) or device_id
-	IsAuthenticated bool   // true if JWT authenticated, false if anonymous
+	UserID          string
+	IsAuthenticated bool
 	Conn            *websocket.Conn
 	Send            chan []byte
 	Hub             *Hub
+	lastLat         float64
+	lastLon         float64
 }
 
 func (c *Client) ReadPump(ctx context.Context) {
