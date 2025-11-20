@@ -45,15 +45,17 @@ func (h *SafeRouteHandler) decodeAndHandle(
 
 func (h *SafeRouteHandler) CalculateSafeRoute(w http.ResponseWriter, r *http.Request) {
 	var req dto.SafeRouteRequest
+	ctx := r.Context()
 	h.decodeAndHandle(w, r, &req, func() (interface{}, error) {
-		return h.app.SafeRouteUseCase.CalculateSafeRoute(r.Context(), &req)
+		return h.app.SafeRouteUseCase.CalculateSafeRoute(ctx, &req)
 	}, "failed to calculate safe route")
 }
 
 func (h *SafeRouteHandler) GetIncidentsHeatmap(w http.ResponseWriter, r *http.Request) {
 	var req dto.HeatmapRequest
+	ctx := r.Context()
 	h.decodeAndHandle(w, r, &req, func() (interface{}, error) {
-		return h.app.SafeRouteUseCase.GetIncidentsHeatmap(r.Context(), &req)
+		return h.app.SafeRouteUseCase.GetIncidentsHeatmap(ctx, &req)
 	}, "failed to get incidents heatmap")
 }
 
