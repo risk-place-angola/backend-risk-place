@@ -77,6 +77,9 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	g.ProtectedJWT.HandleFunc("POST /api/v1/upload/risk-topic-icon", container.StorageHandler.UploadRiskTopicIcon)
 	g.Public.HandleFunc("GET /api/v1/storage/{path...}", container.StorageHandler.ServeFile)
 
+	g.OptionalAuth.HandleFunc("POST /api/v1/users/location", container.NearbyUsersHandler.UpdateLocation)
+	g.OptionalAuth.HandleFunc("POST /api/v1/users/nearby", container.NearbyUsersHandler.GetNearbyUsers)
+
 	mux.HandleFunc("/ws/alerts", container.WSHandler.HandleWebSocket)
 	mux.HandleFunc("/docs/", httpSwagger.WrapHandler)
 

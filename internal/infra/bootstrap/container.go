@@ -43,6 +43,7 @@ type Container struct {
 	SafetySettingsHandler   *handler.SafetySettingsHandler
 	NotificationHandler     *handler.NotificationHandler
 	StorageHandler          *handler.StorageHandler
+	NearbyUsersHandler      *handler.NearbyUsersHandler
 
 	UserApp *application.Application
 
@@ -85,11 +86,14 @@ func NewContainer() (*Container, error) {
 	safetySettingsRepoPG := postgres.NewSafetySettingsRepository(database)
 	deviceMappingRepoPG := postgres.NewDeviceUserMappingRepository(database)
 	migrationRepoPG := postgres.NewAnonymousMigrationRepository(database)
+	userLocationRepoPG := postgres.NewUserLocationRepository(database)
 
 	emailService := notifier.NewSmtpEmailService(cfg)
 	tokenService := service.NewJwtTokenService(cfg)
 	hashService := service.NewBcryptHasher()
 	geoService := domainService.NewGeolocationService()
+	nearbyUsersDomainService := domainService.NewNearbyUsersService(userLocationRepoPG)
+	nearbyUsersService := service.NewNearbyUsersAdapter(nearbyUsersDomainService)
 
 	migrationService := service.NewAnonymousMigrationService(
 		deviceMappingRepoPG,
@@ -102,7 +106,7 @@ func NewContainer() (*Container, error) {
 
 	dispatcher := event.NewEventDispatcher()
 
-	hub := websocket.NewHub(locationStore, geoService)
+	hub := websocket.NewHub(locationStore, geoService, nearbyUsersService)
 	go hub.Run()
 
 	notifierFCM := notifier.NewFCMNotifier(firebaseApp)
@@ -174,6 +178,9 @@ func NewContainer() (*Container, error) {
 	safetySettingsHandler := handler.NewSafetySettingsHandler(userApp)
 	notificationHandler := handler.NewNotificationHandler(userApp)
 	storageHandler := handler.NewStorageHandler(storageService, userApp)
+	nearbyUsersHandler := handler.NewNearbyUsersHandler(nearbyUsersService)
+
+	handler.StartCleanupJob(context.Background(), nearbyUsersService)
 
 	return &Container{
 		UserApp:                 userApp,
@@ -194,5 +201,6 @@ func NewContainer() (*Container, error) {
 		SafetySettingsHandler:   safetySettingsHandler,
 		NotificationHandler:     notificationHandler,
 		StorageHandler:          storageHandler,
+		NearbyUsersHandler:      nearbyUsersHandler,
 	}, nil
 }
