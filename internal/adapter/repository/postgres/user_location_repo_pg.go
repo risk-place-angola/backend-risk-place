@@ -33,6 +33,13 @@ func (r *userLocationRepoPG) Upsert(ctx context.Context, location *model.UserLoc
 			heading = EXCLUDED.heading,
 			last_update = EXCLUDED.last_update
 	`
+
+	slog.Debug("upserting user location",
+		slog.String("user_id", location.UserID.String()),
+		slog.Float64("lat", location.Latitude),
+		slog.Float64("lon", location.Longitude),
+		slog.Bool("is_anonymous", location.IsAnonymous))
+
 	_, err := r.db.ExecContext(ctx, query,
 		location.ID,
 		location.UserID,
@@ -46,6 +53,11 @@ func (r *userLocationRepoPG) Upsert(ctx context.Context, location *model.UserLoc
 		location.IsAnonymous,
 		location.LastUpdate,
 	)
+
+	if err != nil {
+		slog.Error("failed to upsert user location", slog.Any("error", err))
+	}
+
 	return err
 }
 
@@ -95,13 +107,20 @@ func (r *userLocationRepoPG) FindNearbyUsers(ctx context.Context, lat, lon, radi
 			ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
 			$3
 		)
-		AND last_update > NOW() - INTERVAL '10 seconds'
+		AND last_update > NOW() - INTERVAL '30 seconds'
 		ORDER BY location <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
 		LIMIT $4
 	`
 
+	slog.Debug("finding nearby users",
+		slog.Float64("lat", lat),
+		slog.Float64("lon", lon),
+		slog.Float64("radius", radiusMeters),
+		slog.Int("limit", limit))
+
 	rows, err := r.db.QueryContext(ctx, query, lon, lat, radiusMeters, limit)
 	if err != nil {
+		slog.Error("failed to query nearby users", slog.Any("error", err))
 		return nil, err
 	}
 	defer func() {
@@ -143,6 +162,8 @@ func (r *userLocationRepoPG) FindNearbyUsers(ctx context.Context, lat, lon, radi
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
+	slog.Debug("found nearby users", slog.Int("count", len(locations)))
 
 	return locations, nil
 }
