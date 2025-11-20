@@ -168,7 +168,7 @@ func NewContainer() (*Container, error) {
 	userHandler := handler.NewUserHandler(userApp)
 	alertHandler := handler.NewAlertHandler(userApp)
 	wsHandler := websocket.NewWSHandler(hub, *authMW, optionalAuthMW)
-	reportHandler := handler.NewReportHandler(userApp, reportRepoPG)
+	reportHandler := handler.NewReportHandler(userApp, reportRepoPG, anonymousSessionRepoPG)
 	riskHandler := handler.NewRiskHandler(userApp)
 	deviceHandler := handler.NewDeviceHandler(registerDeviceUC, updateDeviceLocationUC)
 	locationSharingHandler := handler.NewLocationSharingHandler(userApp)

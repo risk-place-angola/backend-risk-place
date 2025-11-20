@@ -16,14 +16,16 @@ import (
 )
 
 type ReportHandler struct {
-	reportUseCase *application.Application
-	reportRepo    repository.ReportRepository
+	reportUseCase        *application.Application
+	reportRepo           repository.ReportRepository
+	anonymousSessionRepo repository.AnonymousSessionRepository
 }
 
-func NewReportHandler(reportUseCase *application.Application, reportRepo repository.ReportRepository) *ReportHandler {
+func NewReportHandler(reportUseCase *application.Application, reportRepo repository.ReportRepository, anonymousSessionRepo repository.AnonymousSessionRepository) *ReportHandler {
 	return &ReportHandler{
-		reportUseCase: reportUseCase,
-		reportRepo:    reportRepo,
+		reportUseCase:        reportUseCase,
+		reportRepo:           reportRepo,
+		anonymousSessionRepo: anonymousSessionRepo,
 	}
 }
 
@@ -382,12 +384,14 @@ func (h *ReportHandler) VoteReport(w http.ResponseWriter, r *http.Request) {
 		}
 		userID = &uid
 	case deviceID != "":
-		sessionID, err := uuid.Parse(deviceID)
+		// Find the anonymous session by device_id to get the session UUID
+		session, err := h.anonymousSessionRepo.FindByDeviceID(r.Context(), deviceID)
 		if err != nil {
-			util.Error(w, "invalid device ID", http.StatusBadRequest)
+			slog.Error("failed to find anonymous session by device ID", "error", err, "deviceID", deviceID)
+			util.Error(w, "anonymous session not found", http.StatusNotFound)
 			return
 		}
-		anonymousSessionID = &sessionID
+		anonymousSessionID = &session.ID
 	default:
 		util.Error(w, "authentication required", http.StatusUnauthorized)
 		return
