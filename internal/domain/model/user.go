@@ -49,6 +49,11 @@ type User struct {
 	Address           Address
 	HomeAddress       *SavedLocation
 	WorkAddress       *SavedLocation
+	DeviceToken       string
+	DeviceLanguage    string
+	TrustScore        int
+	ReportsSubmitted  int
+	ReportsVerified   int
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	DeletedAt         *time.Time

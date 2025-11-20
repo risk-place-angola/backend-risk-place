@@ -301,3 +301,44 @@ func nullString(s string) sql.NullString {
 func nullFloat(f float64) sql.NullFloat64 {
 	return sql.NullFloat64{Float64: f, Valid: f != 0}
 }
+
+func (r *anonymousSessionRepoPG) UpdateNotificationPreferences(ctx context.Context, deviceID string, pushEnabled, smsEnabled bool) error {
+	query := `
+		UPDATE anonymous_sessions 
+		SET push_notification_enabled = $2, 
+		    sms_notification_enabled = $3,
+		    updated_at = NOW()
+		WHERE device_id = $1
+	`
+	result, err := r.db.ExecContext(ctx, query, deviceID, pushEnabled, smsEnabled)
+	if err != nil {
+		return fmt.Errorf("failed to update notification preferences: %w", err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rows == 0 {
+		return fmt.Errorf("anonymous session not found")
+	}
+
+	return nil
+}
+
+func (r *anonymousSessionRepoPG) GetNotificationPreferences(ctx context.Context, deviceID string) (pushEnabled, smsEnabled bool, err error) {
+	query := `
+		SELECT push_notification_enabled, sms_notification_enabled 
+		FROM anonymous_sessions 
+		WHERE device_id = $1
+	`
+	err = r.db.QueryRowContext(ctx, query, deviceID).Scan(&pushEnabled, &smsEnabled)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, false, fmt.Errorf("anonymous session not found")
+		}
+		return false, false, fmt.Errorf("failed to get notification preferences: %w", err)
+	}
+	return
+}

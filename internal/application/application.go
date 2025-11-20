@@ -17,16 +17,17 @@ import (
 )
 
 type Application struct {
-	UserUseCase             *user.UserUseCase
-	AlertUseCase            *alert.AlertUseCase
-	ReportUseCase           *report.ReportUseCase
-	RiskUseCase             *risk.RiskUseCase
-	LocationSharingUseCase  *locationsharing.LocationSharingUseCase
-	SafeRouteUseCase        *saferoute.SafeRouteUseCase
-	EmergencyContactUseCase *emergencycontact.EmergencyContactUseCase
-	EmergencyAlertUseCase   *emergencycontact.EmergencyAlertUseCase
-	MyAlertsUseCase         *myalerts.MyAlertsUseCase
-	SafetySettingsUseCase   *safetysettings.SafetySettingsUseCase
+	UserUseCase               *user.UserUseCase
+	AlertUseCase              *alert.AlertUseCase
+	ReportUseCase             *report.ReportUseCase
+	RiskUseCase               *risk.RiskUseCase
+	LocationSharingUseCase    *locationsharing.LocationSharingUseCase
+	SafeRouteUseCase          *saferoute.SafeRouteUseCase
+	EmergencyContactUseCase   *emergencycontact.EmergencyContactUseCase
+	EmergencyAlertUseCase     *emergencycontact.EmergencyAlertUseCase
+	MyAlertsUseCase           *myalerts.MyAlertsUseCase
+	SafetySettingsUseCase     *safetysettings.SafetySettingsUseCase
+	ReportVerificationService domainService.ReportVerificationService
 }
 
 func NewUserApplication(
@@ -52,6 +53,7 @@ func NewUserApplication(
 	eventDispatcher port.EventDispatcher,
 	migrationService domainService.AnonymousMigrationService,
 	verificationService domainService.VerificationService,
+	storageService port.StorageService,
 ) *Application {
 	return &Application{
 		UserUseCase: user.NewUserUseCase(
@@ -80,6 +82,7 @@ func NewUserApplication(
 		RiskUseCase: risk.NewRiskUseCase(
 			riskTypeRepo,
 			riskTopicRepo,
+			storageService,
 		),
 		LocationSharingUseCase: locationsharing.NewLocationSharingUseCase(
 			locationSharingRepo,

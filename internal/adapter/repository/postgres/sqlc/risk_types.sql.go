@@ -38,7 +38,7 @@ func (q *Queries) DeleteRiskType(ctx context.Context, id uuid.UUID) error {
 }
 
 const getRiskTypeByID = `-- name: GetRiskTypeByID :one
-SELECT id, name, description, default_radius_meters, created_at, updated_at FROM risk_types WHERE id = $1
+SELECT id, name, description, icon_path, default_radius_meters, created_at, updated_at FROM risk_types WHERE id = $1
 `
 
 func (q *Queries) GetRiskTypeByID(ctx context.Context, id uuid.UUID) (RiskType, error) {
@@ -48,6 +48,7 @@ func (q *Queries) GetRiskTypeByID(ctx context.Context, id uuid.UUID) (RiskType, 
 		&i.ID,
 		&i.Name,
 		&i.Description,
+		&i.IconPath,
 		&i.DefaultRadiusMeters,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -56,7 +57,7 @@ func (q *Queries) GetRiskTypeByID(ctx context.Context, id uuid.UUID) (RiskType, 
 }
 
 const listRiskTypes = `-- name: ListRiskTypes :many
-SELECT id, name, description, default_radius_meters, created_at, updated_at FROM risk_types ORDER BY created_at DESC
+SELECT id, name, description, icon_path, default_radius_meters, created_at, updated_at FROM risk_types ORDER BY created_at DESC
 `
 
 func (q *Queries) ListRiskTypes(ctx context.Context) ([]RiskType, error) {
@@ -72,6 +73,7 @@ func (q *Queries) ListRiskTypes(ctx context.Context) ([]RiskType, error) {
 			&i.ID,
 			&i.Name,
 			&i.Description,
+			&i.IconPath,
 			&i.DefaultRadiusMeters,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -109,5 +111,21 @@ func (q *Queries) UpdateRiskType(ctx context.Context, arg UpdateRiskTypeParams) 
 		arg.Description,
 		arg.DefaultRadiusMeters,
 	)
+	return err
+}
+
+const updateRiskTypeIcon = `-- name: UpdateRiskTypeIcon :exec
+UPDATE risk_types
+SET icon_path = $2, updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateRiskTypeIconParams struct {
+	ID       uuid.UUID      `json:"id"`
+	IconPath sql.NullString `json:"icon_path"`
+}
+
+func (q *Queries) UpdateRiskTypeIcon(ctx context.Context, arg UpdateRiskTypeIconParams) error {
+	_, err := q.db.ExecContext(ctx, updateRiskTypeIcon, arg.ID, arg.IconPath)
 	return err
 }

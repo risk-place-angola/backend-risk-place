@@ -38,12 +38,17 @@ func (r *RiskTopicPG) ListRiskTopics(ctx context.Context, riskTypeID *string) ([
 		if rt.Description.Valid {
 			description = &rt.Description.String
 		}
+		var iconPath *string
+		if rt.IconPath.Valid {
+			iconPath = &rt.IconPath.String
+		}
 
 		result = append(result, model.RiskTopic{
 			ID:          rt.ID,
 			RiskTypeID:  rt.RiskTypeID,
 			Name:        rt.Name,
 			Description: description,
+			IconPath:    iconPath,
 			CreatedAt:   rt.CreatedAt.Time,
 			UpdatedAt:   rt.UpdatedAt.Time,
 		})
@@ -62,15 +67,27 @@ func (r *RiskTopicPG) GetRiskTopicByID(ctx context.Context, id string) (model.Ri
 	if rt.Description.Valid {
 		description = &rt.Description.String
 	}
+	var iconPath *string
+	if rt.IconPath.Valid {
+		iconPath = &rt.IconPath.String
+	}
 
 	return model.RiskTopic{
 		ID:          rt.ID,
 		RiskTypeID:  rt.RiskTypeID,
 		Name:        rt.Name,
 		Description: description,
+		IconPath:    iconPath,
 		CreatedAt:   rt.CreatedAt.Time,
 		UpdatedAt:   rt.UpdatedAt.Time,
 	}, nil
+}
+
+func (r *RiskTopicPG) UpdateRiskTopicIcon(ctx context.Context, id string, iconPath string) error {
+	return r.q.UpdateRiskTopicIcon(ctx, sqlc.UpdateRiskTopicIconParams{
+		ID:       uuid.MustParse(id),
+		IconPath: sql.NullString{String: iconPath, Valid: true},
+	})
 }
 
 func NewRiskTopicRepoPG(db *sql.DB) repository.RiskTopicsRepository {

@@ -13,7 +13,9 @@ import (
 )
 
 type Querier interface {
+	AddAnonymousReportVote(ctx context.Context, arg AddAnonymousReportVoteParams) error
 	AddCodeToUser(ctx context.Context, arg AddCodeToUserParams) error
+	AddUserReportVote(ctx context.Context, arg AddUserReportVoteParams) error
 	AssignRoleToUser(ctx context.Context, arg AssignRoleToUserParams) error
 	AssignUserRole(ctx context.Context, arg AssignUserRoleParams) error
 	CountAlertSubscribers(ctx context.Context, alertID uuid.UUID) (int64, error)
@@ -53,13 +55,16 @@ type Querier interface {
 	DeleteRiskType(ctx context.Context, id uuid.UUID) error
 	DeleteSafetySettingsByAnonymousSessionID(ctx context.Context, arg DeleteSafetySettingsByAnonymousSessionIDParams) error
 	ExpireAlert(ctx context.Context, id uuid.UUID) error
+	ExpireOldReports(ctx context.Context, expiresAt sql.NullTime) error
+	FindDuplicateReports(ctx context.Context, arg FindDuplicateReportsParams) ([]FindDuplicateReportsRow, error)
 	// Retorna o mapeamento ativo de um device
 	GetActiveDeviceUserMapping(ctx context.Context, deviceID string) (DeviceUserMapping, error)
-	GetAlertByID(ctx context.Context, id uuid.UUID) (Alert, error)
-	GetAlertsByAnonymousSessionID(ctx context.Context, arg GetAlertsByAnonymousSessionIDParams) ([]Alert, error)
-	GetAlertsByUserID(ctx context.Context, createdBy uuid.NullUUID) ([]Alert, error)
+	GetAlertByID(ctx context.Context, id uuid.UUID) (GetAlertByIDRow, error)
+	GetAlertsByAnonymousSessionID(ctx context.Context, arg GetAlertsByAnonymousSessionIDParams) ([]GetAlertsByAnonymousSessionIDRow, error)
+	GetAlertsByUserID(ctx context.Context, createdBy uuid.NullUUID) ([]GetAlertsByUserIDRow, error)
 	// Retorna contadores de dados anônimos antes da migração
 	GetAnonymousDataCounts(ctx context.Context, anonymousSessionID uuid.UUID) (GetAnonymousDataCountsRow, error)
+	GetAnonymousVote(ctx context.Context, arg GetAnonymousVoteParams) (ReportVote, error)
 	// Retorna todos os devices vinculados a um usuário
 	GetDeviceUserMappingsByUserID(ctx context.Context, userID uuid.UUID) ([]DeviceUserMapping, error)
 	GetEmergencyContactByID(ctx context.Context, id uuid.UUID) (EmergencyContact, error)
@@ -82,7 +87,7 @@ type Querier interface {
 	GetPriorityEmergencyContactsByUserID(ctx context.Context, userID uuid.UUID) ([]EmergencyContact, error)
 	// Retorna migrações falhadas recentes para debug
 	GetRecentFailedMigrations(ctx context.Context, limit int32) ([]AnonymousUserMigration, error)
-	GetReportByID(ctx context.Context, id uuid.UUID) (Report, error)
+	GetReportByID(ctx context.Context, id uuid.UUID) (GetReportByIDRow, error)
 	GetRiskTopicByID(ctx context.Context, id uuid.UUID) (RiskTopic, error)
 	GetRiskTypeByID(ctx context.Context, id uuid.UUID) (RiskType, error)
 	GetRoleByName(ctx context.Context, name string) (Role, error)
@@ -94,7 +99,7 @@ type Querier interface {
 	// Anonymous User Queries
 	GetSafetySettingsByAnonymousSessionID(ctx context.Context, arg GetSafetySettingsByAnonymousSessionIDParams) (UserSafetySetting, error)
 	GetSafetySettingsByUserID(ctx context.Context, userID uuid.NullUUID) (UserSafetySetting, error)
-	GetSubscribedAlerts(ctx context.Context, userID uuid.NullUUID) ([]Alert, error)
+	GetSubscribedAlerts(ctx context.Context, userID uuid.NullUUID) ([]GetSubscribedAlertsRow, error)
 	GetSubscribedAlertsAnonymous(ctx context.Context, arg GetSubscribedAlertsAnonymousParams) ([]Alert, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
@@ -103,10 +108,13 @@ type Querier interface {
 	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]Role, error)
 	// Retorna configurações de um usuário autenticado
 	GetUserSafetySettings(ctx context.Context, userID uuid.UUID) (UserSafetySetting, error)
+	GetUserVote(ctx context.Context, arg GetUserVoteParams) (ReportVote, error)
 	GetUsersByRole(ctx context.Context, roleID uuid.UUID) ([]GetUsersByRoleRow, error)
+	IncrementUserReportsSubmitted(ctx context.Context, id uuid.UUID) error
+	IncrementUserReportsVerified(ctx context.Context, id uuid.UUID) error
 	IsAnonymousSubscribed(ctx context.Context, arg IsAnonymousSubscribedParams) (bool, error)
 	IsUserSubscribed(ctx context.Context, arg IsUserSubscribedParams) (bool, error)
-	ListActiveAlerts(ctx context.Context) ([]Alert, error)
+	ListActiveAlerts(ctx context.Context) ([]ListActiveAlertsRow, error)
 	ListActiveLocationSharingsByDeviceID(ctx context.Context, deviceID sql.NullString) ([]LocationSharing, error)
 	ListActiveLocationSharingsByUserID(ctx context.Context, userID uuid.NullUUID) ([]LocationSharing, error)
 	ListAllDeviceTokensExceptUser(ctx context.Context, id uuid.UUID) ([]ListAllDeviceTokensExceptUserRow, error)
@@ -114,10 +122,10 @@ type Querier interface {
 	ListDeviceTokensByUserIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]ListDeviceTokensByUserIDsRow, error)
 	ListEntities(ctx context.Context) ([]Entity, error)
 	ListNearbyUsers(ctx context.Context) ([]User, error)
-	ListReportsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]Report, error)
-	ListReportsByStatus(ctx context.Context, status interface{}) ([]Report, error)
-	ListReportsByUser(ctx context.Context, userID uuid.UUID) ([]Report, error)
-	ListReportsWithPagination(ctx context.Context, arg ListReportsWithPaginationParams) ([]Report, error)
+	ListReportsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]ListReportsByIDsRow, error)
+	ListReportsByStatus(ctx context.Context, status interface{}) ([]ListReportsByStatusRow, error)
+	ListReportsByUser(ctx context.Context, userID uuid.UUID) ([]ListReportsByUserRow, error)
+	ListReportsWithPagination(ctx context.Context, arg ListReportsWithPaginationParams) ([]ListReportsWithPaginationRow, error)
 	ListRiskTopics(ctx context.Context) ([]RiskTopic, error)
 	ListRiskTopicsByType(ctx context.Context, riskTypeID uuid.UUID) ([]RiskTopic, error)
 	ListRiskTypes(ctx context.Context) ([]RiskType, error)
@@ -149,6 +157,8 @@ type Querier interface {
 	// Migra todas as subscrições de uma sessão anônima para um usuário autenticado
 	MigrateSubscriptionsToUser(ctx context.Context, arg MigrateSubscriptionsToUserParams) (int64, error)
 	RejectReport(ctx context.Context, id uuid.UUID) error
+	RemoveAnonymousVote(ctx context.Context, arg RemoveAnonymousVoteParams) error
+	RemoveUserVote(ctx context.Context, arg RemoveUserVoteParams) error
 	ResolveAlert(ctx context.Context, id uuid.UUID) error
 	ResolveReport(ctx context.Context, id uuid.UUID) error
 	// ============================================================================
@@ -175,11 +185,15 @@ type Querier interface {
 	UpdateMigrationCounters(ctx context.Context, arg UpdateMigrationCountersParams) error
 	UpdateReport(ctx context.Context, arg UpdateReportParams) error
 	UpdateReportLocation(ctx context.Context, arg UpdateReportLocationParams) (UpdateReportLocationRow, error)
+	UpdateRiskTopicIcon(ctx context.Context, arg UpdateRiskTopicIconParams) error
 	UpdateRiskType(ctx context.Context, arg UpdateRiskTypeParams) error
+	UpdateRiskTypeIcon(ctx context.Context, arg UpdateRiskTypeIconParams) error
 	UpdateUserDeviceInfo(ctx context.Context, arg UpdateUserDeviceInfoParams) error
 	UpdateUserLocation(ctx context.Context, arg UpdateUserLocationParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateUserSavedLocations(ctx context.Context, arg UpdateUserSavedLocationsParams) error
+	UpdateUserTrustScore(ctx context.Context, arg UpdateUserTrustScoreParams) error
+	UpdateVerificationCounts(ctx context.Context, arg UpdateVerificationCountsParams) error
 	UpsertAnonymousSafetySettings(ctx context.Context, arg UpsertAnonymousSafetySettingsParams) error
 	UpsertSafetySettings(ctx context.Context, arg UpsertSafetySettingsParams) error
 	VerifyReport(ctx context.Context, arg VerifyReportParams) error

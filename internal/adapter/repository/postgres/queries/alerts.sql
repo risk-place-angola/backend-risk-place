@@ -7,23 +7,57 @@ INSERT INTO alerts (
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
 
 -- name: GetAlertByID :one
-SELECT * FROM alerts WHERE id = $1 LIMIT 1;
+SELECT 
+    a.*,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM alerts a
+LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
+WHERE a.id = $1 
+LIMIT 1;
 
 -- name: GetAlertsByUserID :many
-SELECT * FROM alerts
-WHERE created_by = $1
-ORDER BY created_at DESC;
+SELECT 
+    a.*,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM alerts a
+LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
+WHERE a.created_by = $1
+ORDER BY a.created_at DESC;
 
 -- name: GetSubscribedAlerts :many
-SELECT a.* FROM alerts a
+SELECT 
+    a.*,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM alerts a
 INNER JOIN alert_subscriptions s ON a.id = s.alert_id
+LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
 WHERE s.user_id = $1
 ORDER BY s.subscribed_at DESC;
 
 -- name: ListActiveAlerts :many
-SELECT * FROM alerts
-WHERE status = 'active' AND (expires_at IS NULL OR expires_at > NOW())
-ORDER BY created_at DESC;
+SELECT 
+    a.*,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM alerts a
+LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
+WHERE a.status = 'active' AND (a.expires_at IS NULL OR a.expires_at > NOW())
+ORDER BY a.created_at DESC;
 
 -- name: UpdateAlert :exec
 UPDATE alerts
@@ -71,9 +105,17 @@ INSERT INTO alerts (
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);
 
 -- name: GetAlertsByAnonymousSessionID :many
-SELECT * FROM alerts
-WHERE anonymous_session_id = $1 AND device_id = $2
-ORDER BY created_at DESC;
+SELECT 
+    a.*,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM alerts a
+LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
+WHERE a.anonymous_session_id = $1 AND a.device_id = $2
+ORDER BY a.created_at DESC;
 
 -- name: UpdateAlertAnonymousToUser :exec
 UPDATE alerts

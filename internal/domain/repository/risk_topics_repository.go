@@ -9,4 +9,5 @@ import (
 type RiskTopicsRepository interface {
 	ListRiskTopics(ctx context.Context, riskTypeID *string) ([]model.RiskTopic, error)
 	GetRiskTopicByID(ctx context.Context, id string) (model.RiskTopic, error)
+	UpdateRiskTopicIcon(ctx context.Context, id string, iconPath string) error
 }

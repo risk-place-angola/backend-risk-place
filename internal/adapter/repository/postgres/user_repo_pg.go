@@ -12,7 +12,8 @@ import (
 )
 
 type userRepoPG struct {
-	q sqlc.Querier
+	q  sqlc.Querier
+	db *sql.DB
 }
 
 // ListDeviceTokensByUserIDs implements repository.UserRepository.
@@ -199,8 +200,41 @@ func floatOrZero(ptr *float64) float64 {
 	return 0
 }
 
+func (u *userRepoPG) UpdateNotificationPreferences(ctx context.Context, userID uuid.UUID, pushEnabled, smsEnabled bool) error {
+	query := `
+		UPDATE users 
+		SET push_notification_enabled = $2, 
+		    sms_notification_enabled = $3,
+		    updated_at = NOW()
+		WHERE id = $1
+	`
+	_, err := u.db.ExecContext(ctx, query, userID, pushEnabled, smsEnabled)
+	return err
+}
+
+func (u *userRepoPG) GetNotificationPreferences(ctx context.Context, userID uuid.UUID) (pushEnabled, smsEnabled bool, err error) {
+	query := `
+		SELECT push_notification_enabled, sms_notification_enabled 
+		FROM users 
+		WHERE id = $1
+	`
+	err = u.db.QueryRowContext(ctx, query, userID).Scan(&pushEnabled, &smsEnabled)
+	return
+}
+
+func (u *userRepoPG) GetUserLanguageAndPhone(ctx context.Context, userID uuid.UUID) (language, phone string, err error) {
+	query := `
+		SELECT COALESCE(device_language, 'pt'), COALESCE(phone, '') 
+		FROM users 
+		WHERE id = $1
+	`
+	err = u.db.QueryRowContext(ctx, query, userID).Scan(&language, &phone)
+	return
+}
+
 func NewUserRepoPG(db *sql.DB) repository.UserRepository {
 	return &userRepoPG{
-		q: sqlc.New(db),
+		q:  sqlc.New(db),
+		db: db,
 	}
 }

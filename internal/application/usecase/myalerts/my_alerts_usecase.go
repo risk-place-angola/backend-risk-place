@@ -168,11 +168,6 @@ func (uc *MyAlertsUseCase) toResponseList(ctx context.Context, alerts []*model.A
 }
 
 func (uc *MyAlertsUseCase) toResponse(ctx context.Context, alert *model.Alert, userID uuid.UUID) (*dto.MyAlertResponse, error) {
-	riskType, err := uc.riskTypeRepo.GetRiskTypeByID(ctx, alert.RiskTypeID.String())
-	if err != nil {
-		slog.Error("Error fetching risk type", "risk_type_id", alert.RiskTypeID, "error", err)
-	}
-
 	response := &dto.MyAlertResponse{
 		ID:           alert.ID.String(),
 		Message:      alert.Message,
@@ -186,13 +181,22 @@ func (uc *MyAlertsUseCase) toResponse(ctx context.Context, alert *model.Alert, u
 		Status:       string(alert.Status),
 		Severity:     string(alert.Severity),
 		CreatedAt:    alert.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		RiskTypeName: riskType.Name,
+		RiskTypeName: alert.RiskTypeName,
+	}
+
+	// Convert icon paths to URLs
+	if alert.RiskTypeIconPath != nil && *alert.RiskTypeIconPath != "" {
+		iconURL := "/api/v1/storage/" + *alert.RiskTypeIconPath
+		response.RiskTypeIconURL = &iconURL
 	}
 
 	if alert.RiskTopicID != uuid.Nil {
-		riskTopic, err := uc.riskTopicRepo.GetRiskTopicByID(ctx, alert.RiskTopicID.String())
-		if err == nil {
-			response.RiskTopicName = riskTopic.Name
+		response.RiskTopicName = alert.RiskTopicName
+
+		// Convert topic icon path to URL
+		if alert.RiskTopicIconPath != nil && *alert.RiskTopicIconPath != "" {
+			topicIconURL := "/api/v1/storage/" + *alert.RiskTopicIconPath
+			response.RiskTopicIconURL = &topicIconURL
 		}
 	}
 

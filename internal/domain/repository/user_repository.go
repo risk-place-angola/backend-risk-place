@@ -18,4 +18,7 @@ type UserRepository interface {
 	UpdateUserDeviceInfo(ctx context.Context, userID uuid.UUID, fcmToken string, language string) error
 	ListDeviceTokensByUserIDs(ctx context.Context, userIDs []uuid.UUID) ([]string, error)
 	UpdateSavedLocations(ctx context.Context, userID uuid.UUID, homeAddress, workAddress *model.SavedLocation) error
+	UpdateNotificationPreferences(ctx context.Context, userID uuid.UUID, pushEnabled, smsEnabled bool) error
+	GetNotificationPreferences(ctx context.Context, userID uuid.UUID) (pushEnabled, smsEnabled bool, err error)
+	GetUserLanguageAndPhone(ctx context.Context, userID uuid.UUID) (language, phone string, err error)
 }

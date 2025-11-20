@@ -7,10 +7,12 @@ import (
 )
 
 type RegisterUserInput struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Phone    string `json:"phone"`
-	Password string `json:"password"`
+	Name           string `json:"name"`
+	Email          string `json:"email"`
+	Phone          string `json:"phone"`
+	Password       string `json:"password"`
+	DeviceFCMToken string `json:"device_fcm_token,omitempty"`
+	DeviceLanguage string `json:"device_language,omitempty"`
 }
 
 type RegisterUserOutput struct {
@@ -65,8 +67,10 @@ type NavigateToSavedLocationRequest struct {
 }
 
 type LoginInput struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	DeviceFCMToken string `json:"device_fcm_token,omitempty"`
+	DeviceLanguage string `json:"device_language,omitempty"`
 }
 
 type UserSignInDTO struct {

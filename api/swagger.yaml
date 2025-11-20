@@ -23,7 +23,11 @@ definitions:
         type: string
       radius:
         type: number
+      risk_topic_icon_url:
+        type: string
       risk_topic_id:
+        type: string
+      risk_type_icon_url:
         type: string
       risk_type_id:
         type: string
@@ -179,6 +183,10 @@ definitions:
     type: object
   dto.LoginInput:
     properties:
+      device_fcm_token:
+        type: string
+      device_language:
+        type: string
       email:
         type: string
       password:
@@ -212,7 +220,11 @@ definitions:
         type: integer
       resolved_at:
         type: string
+      risk_topic_icon_url:
+        type: string
       risk_topic_name:
+        type: string
+      risk_type_icon_url:
         type: string
       risk_type_name:
         type: string
@@ -239,6 +251,20 @@ definitions:
         items:
           $ref: '#/definitions/dto.ReportWithDistance'
         type: array
+    type: object
+  dto.NotificationPreferencesRequest:
+    properties:
+      push_enabled:
+        type: boolean
+      sms_enabled:
+        type: boolean
+    type: object
+  dto.NotificationPreferencesResponse:
+    properties:
+      push_enabled:
+        type: boolean
+      sms_enabled:
+        type: boolean
     type: object
   dto.PaginationMetadata:
     properties:
@@ -298,6 +324,10 @@ definitions:
     type: object
   dto.RegisterUserInput:
     properties:
+      device_fcm_token:
+        type: string
+      device_language:
+        type: string
       email:
         type: string
       name:
@@ -345,6 +375,8 @@ definitions:
         type: string
       description:
         type: string
+      expires_at:
+        type: string
       id:
         type: string
       image_url:
@@ -359,13 +391,23 @@ definitions:
         type: string
       province:
         type: string
+      rejection_count:
+        type: integer
       resolved_at:
         type: string
       reviewed_by:
         type: string
+      risk_topic_icon_url:
+        type: string
       risk_topic_id:
         type: string
+      risk_topic_name:
+        type: string
+      risk_type_icon_url:
+        type: string
       risk_type_id:
+        type: string
+      risk_type_name:
         type: string
       status:
         type: string
@@ -373,6 +415,8 @@ definitions:
         type: string
       user_id:
         type: string
+      verification_count:
+        type: integer
     type: object
   dto.ReportWithDistance:
     properties:
@@ -385,6 +429,8 @@ definitions:
       distance:
         description: Distance in meters
         type: number
+      expires_at:
+        type: string
       id:
         type: string
       image_url:
@@ -399,13 +445,23 @@ definitions:
         type: string
       province:
         type: string
+      rejection_count:
+        type: integer
       resolved_at:
         type: string
       reviewed_by:
         type: string
+      risk_topic_icon_url:
+        type: string
       risk_topic_id:
         type: string
+      risk_topic_name:
+        type: string
+      risk_type_icon_url:
+        type: string
       risk_type_id:
+        type: string
+      risk_type_name:
         type: string
       status:
         type: string
@@ -413,6 +469,8 @@ definitions:
         type: string
       user_id:
         type: string
+      verification_count:
+        type: integer
     type: object
   dto.ResolveReportRequest:
     properties:
@@ -426,6 +484,8 @@ definitions:
       created_at:
         type: string
       description:
+        type: string
+      icon_url:
         type: string
       id:
         type: string
@@ -450,6 +510,8 @@ definitions:
       default_radius:
         type: integer
       description:
+        type: string
+      icon_url:
         type: string
       id:
         type: string
@@ -608,6 +670,16 @@ definitions:
     - message
     - radius_meters
     - severity
+    type: object
+  dto.UpdateDeviceInfoRequest:
+    properties:
+      device_fcm_token:
+        type: string
+      device_language:
+        enum:
+        - pt
+        - en
+        type: string
     type: object
   dto.UpdateDeviceLocationRequest:
     properties:
@@ -799,6 +871,27 @@ definitions:
         type: string
     required:
     - moderator_id
+    type: object
+  dto.VoteReportRequest:
+    properties:
+      vote_type:
+        enum:
+        - upvote
+        - downvote
+        type: string
+    required:
+    - vote_type
+    type: object
+  dto.VoteReportResponse:
+    properties:
+      rejection_count:
+        type: integer
+      report_id:
+        type: string
+      verification_count:
+        type: integer
+      vote_type:
+        type: string
     type: object
   dto.WaypointDTO:
     properties:
@@ -1717,6 +1810,47 @@ paths:
       summary: Verify a report
       tags:
       - reports
+  /reports/{id}/vote:
+    post:
+      consumes:
+      - application/json
+      description: Upvote or downvote a report to verify its authenticity
+      parameters:
+      - description: Report ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-Id
+        type: string
+      - description: Vote data
+        in: body
+        name: vote
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VoteReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.VoteReportResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - OptionalAuth: []
+      summary: Vote on a report
+      tags:
+      - reports
   /reports/nearby:
     get:
       consumes:
@@ -2059,6 +2193,44 @@ paths:
       summary: Get all alerts the user is subscribed to
       tags:
       - my-alerts
+  /users/me/device:
+    put:
+      consumes:
+      - application/json
+      description: Update FCM token and device language for push notifications
+      parameters:
+      - description: Device information
+        in: body
+        name: device
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateDeviceInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user device information
+      tags:
+      - notifications
   /users/me/emergency-contacts:
     get:
       description: Retrieve all emergency contacts configured by the authenticated
@@ -2199,6 +2371,69 @@ paths:
       summary: Update an emergency contact
       tags:
       - emergency-contacts
+  /users/me/notifications/preferences:
+    get:
+      description: Get push and SMS notification preferences for authenticated users
+        or anonymous sessions
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.NotificationPreferencesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Get notification preferences
+      tags:
+      - notifications
+    put:
+      consumes:
+      - application/json
+      description: Update push and SMS notification preferences for authenticated
+        users or anonymous sessions
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-Id
+        type: string
+      - description: Notification preferences
+        in: body
+        name: preferences
+        required: true
+        schema:
+          $ref: '#/definitions/dto.NotificationPreferencesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Update notification preferences
+      tags:
+      - notifications
   /users/me/settings:
     get:
       description: Retrieve safety settings for the authenticated user. Creates default

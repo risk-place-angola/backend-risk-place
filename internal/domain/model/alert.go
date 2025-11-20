@@ -29,7 +29,11 @@ type Alert struct {
 	AnonymousSessionID *uuid.UUID // Set for anonymous users
 	DeviceID           *string    // Set for anonymous users
 	RiskTypeID         uuid.UUID
+	RiskTypeName       string
+	RiskTypeIconPath   *string
 	RiskTopicID        uuid.UUID
+	RiskTopicName      string
+	RiskTopicIconPath  *string
 	Message            string
 	Latitude           float64
 	Longitude          float64

@@ -100,6 +100,7 @@ func (uc *ReportUseCase) Create(ctx context.Context, dto dto.ReportCreate) (*mod
 		Latitude:  report.Latitude,
 		Longitude: report.Longitude,
 		Radius:    float64(riskType.DefaultRadiusMeters),
+		RiskType:  riskType.Name,
 	})
 
 	return report, nil

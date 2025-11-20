@@ -13,5 +13,10 @@ UPDATE risk_types
 SET name = $2, description = $3, default_radius_meters = $4, updated_at = NOW()
 WHERE id = $1;
 
+-- name: UpdateRiskTypeIcon :exec
+UPDATE risk_types
+SET icon_path = $2, updated_at = NOW()
+WHERE id = $1;
+
 -- name: DeleteRiskType :exec
 DELETE FROM risk_types WHERE id = $1;

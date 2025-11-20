@@ -6,28 +6,30 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/joho/godotenv"
 
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	AppEnv string // dev, prod
-	Port   string // :8080
+	AppEnv string
+	Port   string
 
-	JWTSecret     string // chave JWT
-	RefreshSecret string // chave JWT de refresh
-	JWTIssuer     string // emissor do JWT
-	JWTAudience   string // público do JWT
+	JWTSecret     string
+	RefreshSecret string
+	JWTIssuer     string
+	JWTAudience   string
 
-	APIRateLimit int           // máximo de req por minuto (dev)
-	Timeout      time.Duration // timeout de operações
+	APIRateLimit int
+	Timeout      time.Duration
 
 	DatabaseConfig *DatabaseConfig
 	EmailConfig    *EmailConfig
 	RedisConfig    *RedisConfig
 	FirebaseConfig *FirebaseConfig
 	TwilioConfig   *TwilioConfig
+	AWSConfig      *AWSConfig
 	FrontendURL    string
 }
 
@@ -69,6 +71,15 @@ type RedisConfig struct {
 	Port     int
 	Password string
 	DB       int
+}
+
+type AWSConfig struct {
+	Region          string
+	Bucket          string
+	AccessKeyID     string
+	SecretAccessKey string
+	Endpoint        string
+	AwsConfig       aws.Config
 }
 
 func NewDatabaseConfig() *DatabaseConfig {
@@ -125,6 +136,16 @@ func NewRedisConfig() *RedisConfig {
 	}
 }
 
+func NewAWSConfig() *AWSConfig {
+	return &AWSConfig{
+		Region:          viper.GetString("AWS_REGION"),
+		Bucket:          viper.GetString("AWS_S3_BUCKET"),
+		AccessKeyID:     viper.GetString("ACCESS_KEY_ID"),
+		SecretAccessKey: viper.GetString("SECRET_ACCESS_KEY"),
+		Endpoint:        viper.GetString("AWS_S3_ENDPOINT"),
+	}
+}
+
 func (c *Config) IsDevelopment() bool {
 	return c.AppEnv == "development" || c.AppEnv == "dev"
 }
@@ -155,6 +176,7 @@ func Load() Config {
 		RedisConfig:    NewRedisConfig(),
 		FirebaseConfig: NewFirebaseConfig(),
 		TwilioConfig:   NewTwilioConfig(),
+		AWSConfig:      NewAWSConfig(),
 
 		FrontendURL: viper.GetString("FRONTEND_URL"),
 

@@ -18,6 +18,7 @@ type ReportCreatedEvent struct {
 	Latitude  float64
 	Longitude float64
 	Radius    float64
+	RiskType  string
 }
 
 func (e ReportCreatedEvent) Name() string { return "ReportCreated" }

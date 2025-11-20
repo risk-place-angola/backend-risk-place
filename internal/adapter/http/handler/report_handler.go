@@ -8,6 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/risk-place-angola/backend-risk-place/internal/application"
+	"github.com/risk-place-angola/backend-risk-place/internal/domain/model"
+	"github.com/risk-place-angola/backend-risk-place/internal/domain/repository"
 
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/http/util"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/dto"
@@ -15,11 +17,13 @@ import (
 
 type ReportHandler struct {
 	reportUseCase *application.Application
+	reportRepo    repository.ReportRepository
 }
 
-func NewReportHandler(reportUseCase *application.Application) *ReportHandler {
+func NewReportHandler(reportUseCase *application.Application, reportRepo repository.ReportRepository) *ReportHandler {
 	return &ReportHandler{
 		reportUseCase: reportUseCase,
+		reportRepo:    reportRepo,
 	}
 }
 
@@ -327,5 +331,91 @@ func (h *ReportHandler) UpdateLocation(w http.ResponseWriter, r *http.Request) {
 	util.Response(w, map[string]string{
 		"id":      reportID,
 		"message": "Report location updated successfully",
+	}, http.StatusOK)
+}
+
+// VoteReport godoc
+// @Summary Vote on a report
+// @Description Upvote or downvote a report to verify its authenticity
+// @Tags reports
+// @Accept json
+// @Produce json
+// @Security OptionalAuth
+// @Param id path string true "Report ID"
+// @Param X-Device-Id header string false "Device ID for anonymous users"
+// @Param vote body dto.VoteReportRequest true "Vote data"
+// @Success 200 {object} dto.VoteReportResponse
+// @Failure 400 {object} util.ErrorResponse
+// @Failure 500 {object} util.ErrorResponse
+// @Router /reports/{id}/vote [post]
+func (h *ReportHandler) VoteReport(w http.ResponseWriter, r *http.Request) {
+	reportIDStr := r.PathValue("id")
+	reportID, err := uuid.Parse(reportIDStr)
+	if err != nil {
+		util.Error(w, "invalid report ID", http.StatusBadRequest)
+		return
+	}
+
+	var req dto.VoteReportRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		util.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if req.VoteType != "upvote" && req.VoteType != "downvote" {
+		util.Error(w, "vote_type must be upvote or downvote", http.StatusBadRequest)
+		return
+	}
+
+	userIDStr, hasUser := util.GetUserIDFromContext(r.Context())
+	deviceID := r.Header.Get("X-Device-Id")
+
+	var userID *uuid.UUID
+	var anonymousSessionID *uuid.UUID
+
+	if hasUser {
+		uid, err := dto.ParseUUID(userIDStr)
+		if err != nil {
+			util.Error(w, "invalid user ID", http.StatusBadRequest)
+			return
+		}
+		userID = &uid
+	} else if deviceID != "" {
+		sessionID, err := uuid.Parse(deviceID)
+		if err != nil {
+			util.Error(w, "invalid device ID", http.StatusBadRequest)
+			return
+		}
+		anonymousSessionID = &sessionID
+	} else {
+		util.Error(w, "authentication required", http.StatusUnauthorized)
+		return
+	}
+
+	voteType := model.VoteTypeUpvote
+	if req.VoteType == "downvote" {
+		voteType = model.VoteTypeDownvote
+	}
+
+	if err := h.reportUseCase.ReportVerificationService.VoteReport(
+		r.Context(), reportID, userID, anonymousSessionID, voteType,
+	); err != nil {
+		slog.Error("failed to vote on report", "error", err)
+		util.Error(w, "failed to vote on report", http.StatusInternalServerError)
+		return
+	}
+
+	report, err := h.reportRepo.GetByID(r.Context(), reportID)
+	if err != nil {
+		slog.Error("failed to get report after vote", "error", err)
+		util.Error(w, "failed to get updated report", http.StatusInternalServerError)
+		return
+	}
+
+	util.Response(w, dto.VoteReportResponse{
+		ReportID:          reportIDStr,
+		VoteType:          req.VoteType,
+		VerificationCount: report.VerificationCount,
+		RejectionCount:    report.RejectionCount,
 	}, http.StatusOK)
 }

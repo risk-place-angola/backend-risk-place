@@ -41,10 +41,15 @@ func (r *RiskTypePG) ListRiskTypes(ctx context.Context) ([]model.RiskType, error
 
 	result := make([]model.RiskType, 0, len(riskTypes))
 	for _, rt := range riskTypes {
+		var iconPath *string
+		if rt.IconPath.Valid {
+			iconPath = &rt.IconPath.String
+		}
 		result = append(result, model.RiskType{
 			ID:                  rt.ID,
 			Name:                rt.Name,
 			Description:         rt.Description.String,
+			IconPath:            iconPath,
 			DefaultRadiusMeters: int(rt.DefaultRadiusMeters.Int32),
 			CreatedAt:           rt.CreatedAt.Time,
 			UpdatedAt:           rt.UpdatedAt.Time,
@@ -60,10 +65,16 @@ func (r *RiskTypePG) GetRiskTypeByID(ctx context.Context, id string) (model.Risk
 		return model.RiskType{}, err
 	}
 
+	var iconPath *string
+	if rt.IconPath.Valid {
+		iconPath = &rt.IconPath.String
+	}
+
 	return model.RiskType{
 		ID:                  rt.ID,
 		Name:                rt.Name,
 		Description:         rt.Description.String,
+		IconPath:            iconPath,
 		DefaultRadiusMeters: int(rt.DefaultRadiusMeters.Int32),
 		CreatedAt:           rt.CreatedAt.Time,
 		UpdatedAt:           rt.UpdatedAt.Time,
@@ -81,6 +92,13 @@ func (r *RiskTypePG) UpdateRiskType(ctx context.Context, id string, name string,
 		Name:                name,
 		Description:         sql.NullString{String: description, Valid: description != ""},
 		DefaultRadiusMeters: sql.NullInt32{Int32: radiusInt32, Valid: true},
+	})
+}
+
+func (r *RiskTypePG) UpdateRiskTypeIcon(ctx context.Context, id string, iconPath string) error {
+	return r.q.UpdateRiskTypeIcon(ctx, sqlc.UpdateRiskTypeIconParams{
+		ID:       uuid.MustParse(id),
+		IconPath: sql.NullString{String: iconPath, Valid: true},
 	})
 }
 

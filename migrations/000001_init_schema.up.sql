@@ -69,6 +69,8 @@ CREATE TABLE users (
     address TEXT,
     zip_code TEXT,
     country TEXT,
+    push_notification_enabled BOOLEAN DEFAULT true,
+    sms_notification_enabled BOOLEAN DEFAULT false,
     last_login TIMESTAMP,
     home_address_name VARCHAR(255),
     home_address_address TEXT,
@@ -82,6 +84,9 @@ CREATE TABLE users (
     locked_until TIMESTAMP,
     device_fcm_token TEXT,
     device_language TEXT,
+    trust_score INT DEFAULT 50,
+    reports_submitted INT DEFAULT 0,
+    reports_verified INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     deleted_at TIMESTAMP
@@ -129,6 +134,8 @@ CREATE TABLE anonymous_sessions (
     device_model TEXT,
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,
+    push_notification_enabled BOOLEAN DEFAULT true,
+    sms_notification_enabled BOOLEAN DEFAULT false,
     alert_radius_meters INT DEFAULT 1000,
     device_language TEXT DEFAULT 'pt',
     last_seen TIMESTAMP DEFAULT NOW(),
@@ -176,6 +183,7 @@ CREATE TABLE risk_types (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
     description TEXT,
+    icon_path TEXT,
     default_radius_meters INT DEFAULT 500,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
@@ -186,6 +194,7 @@ CREATE TABLE risk_topics (
     risk_type_id UUID NOT NULL REFERENCES risk_types(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     description TEXT,
+    icon_path TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     UNIQUE (risk_type_id, name)
@@ -205,8 +214,11 @@ CREATE TABLE reports (
     address TEXT,
     image_url TEXT,
     status report_status DEFAULT 'pending',
-    reviewed_by UUID REFERENCES users(id),  -- ERFCE or ERCE user who reviewed
+    reviewed_by UUID REFERENCES users(id),
     resolved_at TIMESTAMP,
+    verification_count INT DEFAULT 0,
+    rejection_count INT DEFAULT 0,
+    expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP
 );
@@ -253,6 +265,21 @@ CREATE TABLE alert_subscriptions (
 CREATE UNIQUE INDEX idx_alert_subscriptions_unique_user ON alert_subscriptions(alert_id, user_id) WHERE user_id IS NOT NULL;
 CREATE UNIQUE INDEX idx_alert_subscriptions_unique_device ON alert_subscriptions(alert_id, device_id) WHERE device_id IS NOT NULL;
 
+CREATE TABLE report_votes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    report_id UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    anonymous_session_id UUID REFERENCES anonymous_sessions(id) ON DELETE CASCADE,
+    vote_type VARCHAR(10) NOT NULL CHECK (vote_type IN ('upvote', 'downvote')),
+    created_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT vote_user_or_anonymous CHECK (
+        (user_id IS NOT NULL AND anonymous_session_id IS NULL) OR
+        (user_id IS NULL AND anonymous_session_id IS NOT NULL)
+    ),
+    UNIQUE(report_id, user_id),
+    UNIQUE(report_id, anonymous_session_id)
+);
+
 CREATE TABLE notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     type notification_type NOT NULL,
@@ -293,6 +320,7 @@ EXECUTE PROCEDURE trigger_set_timestamp();
 
 CREATE INDEX IF NOT EXISTS idx_users_email_trgm ON users USING gin (email gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_users_geo ON users (latitude, longitude);
+CREATE INDEX IF NOT EXISTS idx_users_trust_score ON users(trust_score);
 
 -- Roles and Permissions Table and Indexes
 CREATE INDEX IF NOT EXISTS idx_roles_priority ON roles (priority DESC);
@@ -307,10 +335,16 @@ EXECUTE PROCEDURE trigger_set_timestamp();
 
 CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
 CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reports_status_created ON reports(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_reports_expires_at ON reports(expires_at);
 
 CREATE INDEX IF NOT EXISTS idx_reports_geo ON reports USING GIST (geography(ST_MakePoint(longitude, latitude)));
 
 CREATE INDEX IF NOT EXISTS idx_reports_user ON reports(user_id);
+
+-- Report Votes Table and Indexes
+CREATE INDEX idx_report_votes_report ON report_votes(report_id);
+CREATE INDEX idx_report_votes_user ON report_votes(user_id);
 
 -- Anonymous Sessions Table and Indexes
 CREATE INDEX idx_anonymous_sessions_location ON anonymous_sessions(latitude, longitude);
@@ -409,6 +443,11 @@ CREATE INDEX idx_user_safety_settings_user_id ON user_safety_settings(user_id);
 CREATE INDEX idx_safety_settings_anonymous_session_id ON user_safety_settings(anonymous_session_id) WHERE anonymous_session_id IS NOT NULL;
 CREATE INDEX idx_safety_settings_device_id ON user_safety_settings(device_id) WHERE device_id IS NOT NULL;
 CREATE INDEX idx_user_safety_settings_updated_at ON user_safety_settings(updated_at DESC);
+
+
+CREATE INDEX IF NOT EXISTS idx_users_notification_prefs ON users(push_notification_enabled, sms_notification_enabled) WHERE push_notification_enabled = true OR sms_notification_enabled = true;
+CREATE INDEX IF NOT EXISTS idx_anonymous_sessions_notification_prefs ON anonymous_sessions(push_notification_enabled, sms_notification_enabled) WHERE push_notification_enabled = true OR sms_notification_enabled = true;
+
 
 -- ============================================================================
 -- ANONYMOUS USER TO AUTHENTICATED USER MIGRATION SUPPORT

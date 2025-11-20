@@ -1446,6 +1446,70 @@ const docTemplate = `{
                 }
             }
         },
+        "/reports/{id}/vote": {
+            "post": {
+                "security": [
+                    {
+                        "OptionalAuth": []
+                    }
+                ],
+                "description": "Upvote or downvote a report to verify its authenticity",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Vote on a report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Report ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-Id",
+                        "in": "header"
+                    },
+                    {
+                        "description": "Vote data",
+                        "name": "vote",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.VoteReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.VoteReportResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/risks/topics": {
             "get": {
                 "description": "Retrieve risk topics, optionally filtered by risk_type_id query parameter.",
@@ -1902,6 +1966,66 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/me/device": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update FCM token and device language for push notifications",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Update user device information",
+                "parameters": [
+                    {
+                        "description": "Device information",
+                        "name": "device",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateDeviceInfoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/me/emergency-contacts": {
             "get": {
                 "security": [
@@ -2107,6 +2231,99 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me/notifications/preferences": {
+            "get": {
+                "description": "Get push and SMS notification preferences for authenticated users or anonymous sessions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Get notification preferences",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NotificationPreferencesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update push and SMS notification preferences for authenticated users or anonymous sessions",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Update notification preferences",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-Id",
+                        "in": "header"
+                    },
+                    {
+                        "description": "Notification preferences",
+                        "name": "preferences",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.NotificationPreferencesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -2351,7 +2568,13 @@ const docTemplate = `{
                 "radius": {
                     "type": "number"
                 },
+                "risk_topic_icon_url": {
+                    "type": "string"
+                },
                 "risk_topic_id": {
+                    "type": "string"
+                },
+                "risk_type_icon_url": {
                     "type": "string"
                 },
                 "risk_type_id": {
@@ -2585,6 +2808,12 @@ const docTemplate = `{
         "dto.LoginInput": {
             "type": "object",
             "properties": {
+                "device_fcm_token": {
+                    "type": "string"
+                },
+                "device_language": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -2635,7 +2864,13 @@ const docTemplate = `{
                 "resolved_at": {
                     "type": "string"
                 },
+                "risk_topic_icon_url": {
+                    "type": "string"
+                },
                 "risk_topic_name": {
+                    "type": "string"
+                },
+                "risk_type_icon_url": {
                     "type": "string"
                 },
                 "risk_type_name": {
@@ -2675,6 +2910,28 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/dto.ReportWithDistance"
                     }
+                }
+            }
+        },
+        "dto.NotificationPreferencesRequest": {
+            "type": "object",
+            "properties": {
+                "push_enabled": {
+                    "type": "boolean"
+                },
+                "sms_enabled": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.NotificationPreferencesResponse": {
+            "type": "object",
+            "properties": {
+                "push_enabled": {
+                    "type": "boolean"
+                },
+                "sms_enabled": {
+                    "type": "boolean"
                 }
             }
         },
@@ -2765,6 +3022,12 @@ const docTemplate = `{
         "dto.RegisterUserInput": {
             "type": "object",
             "properties": {
+                "device_fcm_token": {
+                    "type": "string"
+                },
+                "device_language": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -2837,6 +3100,9 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "expires_at": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -2858,16 +3124,31 @@ const docTemplate = `{
                 "province": {
                     "type": "string"
                 },
+                "rejection_count": {
+                    "type": "integer"
+                },
                 "resolved_at": {
                     "type": "string"
                 },
                 "reviewed_by": {
                     "type": "string"
                 },
+                "risk_topic_icon_url": {
+                    "type": "string"
+                },
                 "risk_topic_id": {
                     "type": "string"
                 },
+                "risk_topic_name": {
+                    "type": "string"
+                },
+                "risk_type_icon_url": {
+                    "type": "string"
+                },
                 "risk_type_id": {
+                    "type": "string"
+                },
+                "risk_type_name": {
                     "type": "string"
                 },
                 "status": {
@@ -2878,6 +3159,9 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "string"
+                },
+                "verification_count": {
+                    "type": "integer"
                 }
             }
         },
@@ -2897,6 +3181,9 @@ const docTemplate = `{
                     "description": "Distance in meters",
                     "type": "number"
                 },
+                "expires_at": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -2918,16 +3205,31 @@ const docTemplate = `{
                 "province": {
                     "type": "string"
                 },
+                "rejection_count": {
+                    "type": "integer"
+                },
                 "resolved_at": {
                     "type": "string"
                 },
                 "reviewed_by": {
                     "type": "string"
                 },
+                "risk_topic_icon_url": {
+                    "type": "string"
+                },
                 "risk_topic_id": {
                     "type": "string"
                 },
+                "risk_topic_name": {
+                    "type": "string"
+                },
+                "risk_type_icon_url": {
+                    "type": "string"
+                },
                 "risk_type_id": {
+                    "type": "string"
+                },
+                "risk_type_name": {
                     "type": "string"
                 },
                 "status": {
@@ -2938,6 +3240,9 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "string"
+                },
+                "verification_count": {
+                    "type": "integer"
                 }
             }
         },
@@ -2959,6 +3264,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "description": {
+                    "type": "string"
+                },
+                "icon_url": {
                     "type": "string"
                 },
                 "id": {
@@ -2996,6 +3304,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "description": {
+                    "type": "string"
+                },
+                "icon_url": {
                     "type": "string"
                 },
                 "id": {
@@ -3219,6 +3530,21 @@ const docTemplate = `{
                         "medium",
                         "high",
                         "critical"
+                    ]
+                }
+            }
+        },
+        "dto.UpdateDeviceInfoRequest": {
+            "type": "object",
+            "properties": {
+                "device_fcm_token": {
+                    "type": "string"
+                },
+                "device_language": {
+                    "type": "string",
+                    "enum": [
+                        "pt",
+                        "en"
                     ]
                 }
             }
@@ -3501,6 +3827,38 @@ const docTemplate = `{
             ],
             "properties": {
                 "moderator_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.VoteReportRequest": {
+            "type": "object",
+            "required": [
+                "vote_type"
+            ],
+            "properties": {
+                "vote_type": {
+                    "type": "string",
+                    "enum": [
+                        "upvote",
+                        "downvote"
+                    ]
+                }
+            }
+        },
+        "dto.VoteReportResponse": {
+            "type": "object",
+            "properties": {
+                "rejection_count": {
+                    "type": "integer"
+                },
+                "report_id": {
+                    "type": "string"
+                },
+                "verification_count": {
+                    "type": "integer"
+                },
+                "vote_type": {
                     "type": "string"
                 }
             }

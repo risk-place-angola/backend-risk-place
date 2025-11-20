@@ -15,7 +15,7 @@ import (
 const createRiskTopic = `-- name: CreateRiskTopic :one
 INSERT INTO risk_topics (risk_type_id, name, description)
 VALUES ($1, $2, $3)
-RETURNING id, risk_type_id, name, description, created_at, updated_at
+RETURNING id, risk_type_id, name, description, icon_path, created_at, updated_at
 `
 
 type CreateRiskTopicParams struct {
@@ -32,6 +32,7 @@ func (q *Queries) CreateRiskTopic(ctx context.Context, arg CreateRiskTopicParams
 		&i.RiskTypeID,
 		&i.Name,
 		&i.Description,
+		&i.IconPath,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -48,7 +49,7 @@ func (q *Queries) DeleteRiskTopic(ctx context.Context, id uuid.UUID) error {
 }
 
 const getRiskTopicByID = `-- name: GetRiskTopicByID :one
-SELECT id, risk_type_id, name, description, created_at, updated_at FROM risk_topics WHERE id = $1
+SELECT id, risk_type_id, name, description, icon_path, created_at, updated_at FROM risk_topics WHERE id = $1
 `
 
 func (q *Queries) GetRiskTopicByID(ctx context.Context, id uuid.UUID) (RiskTopic, error) {
@@ -59,6 +60,7 @@ func (q *Queries) GetRiskTopicByID(ctx context.Context, id uuid.UUID) (RiskTopic
 		&i.RiskTypeID,
 		&i.Name,
 		&i.Description,
+		&i.IconPath,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -66,7 +68,7 @@ func (q *Queries) GetRiskTopicByID(ctx context.Context, id uuid.UUID) (RiskTopic
 }
 
 const listRiskTopics = `-- name: ListRiskTopics :many
-SELECT id, risk_type_id, name, description, created_at, updated_at FROM risk_topics ORDER BY created_at DESC
+SELECT id, risk_type_id, name, description, icon_path, created_at, updated_at FROM risk_topics ORDER BY created_at DESC
 `
 
 func (q *Queries) ListRiskTopics(ctx context.Context) ([]RiskTopic, error) {
@@ -83,6 +85,7 @@ func (q *Queries) ListRiskTopics(ctx context.Context) ([]RiskTopic, error) {
 			&i.RiskTypeID,
 			&i.Name,
 			&i.Description,
+			&i.IconPath,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -100,7 +103,7 @@ func (q *Queries) ListRiskTopics(ctx context.Context) ([]RiskTopic, error) {
 }
 
 const listRiskTopicsByType = `-- name: ListRiskTopicsByType :many
-SELECT id, risk_type_id, name, description, created_at, updated_at FROM risk_topics WHERE risk_type_id = $1 ORDER BY created_at DESC
+SELECT id, risk_type_id, name, description, icon_path, created_at, updated_at FROM risk_topics WHERE risk_type_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListRiskTopicsByType(ctx context.Context, riskTypeID uuid.UUID) ([]RiskTopic, error) {
@@ -117,6 +120,7 @@ func (q *Queries) ListRiskTopicsByType(ctx context.Context, riskTypeID uuid.UUID
 			&i.RiskTypeID,
 			&i.Name,
 			&i.Description,
+			&i.IconPath,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -131,4 +135,20 @@ func (q *Queries) ListRiskTopicsByType(ctx context.Context, riskTypeID uuid.UUID
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateRiskTopicIcon = `-- name: UpdateRiskTopicIcon :exec
+UPDATE risk_topics
+SET icon_path = $2, updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateRiskTopicIconParams struct {
+	ID       uuid.UUID      `json:"id"`
+	IconPath sql.NullString `json:"icon_path"`
+}
+
+func (q *Queries) UpdateRiskTopicIcon(ctx context.Context, arg UpdateRiskTopicIconParams) error {
+	_, err := q.db.ExecContext(ctx, updateRiskTopicIcon, arg.ID, arg.IconPath)
+	return err
 }

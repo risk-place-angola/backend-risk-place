@@ -60,12 +60,13 @@ func (uc *AlertUseCase) TriggerAlert(ctx context.Context, alert dto.Alert) error
 		return err
 	}
 
+	riskType, err := uc.riskTypesRepo.GetRiskTypeByID(ctx, alert.RiskTypeID)
+	if err != nil {
+		slog.Error("failed to get risk type for alert", "error", err)
+		return err
+	}
+
 	if alert.Radius <= 0 {
-		riskType, err := uc.riskTypesRepo.GetRiskTypeByID(ctx, alert.RiskTypeID)
-		if err != nil {
-			slog.Error("failed to get risk type for alert", "error", err)
-			return err
-		}
 		alrt.RadiusMeters = riskType.DefaultRadiusMeters
 	}
 
@@ -98,6 +99,7 @@ func (uc *AlertUseCase) TriggerAlert(ctx context.Context, alert dto.Alert) error
 		Latitude:  alert.Latitude,
 		Longitude: alert.Longitude,
 		Radius:    alert.Radius,
+		RiskType:  riskType.Name,
 	})
 
 	return nil

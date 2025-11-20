@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
+	"github.com/risk-place-angola/backend-risk-place/internal/adapter/service"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/websocket"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/port"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/event"
@@ -18,6 +19,7 @@ func RegisterEventListeners(
 	anonymousSessionRepo domainrepository.AnonymousSessionRepository,
 	notifierPush port.NotifierPushService,
 	notifierSMS port.NotifierSMSService,
+	translationService *service.TranslationService,
 ) {
 	registerBroadcastHandler[event.AlertCreatedEvent](
 		dispatcher,
@@ -25,8 +27,9 @@ func RegisterEventListeners(
 		userRepo,
 		anonymousSessionRepo,
 		notifierPush,
+		notifierSMS,
+		translationService,
 		"AlertCreated",
-		"🚨 Alerta de Risco",
 		func(ctx context.Context, h *websocket.Hub, ev event.AlertCreatedEvent) {
 			h.BroadcastAlert(ctx, ev.AlertID.String(), ev.Message, ev.Latitude, ev.Longitude, ev.Radius)
 		},
@@ -39,8 +42,9 @@ func RegisterEventListeners(
 		userRepo,
 		anonymousSessionRepo,
 		notifierPush,
+		notifierSMS,
+		translationService,
 		"ReportCreated",
-		"📍 Novo Relato de Risco",
 		func(ctx context.Context, h *websocket.Hub, ev event.ReportCreatedEvent) {
 			h.BroadcastReport(ctx, ev.ReportID.String(), ev.Message, ev.Latitude, ev.Longitude, ev.Radius)
 		},
@@ -82,7 +86,9 @@ func registerBroadcastHandler[T any](
 	userRepo domainrepository.UserRepository,
 	anonymousSessionRepo domainrepository.AnonymousSessionRepository,
 	notifierPush port.NotifierPushService,
-	eventName, title string,
+	notifierSMS port.NotifierSMSService,
+	translationService *service.TranslationService,
+	eventName string,
 	broadcast func(context.Context, *websocket.Hub, T),
 	idKey string,
 ) {
@@ -98,6 +104,7 @@ func registerBroadcastHandler[T any](
 
 		var userID []uuid.UUID
 		var lat, lon, radius float64
+		var riskType string
 
 		switch v := any(ev).(type) {
 		case event.AlertCreatedEvent:
@@ -105,26 +112,25 @@ func registerBroadcastHandler[T any](
 			lat = v.Latitude
 			lon = v.Longitude
 			radius = v.Radius
+			riskType = v.RiskType
 		case event.ReportCreatedEvent:
 			userID = v.UserID
 			lat = v.Latitude
 			lon = v.Longitude
 			radius = v.Radius
+			riskType = v.RiskType
 		}
 
-		// Get FCM tokens from authenticated users
 		deviceTokens, err := userRepo.ListDeviceTokensByUserIDs(ctx, userID)
 		if err != nil {
 			slog.Error("failed to list device tokens", "event_name", eventName, "error", err)
 		}
 
-		// Get FCM tokens from anonymous sessions in radius
 		anonymousTokens, err := anonymousSessionRepo.GetFCMTokensInRadius(ctx, lat, lon, radius)
 		if err != nil {
 			slog.Error("failed to list anonymous tokens", "event_name", eventName, "error", err)
 		}
 
-		// Combine all tokens
 		allTokens := make([]string, 0, len(deviceTokens)+len(anonymousTokens))
 		allTokens = append(allTokens, deviceTokens...)
 		allTokens = append(allTokens, anonymousTokens...)
@@ -144,7 +150,14 @@ func registerBroadcastHandler[T any](
 				slog.Int("anonymous_sessions", len(anonymousTokens)),
 				slog.Int("total", len(allTokens)))
 
-			err = notifierPush.NotifyPushMulti(ctx, allTokens, title, getMessage(ev), map[string]string{
+			eventKey := "alert_created"
+			if eventName == "ReportCreated" {
+				eventKey = "report_created"
+			}
+
+			msg := translationService.GetMessage(eventKey, service.LanguagePortuguese, riskType)
+
+			err = notifierPush.NotifyPushMulti(ctx, allTokens, msg.Title, msg.Body, map[string]string{
 				idKey: id,
 			})
 			if err != nil {

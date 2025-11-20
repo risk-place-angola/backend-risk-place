@@ -60,6 +60,8 @@ func (uc *UserUseCase) Signup(ctx context.Context, input dto.RegisterUserInput, 
 	}
 
 	user.Password = hashed
+	user.DeviceToken = input.DeviceFCMToken
+	user.DeviceLanguage = input.DeviceLanguage
 
 	err = uc.userRepo.Save(ctx, user)
 	if err != nil {
@@ -101,7 +103,7 @@ func (uc *UserUseCase) Signup(ctx context.Context, input dto.RegisterUserInput, 
 	return &dto.RegisterUserOutput{ID: user.ID}, nil
 }
 
-func (uc *UserUseCase) Login(ctx context.Context, email, rawPassword string, deviceID string) (*dto.UserSignInDTO, error) {
+func (uc *UserUseCase) Login(ctx context.Context, email, rawPassword, deviceID, fcmToken, deviceLanguage string) (*dto.UserSignInDTO, error) {
 	u, err := uc.userRepo.FindByEmail(ctx, email)
 	if err != nil || u == nil {
 		slog.Error("User not found", "email", email, "error", err)
@@ -118,6 +120,12 @@ func (uc *UserUseCase) Login(ctx context.Context, email, rawPassword string, dev
 	if !uc.hasher.Compare(u.Password, rawPassword) {
 		slog.Error("Password mismatch for user", "email", email)
 		return nil, domainErrors.ErrInvalidCredentials
+	}
+
+	if fcmToken != "" || deviceLanguage != "" {
+		if err := uc.userRepo.UpdateUserDeviceInfo(ctx, u.ID, fcmToken, deviceLanguage); err != nil {
+			slog.Error("Failed to update device info", "user_id", u.ID, "error", err)
+		}
 	}
 
 	roles, err := uc.roleRepo.GetUserRoles(ctx, u.ID)
@@ -534,4 +542,29 @@ func (uc *UserUseCase) UpdateUserProfile(ctx context.Context, userID uuid.UUID, 
 	}
 
 	return nil
+}
+
+func (uc *UserUseCase) UpdateDeviceInfo(ctx context.Context, userID uuid.UUID, fcmToken, deviceLanguage string) error {
+	if err := uc.userRepo.UpdateUserDeviceInfo(ctx, userID, fcmToken, deviceLanguage); err != nil {
+		slog.Error("Failed to update device info", "user_id", userID, "error", err)
+		return err
+	}
+	return nil
+}
+
+func (uc *UserUseCase) UpdateNotificationPreferences(ctx context.Context, userID uuid.UUID, deviceID string, pushEnabled, smsEnabled bool) error {
+	if userID != uuid.Nil {
+		if err := uc.userRepo.UpdateNotificationPreferences(ctx, userID, pushEnabled, smsEnabled); err != nil {
+			slog.Error("Failed to update notification preferences for user", "user_id", userID, "error", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (uc *UserUseCase) GetNotificationPreferences(ctx context.Context, userID uuid.UUID, deviceID string) (pushEnabled, smsEnabled bool, err error) {
+	if userID != uuid.Nil {
+		return uc.userRepo.GetNotificationPreferences(ctx, userID)
+	}
+	return false, false, fmt.Errorf("user ID or device ID required")
 }

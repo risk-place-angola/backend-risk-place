@@ -8,23 +8,30 @@ import (
 )
 
 type ReportDTO struct {
-	ID           uuid.UUID `json:"id"`
-	UserID       uuid.UUID `json:"user_id"`
-	RiskTypeID   uuid.UUID `json:"risk_type_id"`
-	RiskTopicID  uuid.UUID `json:"risk_topic_id,omitempty"`
-	Description  string    `json:"description,omitempty"`
-	Latitude     float64   `json:"latitude"`
-	Longitude    float64   `json:"longitude"`
-	Province     string    `json:"province,omitempty"`
-	Municipality string    `json:"municipality,omitempty"`
-	Neighborhood string    `json:"neighborhood,omitempty"`
-	Address      string    `json:"address,omitempty"`
-	ImageURL     string    `json:"image_url,omitempty"`
-	Status       string    `json:"status"`
-	ReviewedBy   uuid.UUID `json:"reviewed_by,omitempty"`
-	ResolvedAt   time.Time `json:"resolved_at,omitempty"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID                uuid.UUID  `json:"id"`
+	UserID            uuid.UUID  `json:"user_id"`
+	RiskTypeID        uuid.UUID  `json:"risk_type_id"`
+	RiskTypeName      string     `json:"risk_type_name,omitempty"`
+	RiskTypeIconURL   *string    `json:"risk_type_icon_url,omitempty"`
+	RiskTopicID       uuid.UUID  `json:"risk_topic_id,omitempty"`
+	RiskTopicName     string     `json:"risk_topic_name,omitempty"`
+	RiskTopicIconURL  *string    `json:"risk_topic_icon_url,omitempty"`
+	Description       string     `json:"description,omitempty"`
+	Latitude          float64    `json:"latitude"`
+	Longitude         float64    `json:"longitude"`
+	Province          string     `json:"province,omitempty"`
+	Municipality      string     `json:"municipality,omitempty"`
+	Neighborhood      string     `json:"neighborhood,omitempty"`
+	Address           string     `json:"address,omitempty"`
+	ImageURL          string     `json:"image_url,omitempty"`
+	Status            string     `json:"status"`
+	ReviewedBy        uuid.UUID  `json:"reviewed_by,omitempty"`
+	ResolvedAt        time.Time  `json:"resolved_at,omitempty"`
+	VerificationCount int        `json:"verification_count"`
+	RejectionCount    int        `json:"rejection_count"`
+	ExpiresAt         *time.Time `json:"expires_at,omitempty"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
 }
 
 type ReportCreate struct {
@@ -129,25 +136,56 @@ type NearbyReportsResponse struct {
 
 func ReportToDTO(r *model.Report) ReportDTO {
 	status := string(r.Status)
-	return ReportDTO{
-		ID:           r.ID,
-		UserID:       r.UserID,
-		RiskTypeID:   r.RiskTypeID,
-		RiskTopicID:  r.RiskTopicID,
-		Description:  r.Description,
-		Latitude:     r.Latitude,
-		Longitude:    r.Longitude,
-		Province:     r.Province,
-		Municipality: r.Municipality,
-		Neighborhood: r.Neighborhood,
-		Address:      r.Address,
-		ImageURL:     r.ImageURL,
-		Status:       status,
-		ReviewedBy:   r.ReviewedBy,
-		ResolvedAt:   r.ResolvedAt,
-		CreatedAt:    r.CreatedAt,
-		UpdatedAt:    r.UpdatedAt,
+
+	var riskTypeIconURL *string
+	if r.RiskTypeIconPath != nil && *r.RiskTypeIconPath != "" {
+		url := "/api/v1/storage/" + *r.RiskTypeIconPath
+		riskTypeIconURL = &url
 	}
+
+	var riskTopicIconURL *string
+	if r.RiskTopicIconPath != nil && *r.RiskTopicIconPath != "" {
+		url := "/api/v1/storage/" + *r.RiskTopicIconPath
+		riskTopicIconURL = &url
+	}
+
+	return ReportDTO{
+		ID:                r.ID,
+		UserID:            r.UserID,
+		RiskTypeID:        r.RiskTypeID,
+		RiskTypeName:      r.RiskTypeName,
+		RiskTypeIconURL:   riskTypeIconURL,
+		RiskTopicID:       r.RiskTopicID,
+		RiskTopicName:     r.RiskTopicName,
+		RiskTopicIconURL:  riskTopicIconURL,
+		Description:       r.Description,
+		Latitude:          r.Latitude,
+		Longitude:         r.Longitude,
+		Province:          r.Province,
+		Municipality:      r.Municipality,
+		Neighborhood:      r.Neighborhood,
+		Address:           r.Address,
+		ImageURL:          r.ImageURL,
+		Status:            status,
+		ReviewedBy:        r.ReviewedBy,
+		ResolvedAt:        r.ResolvedAt,
+		VerificationCount: r.VerificationCount,
+		RejectionCount:    r.RejectionCount,
+		ExpiresAt:         r.ExpiresAt,
+		CreatedAt:         r.CreatedAt,
+		UpdatedAt:         r.UpdatedAt,
+	}
+}
+
+type VoteReportRequest struct {
+	VoteType string `json:"vote_type" validate:"required,oneof=upvote downvote"`
+}
+
+type VoteReportResponse struct {
+	ReportID          string `json:"report_id"`
+	VoteType          string `json:"vote_type"`
+	VerificationCount int    `json:"verification_count"`
+	RejectionCount    int    `json:"rejection_count"`
 }
 
 func ReportToDTOWithDistance(r *model.Report, distance float64) ReportWithDistance {

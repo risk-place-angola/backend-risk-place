@@ -34,6 +34,9 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 
 	g.ProtectedJWT.HandleFunc("GET /api/v1/users/me", container.UserHandler.Me)
 	g.ProtectedJWT.HandleFunc("PUT /api/v1/users/profile", container.UserHandler.UpdateProfile)
+	g.ProtectedJWT.HandleFunc("PUT /api/v1/users/me/device", container.NotificationHandler.UpdateDeviceInfo)
+	g.OptionalAuth.HandleFunc("PUT /api/v1/users/me/notifications/preferences", container.NotificationHandler.UpdateNotificationPreferences)
+	g.OptionalAuth.HandleFunc("GET /api/v1/users/me/notifications/preferences", container.NotificationHandler.GetNotificationPreferences)
 
 	g.ProtectedJWT.HandleFunc("GET /api/v1/users/me/emergency-contacts", container.EmergencyContactHandler.GetEmergencyContacts)
 	g.ProtectedJWT.HandleFunc("POST /api/v1/users/me/emergency-contacts", container.EmergencyContactHandler.CreateEmergencyContact)
@@ -66,8 +69,13 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	g.ProtectedJWT.HandleFunc("POST /api/v1/reports", container.ReportHandler.Create)
 	g.OptionalAuth.HandleFunc("GET /api/v1/reports/nearby", container.ReportHandler.ListNearby)
 	g.OptionalAuth.HandleFunc("PUT /api/v1/reports/{id}/location", container.ReportHandler.UpdateLocation)
+	g.OptionalAuth.HandleFunc("POST /api/v1/reports/{id}/vote", container.ReportHandler.VoteReport)
 	g.ProtectedJWT.HandleFunc("POST /api/v1/reports/{id}/verify", container.ReportHandler.Verify)
 	g.ProtectedJWT.HandleFunc("POST /api/v1/reports/{id}/resolve", container.ReportHandler.Resolve)
+
+	g.ProtectedJWT.HandleFunc("POST /api/v1/upload/risk-type-icon", container.StorageHandler.UploadRiskTypeIcon)
+	g.ProtectedJWT.HandleFunc("POST /api/v1/upload/risk-topic-icon", container.StorageHandler.UploadRiskTopicIcon)
+	g.Public.HandleFunc("GET /api/v1/storage/{path...}", container.StorageHandler.ServeFile)
 
 	mux.HandleFunc("/ws/alerts", container.WSHandler.HandleWebSocket)
 	mux.HandleFunc("/docs/", httpSwagger.WrapHandler)

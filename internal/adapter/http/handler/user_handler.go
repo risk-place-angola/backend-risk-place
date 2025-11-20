@@ -86,7 +86,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		deviceID = r.Header.Get("Device-Id")
 	}
 
-	token, err := h.userUseCase.UserUseCase.Login(r.Context(), req.Email, req.Password, deviceID)
+	token, err := h.userUseCase.UserUseCase.Login(r.Context(), req.Email, req.Password, deviceID, req.DeviceFCMToken, req.DeviceLanguage)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrInvalidCredentials):

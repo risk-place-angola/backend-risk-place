@@ -31,3 +31,5 @@ tmp
 .idea
 
 firebase*.json
+
+scripts/upload-risks

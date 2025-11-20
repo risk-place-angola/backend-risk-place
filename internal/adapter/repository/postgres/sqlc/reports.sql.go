@@ -13,6 +13,40 @@ import (
 	"github.com/lib/pq"
 )
 
+const addAnonymousReportVote = `-- name: AddAnonymousReportVote :exec
+INSERT INTO report_votes (report_id, anonymous_session_id, vote_type)
+VALUES ($1, $2, $3)
+ON CONFLICT (report_id, anonymous_session_id) DO UPDATE SET vote_type = EXCLUDED.vote_type, created_at = NOW()
+`
+
+type AddAnonymousReportVoteParams struct {
+	ReportID           uuid.UUID     `json:"report_id"`
+	AnonymousSessionID uuid.NullUUID `json:"anonymous_session_id"`
+	VoteType           string        `json:"vote_type"`
+}
+
+func (q *Queries) AddAnonymousReportVote(ctx context.Context, arg AddAnonymousReportVoteParams) error {
+	_, err := q.db.ExecContext(ctx, addAnonymousReportVote, arg.ReportID, arg.AnonymousSessionID, arg.VoteType)
+	return err
+}
+
+const addUserReportVote = `-- name: AddUserReportVote :exec
+INSERT INTO report_votes (report_id, user_id, vote_type)
+VALUES ($1, $2, $3)
+ON CONFLICT (report_id, user_id) DO UPDATE SET vote_type = EXCLUDED.vote_type, created_at = NOW()
+`
+
+type AddUserReportVoteParams struct {
+	ReportID uuid.UUID     `json:"report_id"`
+	UserID   uuid.NullUUID `json:"user_id"`
+	VoteType string        `json:"vote_type"`
+}
+
+func (q *Queries) AddUserReportVote(ctx context.Context, arg AddUserReportVoteParams) error {
+	_, err := q.db.ExecContext(ctx, addUserReportVote, arg.ReportID, arg.UserID, arg.VoteType)
+	return err
+}
+
 const countReports = `-- name: CountReports :one
 SELECT COUNT(*) FROM reports
 WHERE ($1::text IS NULL OR status = $1::report_status)
@@ -95,13 +129,195 @@ func (q *Queries) DeleteReport(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const getReportByID = `-- name: GetReportByID :one
-SELECT id, user_id, risk_type_id, risk_topic_id, description, latitude, longitude, province, municipality, neighborhood, address, image_url, status, reviewed_by, resolved_at, created_at, updated_at FROM reports WHERE id = $1
+const expireOldReports = `-- name: ExpireOldReports :exec
+UPDATE reports
+SET status = 'rejected', updated_at = NOW()
+WHERE status = 'pending'
+  AND expires_at IS NOT NULL
+  AND expires_at < $1
 `
 
-func (q *Queries) GetReportByID(ctx context.Context, id uuid.UUID) (Report, error) {
+func (q *Queries) ExpireOldReports(ctx context.Context, expiresAt sql.NullTime) error {
+	_, err := q.db.ExecContext(ctx, expireOldReports, expiresAt)
+	return err
+}
+
+const findDuplicateReports = `-- name: FindDuplicateReports :many
+SELECT 
+    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description, r.latitude, r.longitude, r.province, r.municipality, r.neighborhood, r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at, r.verification_count, r.rejection_count, r.expires_at, r.created_at, r.updated_at,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM reports r
+LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
+WHERE r.risk_type_id = $1
+  AND r.status = 'pending'
+  AND r.created_at > $2
+  AND ST_DWithin(
+    ST_MakePoint(r.longitude, r.latitude)::geography,
+    ST_MakePoint($4, $3)::geography,
+    $5
+  )
+ORDER BY r.created_at DESC
+`
+
+type FindDuplicateReportsParams struct {
+	RiskTypeID    uuid.UUID    `json:"risk_type_id"`
+	CreatedAt     sql.NullTime `json:"created_at"`
+	StMakepoint   interface{}  `json:"st_makepoint"`
+	StMakepoint_2 interface{}  `json:"st_makepoint_2"`
+	StDwithin     interface{}  `json:"st_dwithin"`
+}
+
+type FindDuplicateReportsRow struct {
+	ID                uuid.UUID      `json:"id"`
+	UserID            uuid.UUID      `json:"user_id"`
+	RiskTypeID        uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID       uuid.NullUUID  `json:"risk_topic_id"`
+	Description       sql.NullString `json:"description"`
+	Latitude          float64        `json:"latitude"`
+	Longitude         float64        `json:"longitude"`
+	Province          sql.NullString `json:"province"`
+	Municipality      sql.NullString `json:"municipality"`
+	Neighborhood      sql.NullString `json:"neighborhood"`
+	Address           sql.NullString `json:"address"`
+	ImageUrl          sql.NullString `json:"image_url"`
+	Status            interface{}    `json:"status"`
+	ReviewedBy        uuid.NullUUID  `json:"reviewed_by"`
+	ResolvedAt        sql.NullTime   `json:"resolved_at"`
+	VerificationCount sql.NullInt32  `json:"verification_count"`
+	RejectionCount    sql.NullInt32  `json:"rejection_count"`
+	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	CreatedAt         sql.NullTime   `json:"created_at"`
+	UpdatedAt         sql.NullTime   `json:"updated_at"`
+	RiskTypeName      sql.NullString `json:"risk_type_name"`
+	RiskTypeIconPath  sql.NullString `json:"risk_type_icon_path"`
+	RiskTopicName     sql.NullString `json:"risk_topic_name"`
+	RiskTopicIconPath sql.NullString `json:"risk_topic_icon_path"`
+}
+
+func (q *Queries) FindDuplicateReports(ctx context.Context, arg FindDuplicateReportsParams) ([]FindDuplicateReportsRow, error) {
+	rows, err := q.db.QueryContext(ctx, findDuplicateReports,
+		arg.RiskTypeID,
+		arg.CreatedAt,
+		arg.StMakepoint,
+		arg.StMakepoint_2,
+		arg.StDwithin,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []FindDuplicateReportsRow{}
+	for rows.Next() {
+		var i FindDuplicateReportsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.RiskTypeID,
+			&i.RiskTopicID,
+			&i.Description,
+			&i.Latitude,
+			&i.Longitude,
+			&i.Province,
+			&i.Municipality,
+			&i.Neighborhood,
+			&i.Address,
+			&i.ImageUrl,
+			&i.Status,
+			&i.ReviewedBy,
+			&i.ResolvedAt,
+			&i.VerificationCount,
+			&i.RejectionCount,
+			&i.ExpiresAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.RiskTypeName,
+			&i.RiskTypeIconPath,
+			&i.RiskTopicName,
+			&i.RiskTopicIconPath,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAnonymousVote = `-- name: GetAnonymousVote :one
+SELECT id, report_id, user_id, anonymous_session_id, vote_type, created_at FROM report_votes WHERE report_id = $1 AND anonymous_session_id = $2
+`
+
+type GetAnonymousVoteParams struct {
+	ReportID           uuid.UUID     `json:"report_id"`
+	AnonymousSessionID uuid.NullUUID `json:"anonymous_session_id"`
+}
+
+func (q *Queries) GetAnonymousVote(ctx context.Context, arg GetAnonymousVoteParams) (ReportVote, error) {
+	row := q.db.QueryRowContext(ctx, getAnonymousVote, arg.ReportID, arg.AnonymousSessionID)
+	var i ReportVote
+	err := row.Scan(
+		&i.ID,
+		&i.ReportID,
+		&i.UserID,
+		&i.AnonymousSessionID,
+		&i.VoteType,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getReportByID = `-- name: GetReportByID :one
+SELECT 
+    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description, r.latitude, r.longitude, r.province, r.municipality, r.neighborhood, r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at, r.verification_count, r.rejection_count, r.expires_at, r.created_at, r.updated_at,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM reports r
+LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
+WHERE r.id = $1
+`
+
+type GetReportByIDRow struct {
+	ID                uuid.UUID      `json:"id"`
+	UserID            uuid.UUID      `json:"user_id"`
+	RiskTypeID        uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID       uuid.NullUUID  `json:"risk_topic_id"`
+	Description       sql.NullString `json:"description"`
+	Latitude          float64        `json:"latitude"`
+	Longitude         float64        `json:"longitude"`
+	Province          sql.NullString `json:"province"`
+	Municipality      sql.NullString `json:"municipality"`
+	Neighborhood      sql.NullString `json:"neighborhood"`
+	Address           sql.NullString `json:"address"`
+	ImageUrl          sql.NullString `json:"image_url"`
+	Status            interface{}    `json:"status"`
+	ReviewedBy        uuid.NullUUID  `json:"reviewed_by"`
+	ResolvedAt        sql.NullTime   `json:"resolved_at"`
+	VerificationCount sql.NullInt32  `json:"verification_count"`
+	RejectionCount    sql.NullInt32  `json:"rejection_count"`
+	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	CreatedAt         sql.NullTime   `json:"created_at"`
+	UpdatedAt         sql.NullTime   `json:"updated_at"`
+	RiskTypeName      sql.NullString `json:"risk_type_name"`
+	RiskTypeIconPath  sql.NullString `json:"risk_type_icon_path"`
+	RiskTopicName     sql.NullString `json:"risk_topic_name"`
+	RiskTopicIconPath sql.NullString `json:"risk_topic_icon_path"`
+}
+
+func (q *Queries) GetReportByID(ctx context.Context, id uuid.UUID) (GetReportByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getReportByID, id)
-	var i Report
+	var i GetReportByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
@@ -118,32 +334,114 @@ func (q *Queries) GetReportByID(ctx context.Context, id uuid.UUID) (Report, erro
 		&i.Status,
 		&i.ReviewedBy,
 		&i.ResolvedAt,
+		&i.VerificationCount,
+		&i.RejectionCount,
+		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.RiskTypeName,
+		&i.RiskTypeIconPath,
+		&i.RiskTopicName,
+		&i.RiskTopicIconPath,
 	)
 	return i, err
 }
 
-const listReportsByIDs = `-- name: ListReportsByIDs :many
-SELECT
-    id, user_id, risk_type_id, risk_topic_id, description,
-    latitude, longitude, province, municipality, neighborhood,
-    address, image_url, status, reviewed_by, resolved_at,
-    created_at, updated_at
-FROM reports
-WHERE id = ANY($1::uuid[])
-ORDER BY created_at DESC
+const getUserVote = `-- name: GetUserVote :one
+SELECT id, report_id, user_id, anonymous_session_id, vote_type, created_at FROM report_votes WHERE report_id = $1 AND user_id = $2
 `
 
-func (q *Queries) ListReportsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]Report, error) {
+type GetUserVoteParams struct {
+	ReportID uuid.UUID     `json:"report_id"`
+	UserID   uuid.NullUUID `json:"user_id"`
+}
+
+func (q *Queries) GetUserVote(ctx context.Context, arg GetUserVoteParams) (ReportVote, error) {
+	row := q.db.QueryRowContext(ctx, getUserVote, arg.ReportID, arg.UserID)
+	var i ReportVote
+	err := row.Scan(
+		&i.ID,
+		&i.ReportID,
+		&i.UserID,
+		&i.AnonymousSessionID,
+		&i.VoteType,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const incrementUserReportsSubmitted = `-- name: IncrementUserReportsSubmitted :exec
+UPDATE users SET reports_submitted = reports_submitted + 1, updated_at = NOW() WHERE id = $1
+`
+
+func (q *Queries) IncrementUserReportsSubmitted(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, incrementUserReportsSubmitted, id)
+	return err
+}
+
+const incrementUserReportsVerified = `-- name: IncrementUserReportsVerified :exec
+UPDATE users SET reports_verified = reports_verified + 1, updated_at = NOW() WHERE id = $1
+`
+
+func (q *Queries) IncrementUserReportsVerified(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, incrementUserReportsVerified, id)
+	return err
+}
+
+const listReportsByIDs = `-- name: ListReportsByIDs :many
+SELECT
+    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description,
+    r.latitude, r.longitude, r.province, r.municipality, r.neighborhood,
+    r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at,
+    r.verification_count, r.rejection_count, r.expires_at,
+    r.created_at, r.updated_at,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM reports r
+LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
+WHERE r.id = ANY($1::uuid[])
+ORDER BY r.created_at DESC
+`
+
+type ListReportsByIDsRow struct {
+	ID                uuid.UUID      `json:"id"`
+	UserID            uuid.UUID      `json:"user_id"`
+	RiskTypeID        uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID       uuid.NullUUID  `json:"risk_topic_id"`
+	Description       sql.NullString `json:"description"`
+	Latitude          float64        `json:"latitude"`
+	Longitude         float64        `json:"longitude"`
+	Province          sql.NullString `json:"province"`
+	Municipality      sql.NullString `json:"municipality"`
+	Neighborhood      sql.NullString `json:"neighborhood"`
+	Address           sql.NullString `json:"address"`
+	ImageUrl          sql.NullString `json:"image_url"`
+	Status            interface{}    `json:"status"`
+	ReviewedBy        uuid.NullUUID  `json:"reviewed_by"`
+	ResolvedAt        sql.NullTime   `json:"resolved_at"`
+	VerificationCount sql.NullInt32  `json:"verification_count"`
+	RejectionCount    sql.NullInt32  `json:"rejection_count"`
+	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	CreatedAt         sql.NullTime   `json:"created_at"`
+	UpdatedAt         sql.NullTime   `json:"updated_at"`
+	RiskTypeName      sql.NullString `json:"risk_type_name"`
+	RiskTypeIconPath  sql.NullString `json:"risk_type_icon_path"`
+	RiskTopicName     sql.NullString `json:"risk_topic_name"`
+	RiskTopicIconPath sql.NullString `json:"risk_topic_icon_path"`
+}
+
+func (q *Queries) ListReportsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]ListReportsByIDsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listReportsByIDs, pq.Array(dollar_1))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Report{}
+	items := []ListReportsByIDsRow{}
 	for rows.Next() {
-		var i Report
+		var i ListReportsByIDsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
@@ -160,8 +458,15 @@ func (q *Queries) ListReportsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([
 			&i.Status,
 			&i.ReviewedBy,
 			&i.ResolvedAt,
+			&i.VerificationCount,
+			&i.RejectionCount,
+			&i.ExpiresAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.RiskTypeName,
+			&i.RiskTypeIconPath,
+			&i.RiskTopicName,
+			&i.RiskTopicIconPath,
 		); err != nil {
 			return nil, err
 		}
@@ -177,18 +482,55 @@ func (q *Queries) ListReportsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([
 }
 
 const listReportsByStatus = `-- name: ListReportsByStatus :many
-SELECT id, user_id, risk_type_id, risk_topic_id, description, latitude, longitude, province, municipality, neighborhood, address, image_url, status, reviewed_by, resolved_at, created_at, updated_at FROM reports WHERE status = $1 ORDER BY created_at DESC
+SELECT 
+    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description, r.latitude, r.longitude, r.province, r.municipality, r.neighborhood, r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at, r.verification_count, r.rejection_count, r.expires_at, r.created_at, r.updated_at,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM reports r
+LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
+WHERE r.status = $1 
+ORDER BY r.created_at DESC
 `
 
-func (q *Queries) ListReportsByStatus(ctx context.Context, status interface{}) ([]Report, error) {
+type ListReportsByStatusRow struct {
+	ID                uuid.UUID      `json:"id"`
+	UserID            uuid.UUID      `json:"user_id"`
+	RiskTypeID        uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID       uuid.NullUUID  `json:"risk_topic_id"`
+	Description       sql.NullString `json:"description"`
+	Latitude          float64        `json:"latitude"`
+	Longitude         float64        `json:"longitude"`
+	Province          sql.NullString `json:"province"`
+	Municipality      sql.NullString `json:"municipality"`
+	Neighborhood      sql.NullString `json:"neighborhood"`
+	Address           sql.NullString `json:"address"`
+	ImageUrl          sql.NullString `json:"image_url"`
+	Status            interface{}    `json:"status"`
+	ReviewedBy        uuid.NullUUID  `json:"reviewed_by"`
+	ResolvedAt        sql.NullTime   `json:"resolved_at"`
+	VerificationCount sql.NullInt32  `json:"verification_count"`
+	RejectionCount    sql.NullInt32  `json:"rejection_count"`
+	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	CreatedAt         sql.NullTime   `json:"created_at"`
+	UpdatedAt         sql.NullTime   `json:"updated_at"`
+	RiskTypeName      sql.NullString `json:"risk_type_name"`
+	RiskTypeIconPath  sql.NullString `json:"risk_type_icon_path"`
+	RiskTopicName     sql.NullString `json:"risk_topic_name"`
+	RiskTopicIconPath sql.NullString `json:"risk_topic_icon_path"`
+}
+
+func (q *Queries) ListReportsByStatus(ctx context.Context, status interface{}) ([]ListReportsByStatusRow, error) {
 	rows, err := q.db.QueryContext(ctx, listReportsByStatus, status)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Report{}
+	items := []ListReportsByStatusRow{}
 	for rows.Next() {
-		var i Report
+		var i ListReportsByStatusRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
@@ -205,8 +547,15 @@ func (q *Queries) ListReportsByStatus(ctx context.Context, status interface{}) (
 			&i.Status,
 			&i.ReviewedBy,
 			&i.ResolvedAt,
+			&i.VerificationCount,
+			&i.RejectionCount,
+			&i.ExpiresAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.RiskTypeName,
+			&i.RiskTypeIconPath,
+			&i.RiskTopicName,
+			&i.RiskTopicIconPath,
 		); err != nil {
 			return nil, err
 		}
@@ -222,18 +571,55 @@ func (q *Queries) ListReportsByStatus(ctx context.Context, status interface{}) (
 }
 
 const listReportsByUser = `-- name: ListReportsByUser :many
-SELECT id, user_id, risk_type_id, risk_topic_id, description, latitude, longitude, province, municipality, neighborhood, address, image_url, status, reviewed_by, resolved_at, created_at, updated_at FROM reports WHERE user_id = $1 ORDER BY created_at DESC
+SELECT 
+    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description, r.latitude, r.longitude, r.province, r.municipality, r.neighborhood, r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at, r.verification_count, r.rejection_count, r.expires_at, r.created_at, r.updated_at,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM reports r
+LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
+WHERE r.user_id = $1 
+ORDER BY r.created_at DESC
 `
 
-func (q *Queries) ListReportsByUser(ctx context.Context, userID uuid.UUID) ([]Report, error) {
+type ListReportsByUserRow struct {
+	ID                uuid.UUID      `json:"id"`
+	UserID            uuid.UUID      `json:"user_id"`
+	RiskTypeID        uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID       uuid.NullUUID  `json:"risk_topic_id"`
+	Description       sql.NullString `json:"description"`
+	Latitude          float64        `json:"latitude"`
+	Longitude         float64        `json:"longitude"`
+	Province          sql.NullString `json:"province"`
+	Municipality      sql.NullString `json:"municipality"`
+	Neighborhood      sql.NullString `json:"neighborhood"`
+	Address           sql.NullString `json:"address"`
+	ImageUrl          sql.NullString `json:"image_url"`
+	Status            interface{}    `json:"status"`
+	ReviewedBy        uuid.NullUUID  `json:"reviewed_by"`
+	ResolvedAt        sql.NullTime   `json:"resolved_at"`
+	VerificationCount sql.NullInt32  `json:"verification_count"`
+	RejectionCount    sql.NullInt32  `json:"rejection_count"`
+	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	CreatedAt         sql.NullTime   `json:"created_at"`
+	UpdatedAt         sql.NullTime   `json:"updated_at"`
+	RiskTypeName      sql.NullString `json:"risk_type_name"`
+	RiskTypeIconPath  sql.NullString `json:"risk_type_icon_path"`
+	RiskTopicName     sql.NullString `json:"risk_topic_name"`
+	RiskTopicIconPath sql.NullString `json:"risk_topic_icon_path"`
+}
+
+func (q *Queries) ListReportsByUser(ctx context.Context, userID uuid.UUID) ([]ListReportsByUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, listReportsByUser, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Report{}
+	items := []ListReportsByUserRow{}
 	for rows.Next() {
-		var i Report
+		var i ListReportsByUserRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
@@ -250,8 +636,15 @@ func (q *Queries) ListReportsByUser(ctx context.Context, userID uuid.UUID) ([]Re
 			&i.Status,
 			&i.ReviewedBy,
 			&i.ResolvedAt,
+			&i.VerificationCount,
+			&i.RejectionCount,
+			&i.ExpiresAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.RiskTypeName,
+			&i.RiskTypeIconPath,
+			&i.RiskTopicName,
+			&i.RiskTopicIconPath,
 		); err != nil {
 			return nil, err
 		}
@@ -268,15 +661,22 @@ func (q *Queries) ListReportsByUser(ctx context.Context, userID uuid.UUID) ([]Re
 
 const listReportsWithPagination = `-- name: ListReportsWithPagination :many
 SELECT
-    id, user_id, risk_type_id, risk_topic_id, description,
-    latitude, longitude, province, municipality, neighborhood,
-    address, image_url, status, reviewed_by, resolved_at,
-    created_at, updated_at
-FROM reports
-WHERE ($4::text IS NULL OR status = $4::report_status)
+    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description,
+    r.latitude, r.longitude, r.province, r.municipality, r.neighborhood,
+    r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at,
+    r.verification_count, r.rejection_count, r.expires_at,
+    r.created_at, r.updated_at,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM reports r
+LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
+WHERE ($4::text IS NULL OR r.status = $4::report_status)
 ORDER BY
-    CASE WHEN $1 = 'desc' THEN created_at END DESC,
-    CASE WHEN $1 = 'asc' THEN created_at END ASC
+    CASE WHEN $1 = 'desc' THEN r.created_at END DESC,
+    CASE WHEN $1 = 'asc' THEN r.created_at END ASC
 LIMIT $2 OFFSET $3
 `
 
@@ -287,7 +687,34 @@ type ListReportsWithPaginationParams struct {
 	Status  sql.NullString `json:"status"`
 }
 
-func (q *Queries) ListReportsWithPagination(ctx context.Context, arg ListReportsWithPaginationParams) ([]Report, error) {
+type ListReportsWithPaginationRow struct {
+	ID                uuid.UUID      `json:"id"`
+	UserID            uuid.UUID      `json:"user_id"`
+	RiskTypeID        uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID       uuid.NullUUID  `json:"risk_topic_id"`
+	Description       sql.NullString `json:"description"`
+	Latitude          float64        `json:"latitude"`
+	Longitude         float64        `json:"longitude"`
+	Province          sql.NullString `json:"province"`
+	Municipality      sql.NullString `json:"municipality"`
+	Neighborhood      sql.NullString `json:"neighborhood"`
+	Address           sql.NullString `json:"address"`
+	ImageUrl          sql.NullString `json:"image_url"`
+	Status            interface{}    `json:"status"`
+	ReviewedBy        uuid.NullUUID  `json:"reviewed_by"`
+	ResolvedAt        sql.NullTime   `json:"resolved_at"`
+	VerificationCount sql.NullInt32  `json:"verification_count"`
+	RejectionCount    sql.NullInt32  `json:"rejection_count"`
+	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	CreatedAt         sql.NullTime   `json:"created_at"`
+	UpdatedAt         sql.NullTime   `json:"updated_at"`
+	RiskTypeName      sql.NullString `json:"risk_type_name"`
+	RiskTypeIconPath  sql.NullString `json:"risk_type_icon_path"`
+	RiskTopicName     sql.NullString `json:"risk_topic_name"`
+	RiskTopicIconPath sql.NullString `json:"risk_topic_icon_path"`
+}
+
+func (q *Queries) ListReportsWithPagination(ctx context.Context, arg ListReportsWithPaginationParams) ([]ListReportsWithPaginationRow, error) {
 	rows, err := q.db.QueryContext(ctx, listReportsWithPagination,
 		arg.Column1,
 		arg.Limit,
@@ -298,9 +725,9 @@ func (q *Queries) ListReportsWithPagination(ctx context.Context, arg ListReports
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Report{}
+	items := []ListReportsWithPaginationRow{}
 	for rows.Next() {
-		var i Report
+		var i ListReportsWithPaginationRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
@@ -317,8 +744,15 @@ func (q *Queries) ListReportsWithPagination(ctx context.Context, arg ListReports
 			&i.Status,
 			&i.ReviewedBy,
 			&i.ResolvedAt,
+			&i.VerificationCount,
+			&i.RejectionCount,
+			&i.ExpiresAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.RiskTypeName,
+			&i.RiskTypeIconPath,
+			&i.RiskTopicName,
+			&i.RiskTopicIconPath,
 		); err != nil {
 			return nil, err
 		}
@@ -342,6 +776,34 @@ WHERE id = $1
 
 func (q *Queries) RejectReport(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, rejectReport, id)
+	return err
+}
+
+const removeAnonymousVote = `-- name: RemoveAnonymousVote :exec
+DELETE FROM report_votes WHERE report_id = $1 AND anonymous_session_id = $2
+`
+
+type RemoveAnonymousVoteParams struct {
+	ReportID           uuid.UUID     `json:"report_id"`
+	AnonymousSessionID uuid.NullUUID `json:"anonymous_session_id"`
+}
+
+func (q *Queries) RemoveAnonymousVote(ctx context.Context, arg RemoveAnonymousVoteParams) error {
+	_, err := q.db.ExecContext(ctx, removeAnonymousVote, arg.ReportID, arg.AnonymousSessionID)
+	return err
+}
+
+const removeUserVote = `-- name: RemoveUserVote :exec
+DELETE FROM report_votes WHERE report_id = $1 AND user_id = $2
+`
+
+type RemoveUserVoteParams struct {
+	ReportID uuid.UUID     `json:"report_id"`
+	UserID   uuid.NullUUID `json:"user_id"`
+}
+
+func (q *Queries) RemoveUserVote(ctx context.Context, arg RemoveUserVoteParams) error {
+	_, err := q.db.ExecContext(ctx, removeUserVote, arg.ReportID, arg.UserID)
 	return err
 }
 
@@ -418,6 +880,37 @@ func (q *Queries) UpdateReportLocation(ctx context.Context, arg UpdateReportLoca
 	var i UpdateReportLocationRow
 	err := row.Scan(&i.ID, &i.UpdatedAt)
 	return i, err
+}
+
+const updateUserTrustScore = `-- name: UpdateUserTrustScore :exec
+UPDATE users SET trust_score = $2, updated_at = NOW() WHERE id = $1
+`
+
+type UpdateUserTrustScoreParams struct {
+	ID         uuid.UUID     `json:"id"`
+	TrustScore sql.NullInt32 `json:"trust_score"`
+}
+
+func (q *Queries) UpdateUserTrustScore(ctx context.Context, arg UpdateUserTrustScoreParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserTrustScore, arg.ID, arg.TrustScore)
+	return err
+}
+
+const updateVerificationCounts = `-- name: UpdateVerificationCounts :exec
+UPDATE reports 
+SET verification_count = $2, rejection_count = $3, updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateVerificationCountsParams struct {
+	ID                uuid.UUID     `json:"id"`
+	VerificationCount sql.NullInt32 `json:"verification_count"`
+	RejectionCount    sql.NullInt32 `json:"rejection_count"`
+}
+
+func (q *Queries) UpdateVerificationCounts(ctx context.Context, arg UpdateVerificationCountsParams) error {
+	_, err := q.db.ExecContext(ctx, updateVerificationCounts, arg.ID, arg.VerificationCount, arg.RejectionCount)
+	return err
 }
 
 const verifyReport = `-- name: VerifyReport :exec

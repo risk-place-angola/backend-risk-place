@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/model"
@@ -47,4 +48,16 @@ type ReportRepository interface {
 	CreateReportNotification(ctx context.Context, reportID uuid.UUID, userID uuid.UUID) error
 	FindByRadius(ctx context.Context, lat float64, lon float64, radiusMeters float64) ([]*model.Report, error)
 	FindByRadiusWithDistance(ctx context.Context, lat float64, lon float64, radiusMeters float64, limit int) ([]ReportWithDistance, error)
+
+	AddVote(ctx context.Context, vote *model.ReportVote) error
+	RemoveVote(ctx context.Context, reportID, userID uuid.UUID) error
+	RemoveAnonymousVote(ctx context.Context, reportID, sessionID uuid.UUID) error
+	GetUserVote(ctx context.Context, reportID, userID uuid.UUID) (*model.ReportVote, error)
+	GetAnonymousVote(ctx context.Context, reportID, sessionID uuid.UUID) (*model.ReportVote, error)
+	UpdateVerificationCounts(ctx context.Context, reportID uuid.UUID, upvotes, downvotes int) error
+	FindDuplicates(ctx context.Context, lat, lon float64, riskTypeID uuid.UUID, radiusMeters float64, since time.Time) ([]*model.Report, error)
+	ExpireOldReports(ctx context.Context, before time.Time) error
+	UpdateTrustScore(ctx context.Context, userID uuid.UUID, score int) error
+	IncrementReportsSubmitted(ctx context.Context, userID uuid.UUID) error
+	IncrementReportsVerified(ctx context.Context, userID uuid.UUID) error
 }

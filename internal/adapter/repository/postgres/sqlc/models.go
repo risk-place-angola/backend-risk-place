@@ -87,21 +87,23 @@ type AlertSubscription struct {
 }
 
 type AnonymousSession struct {
-	ID                uuid.UUID       `json:"id"`
-	DeviceID          string          `json:"device_id"`
-	DeviceFcmToken    sql.NullString  `json:"device_fcm_token"`
-	DevicePlatform    sql.NullString  `json:"device_platform"`
-	DeviceModel       sql.NullString  `json:"device_model"`
-	Latitude          sql.NullFloat64 `json:"latitude"`
-	Longitude         sql.NullFloat64 `json:"longitude"`
-	AlertRadiusMeters sql.NullInt32   `json:"alert_radius_meters"`
-	DeviceLanguage    sql.NullString  `json:"device_language"`
-	LastSeen          sql.NullTime    `json:"last_seen"`
-	CreatedAt         sql.NullTime    `json:"created_at"`
-	UpdatedAt         sql.NullTime    `json:"updated_at"`
-	MigratedToUserID  uuid.NullUUID   `json:"migrated_to_user_id"`
-	MigratedAt        sql.NullTime    `json:"migrated_at"`
-	IsActive          sql.NullBool    `json:"is_active"`
+	ID                      uuid.UUID       `json:"id"`
+	DeviceID                string          `json:"device_id"`
+	DeviceFcmToken          sql.NullString  `json:"device_fcm_token"`
+	DevicePlatform          sql.NullString  `json:"device_platform"`
+	DeviceModel             sql.NullString  `json:"device_model"`
+	Latitude                sql.NullFloat64 `json:"latitude"`
+	Longitude               sql.NullFloat64 `json:"longitude"`
+	PushNotificationEnabled sql.NullBool    `json:"push_notification_enabled"`
+	SmsNotificationEnabled  sql.NullBool    `json:"sms_notification_enabled"`
+	AlertRadiusMeters       sql.NullInt32   `json:"alert_radius_meters"`
+	DeviceLanguage          sql.NullString  `json:"device_language"`
+	LastSeen                sql.NullTime    `json:"last_seen"`
+	CreatedAt               sql.NullTime    `json:"created_at"`
+	UpdatedAt               sql.NullTime    `json:"updated_at"`
+	MigratedToUserID        uuid.NullUUID   `json:"migrated_to_user_id"`
+	MigratedAt              sql.NullTime    `json:"migrated_at"`
+	IsActive                sql.NullBool    `json:"is_active"`
 }
 
 type AnonymousUserMigration struct {
@@ -188,23 +190,35 @@ type Permission struct {
 }
 
 type Report struct {
-	ID           uuid.UUID      `json:"id"`
-	UserID       uuid.UUID      `json:"user_id"`
-	RiskTypeID   uuid.UUID      `json:"risk_type_id"`
-	RiskTopicID  uuid.NullUUID  `json:"risk_topic_id"`
-	Description  sql.NullString `json:"description"`
-	Latitude     float64        `json:"latitude"`
-	Longitude    float64        `json:"longitude"`
-	Province     sql.NullString `json:"province"`
-	Municipality sql.NullString `json:"municipality"`
-	Neighborhood sql.NullString `json:"neighborhood"`
-	Address      sql.NullString `json:"address"`
-	ImageUrl     sql.NullString `json:"image_url"`
-	Status       interface{}    `json:"status"`
-	ReviewedBy   uuid.NullUUID  `json:"reviewed_by"`
-	ResolvedAt   sql.NullTime   `json:"resolved_at"`
-	CreatedAt    sql.NullTime   `json:"created_at"`
-	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	ID                uuid.UUID      `json:"id"`
+	UserID            uuid.UUID      `json:"user_id"`
+	RiskTypeID        uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID       uuid.NullUUID  `json:"risk_topic_id"`
+	Description       sql.NullString `json:"description"`
+	Latitude          float64        `json:"latitude"`
+	Longitude         float64        `json:"longitude"`
+	Province          sql.NullString `json:"province"`
+	Municipality      sql.NullString `json:"municipality"`
+	Neighborhood      sql.NullString `json:"neighborhood"`
+	Address           sql.NullString `json:"address"`
+	ImageUrl          sql.NullString `json:"image_url"`
+	Status            interface{}    `json:"status"`
+	ReviewedBy        uuid.NullUUID  `json:"reviewed_by"`
+	ResolvedAt        sql.NullTime   `json:"resolved_at"`
+	VerificationCount sql.NullInt32  `json:"verification_count"`
+	RejectionCount    sql.NullInt32  `json:"rejection_count"`
+	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	CreatedAt         sql.NullTime   `json:"created_at"`
+	UpdatedAt         sql.NullTime   `json:"updated_at"`
+}
+
+type ReportVote struct {
+	ID                 uuid.UUID     `json:"id"`
+	ReportID           uuid.UUID     `json:"report_id"`
+	UserID             uuid.NullUUID `json:"user_id"`
+	AnonymousSessionID uuid.NullUUID `json:"anonymous_session_id"`
+	VoteType           string        `json:"vote_type"`
+	CreatedAt          sql.NullTime  `json:"created_at"`
 }
 
 type RiskTopic struct {
@@ -212,6 +226,7 @@ type RiskTopic struct {
 	RiskTypeID  uuid.UUID      `json:"risk_type_id"`
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
+	IconPath    sql.NullString `json:"icon_path"`
 	CreatedAt   sql.NullTime   `json:"created_at"`
 	UpdatedAt   sql.NullTime   `json:"updated_at"`
 }
@@ -220,6 +235,7 @@ type RiskType struct {
 	ID                  uuid.UUID      `json:"id"`
 	Name                string         `json:"name"`
 	Description         sql.NullString `json:"description"`
+	IconPath            sql.NullString `json:"icon_path"`
 	DefaultRadiusMeters sql.NullInt32  `json:"default_radius_meters"`
 	CreatedAt           sql.NullTime   `json:"created_at"`
 	UpdatedAt           sql.NullTime   `json:"updated_at"`
@@ -257,6 +273,8 @@ type User struct {
 	Address                    sql.NullString  `json:"address"`
 	ZipCode                    sql.NullString  `json:"zip_code"`
 	Country                    sql.NullString  `json:"country"`
+	PushNotificationEnabled    sql.NullBool    `json:"push_notification_enabled"`
+	SmsNotificationEnabled     sql.NullBool    `json:"sms_notification_enabled"`
 	LastLogin                  sql.NullTime    `json:"last_login"`
 	HomeAddressName            sql.NullString  `json:"home_address_name"`
 	HomeAddressAddress         sql.NullString  `json:"home_address_address"`
@@ -270,6 +288,9 @@ type User struct {
 	LockedUntil                sql.NullTime    `json:"locked_until"`
 	DeviceFcmToken             sql.NullString  `json:"device_fcm_token"`
 	DeviceLanguage             sql.NullString  `json:"device_language"`
+	TrustScore                 sql.NullInt32   `json:"trust_score"`
+	ReportsSubmitted           sql.NullInt32   `json:"reports_submitted"`
+	ReportsVerified            sql.NullInt32   `json:"reports_verified"`
 	CreatedAt                  sql.NullTime    `json:"created_at"`
 	UpdatedAt                  sql.NullTime    `json:"updated_at"`
 	DeletedAt                  sql.NullTime    `json:"deleted_at"`

@@ -11,6 +11,11 @@ type NotifierSMSService interface {
 	NotifySMS(ctx context.Context, phone string, message string) error
 }
 
+type NotificationService interface {
+	SendNotificationWithFallback(ctx context.Context, userID, deviceID, language, riskType, eventKey string, data map[string]string) error
+	SendNotificationToMultiple(ctx context.Context, userIDs []string, deviceTokens []string, language, riskType, eventKey string, data map[string]string) error
+}
+
 type NotifierHubService interface {
 	BroadcastAlert(ctx context.Context, alertID, message string, lat, lon float64, radius float64) error
 	BroadcastReport(ctx context.Context, reportID, message string, lat, lon, radius float64) error

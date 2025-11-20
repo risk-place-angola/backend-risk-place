@@ -16,4 +16,6 @@ type AnonymousSessionRepository interface {
 	Delete(ctx context.Context, deviceID string) error
 	CleanupOldSessions(ctx context.Context, daysOld int) error
 	TouchLastSeen(ctx context.Context, deviceID string) error
+	UpdateNotificationPreferences(ctx context.Context, deviceID string, pushEnabled, smsEnabled bool) error
+	GetNotificationPreferences(ctx context.Context, deviceID string) (pushEnabled, smsEnabled bool, err error)
 }

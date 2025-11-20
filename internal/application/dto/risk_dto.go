@@ -11,6 +11,7 @@ type RiskTypeResponse struct {
 	ID            uuid.UUID `json:"id"`
 	Name          string    `json:"name"`
 	Description   string    `json:"description"`
+	IconURL       *string   `json:"icon_url,omitempty"`
 	DefaultRadius int       `json:"default_radius"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
@@ -22,6 +23,7 @@ type RiskTopicResponse struct {
 	RiskTypeID  uuid.UUID `json:"risk_type_id"`
 	Name        string    `json:"name"`
 	Description *string   `json:"description,omitempty"`
+	IconURL     *string   `json:"icon_url,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }

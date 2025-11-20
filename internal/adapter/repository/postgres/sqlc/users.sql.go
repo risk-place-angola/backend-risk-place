@@ -61,7 +61,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, created_at, updated_at, deleted_at, linked_device_id FROM users WHERE email = $1 AND deleted_at IS NULL LIMIT 1
+SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, push_notification_enabled, sms_notification_enabled, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, trust_score, reports_submitted, reports_verified, created_at, updated_at, deleted_at, linked_device_id FROM users WHERE email = $1 AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -86,6 +86,8 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Address,
 		&i.ZipCode,
 		&i.Country,
+		&i.PushNotificationEnabled,
+		&i.SmsNotificationEnabled,
 		&i.LastLogin,
 		&i.HomeAddressName,
 		&i.HomeAddressAddress,
@@ -99,6 +101,9 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.LockedUntil,
 		&i.DeviceFcmToken,
 		&i.DeviceLanguage,
+		&i.TrustScore,
+		&i.ReportsSubmitted,
+		&i.ReportsVerified,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -108,7 +113,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, created_at, updated_at, deleted_at, linked_device_id FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1
+SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, push_notification_enabled, sms_notification_enabled, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, trust_score, reports_submitted, reports_verified, created_at, updated_at, deleted_at, linked_device_id FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
@@ -133,6 +138,8 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Address,
 		&i.ZipCode,
 		&i.Country,
+		&i.PushNotificationEnabled,
+		&i.SmsNotificationEnabled,
 		&i.LastLogin,
 		&i.HomeAddressName,
 		&i.HomeAddressAddress,
@@ -146,6 +153,9 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.LockedUntil,
 		&i.DeviceFcmToken,
 		&i.DeviceLanguage,
+		&i.TrustScore,
+		&i.ReportsSubmitted,
+		&i.ReportsVerified,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -227,7 +237,7 @@ func (q *Queries) ListDeviceTokensByUserIDs(ctx context.Context, dollar_1 []uuid
 }
 
 const listNearbyUsers = `-- name: ListNearbyUsers :many
-SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, created_at, updated_at, deleted_at, linked_device_id
+SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, push_notification_enabled, sms_notification_enabled, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, trust_score, reports_submitted, reports_verified, created_at, updated_at, deleted_at, linked_device_id
 FROM users
 WHERE deleted_at IS NULL
   AND (latitude IS NOT NULL AND longitude IS NOT NULL)
@@ -261,6 +271,8 @@ func (q *Queries) ListNearbyUsers(ctx context.Context) ([]User, error) {
 			&i.Address,
 			&i.ZipCode,
 			&i.Country,
+			&i.PushNotificationEnabled,
+			&i.SmsNotificationEnabled,
 			&i.LastLogin,
 			&i.HomeAddressName,
 			&i.HomeAddressAddress,
@@ -274,6 +286,9 @@ func (q *Queries) ListNearbyUsers(ctx context.Context) ([]User, error) {
 			&i.LockedUntil,
 			&i.DeviceFcmToken,
 			&i.DeviceLanguage,
+			&i.TrustScore,
+			&i.ReportsSubmitted,
+			&i.ReportsVerified,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,

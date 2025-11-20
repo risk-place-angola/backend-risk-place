@@ -146,12 +146,48 @@ func (q *Queries) ExpireAlert(ctx context.Context, id uuid.UUID) error {
 }
 
 const getAlertByID = `-- name: GetAlertByID :one
-SELECT id, created_by, anonymous_session_id, device_id, risk_type_id, risk_topic_id, message, latitude, longitude, province, municipality, neighborhood, address, radius_meters, severity, status, created_at, expires_at, resolved_at FROM alerts WHERE id = $1 LIMIT 1
+SELECT 
+    a.id, a.created_by, a.anonymous_session_id, a.device_id, a.risk_type_id, a.risk_topic_id, a.message, a.latitude, a.longitude, a.province, a.municipality, a.neighborhood, a.address, a.radius_meters, a.severity, a.status, a.created_at, a.expires_at, a.resolved_at,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM alerts a
+LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
+WHERE a.id = $1 
+LIMIT 1
 `
 
-func (q *Queries) GetAlertByID(ctx context.Context, id uuid.UUID) (Alert, error) {
+type GetAlertByIDRow struct {
+	ID                 uuid.UUID      `json:"id"`
+	CreatedBy          uuid.NullUUID  `json:"created_by"`
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+	RiskTypeID         uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID        uuid.NullUUID  `json:"risk_topic_id"`
+	Message            string         `json:"message"`
+	Latitude           float64        `json:"latitude"`
+	Longitude          float64        `json:"longitude"`
+	Province           sql.NullString `json:"province"`
+	Municipality       sql.NullString `json:"municipality"`
+	Neighborhood       sql.NullString `json:"neighborhood"`
+	Address            sql.NullString `json:"address"`
+	RadiusMeters       int32          `json:"radius_meters"`
+	Severity           interface{}    `json:"severity"`
+	Status             interface{}    `json:"status"`
+	CreatedAt          sql.NullTime   `json:"created_at"`
+	ExpiresAt          sql.NullTime   `json:"expires_at"`
+	ResolvedAt         sql.NullTime   `json:"resolved_at"`
+	RiskTypeName       sql.NullString `json:"risk_type_name"`
+	RiskTypeIconPath   sql.NullString `json:"risk_type_icon_path"`
+	RiskTopicName      sql.NullString `json:"risk_topic_name"`
+	RiskTopicIconPath  sql.NullString `json:"risk_topic_icon_path"`
+}
+
+func (q *Queries) GetAlertByID(ctx context.Context, id uuid.UUID) (GetAlertByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getAlertByID, id)
-	var i Alert
+	var i GetAlertByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedBy,
@@ -172,14 +208,26 @@ func (q *Queries) GetAlertByID(ctx context.Context, id uuid.UUID) (Alert, error)
 		&i.CreatedAt,
 		&i.ExpiresAt,
 		&i.ResolvedAt,
+		&i.RiskTypeName,
+		&i.RiskTypeIconPath,
+		&i.RiskTopicName,
+		&i.RiskTopicIconPath,
 	)
 	return i, err
 }
 
 const getAlertsByAnonymousSessionID = `-- name: GetAlertsByAnonymousSessionID :many
-SELECT id, created_by, anonymous_session_id, device_id, risk_type_id, risk_topic_id, message, latitude, longitude, province, municipality, neighborhood, address, radius_meters, severity, status, created_at, expires_at, resolved_at FROM alerts
-WHERE anonymous_session_id = $1 AND device_id = $2
-ORDER BY created_at DESC
+SELECT 
+    a.id, a.created_by, a.anonymous_session_id, a.device_id, a.risk_type_id, a.risk_topic_id, a.message, a.latitude, a.longitude, a.province, a.municipality, a.neighborhood, a.address, a.radius_meters, a.severity, a.status, a.created_at, a.expires_at, a.resolved_at,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM alerts a
+LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
+WHERE a.anonymous_session_id = $1 AND a.device_id = $2
+ORDER BY a.created_at DESC
 `
 
 type GetAlertsByAnonymousSessionIDParams struct {
@@ -187,15 +235,41 @@ type GetAlertsByAnonymousSessionIDParams struct {
 	DeviceID           sql.NullString `json:"device_id"`
 }
 
-func (q *Queries) GetAlertsByAnonymousSessionID(ctx context.Context, arg GetAlertsByAnonymousSessionIDParams) ([]Alert, error) {
+type GetAlertsByAnonymousSessionIDRow struct {
+	ID                 uuid.UUID      `json:"id"`
+	CreatedBy          uuid.NullUUID  `json:"created_by"`
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+	RiskTypeID         uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID        uuid.NullUUID  `json:"risk_topic_id"`
+	Message            string         `json:"message"`
+	Latitude           float64        `json:"latitude"`
+	Longitude          float64        `json:"longitude"`
+	Province           sql.NullString `json:"province"`
+	Municipality       sql.NullString `json:"municipality"`
+	Neighborhood       sql.NullString `json:"neighborhood"`
+	Address            sql.NullString `json:"address"`
+	RadiusMeters       int32          `json:"radius_meters"`
+	Severity           interface{}    `json:"severity"`
+	Status             interface{}    `json:"status"`
+	CreatedAt          sql.NullTime   `json:"created_at"`
+	ExpiresAt          sql.NullTime   `json:"expires_at"`
+	ResolvedAt         sql.NullTime   `json:"resolved_at"`
+	RiskTypeName       sql.NullString `json:"risk_type_name"`
+	RiskTypeIconPath   sql.NullString `json:"risk_type_icon_path"`
+	RiskTopicName      sql.NullString `json:"risk_topic_name"`
+	RiskTopicIconPath  sql.NullString `json:"risk_topic_icon_path"`
+}
+
+func (q *Queries) GetAlertsByAnonymousSessionID(ctx context.Context, arg GetAlertsByAnonymousSessionIDParams) ([]GetAlertsByAnonymousSessionIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAlertsByAnonymousSessionID, arg.AnonymousSessionID, arg.DeviceID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Alert{}
+	items := []GetAlertsByAnonymousSessionIDRow{}
 	for rows.Next() {
-		var i Alert
+		var i GetAlertsByAnonymousSessionIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedBy,
@@ -216,6 +290,10 @@ func (q *Queries) GetAlertsByAnonymousSessionID(ctx context.Context, arg GetAler
 			&i.CreatedAt,
 			&i.ExpiresAt,
 			&i.ResolvedAt,
+			&i.RiskTypeName,
+			&i.RiskTypeIconPath,
+			&i.RiskTopicName,
+			&i.RiskTopicIconPath,
 		); err != nil {
 			return nil, err
 		}
@@ -231,20 +309,54 @@ func (q *Queries) GetAlertsByAnonymousSessionID(ctx context.Context, arg GetAler
 }
 
 const getAlertsByUserID = `-- name: GetAlertsByUserID :many
-SELECT id, created_by, anonymous_session_id, device_id, risk_type_id, risk_topic_id, message, latitude, longitude, province, municipality, neighborhood, address, radius_meters, severity, status, created_at, expires_at, resolved_at FROM alerts
-WHERE created_by = $1
-ORDER BY created_at DESC
+SELECT 
+    a.id, a.created_by, a.anonymous_session_id, a.device_id, a.risk_type_id, a.risk_topic_id, a.message, a.latitude, a.longitude, a.province, a.municipality, a.neighborhood, a.address, a.radius_meters, a.severity, a.status, a.created_at, a.expires_at, a.resolved_at,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM alerts a
+LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
+WHERE a.created_by = $1
+ORDER BY a.created_at DESC
 `
 
-func (q *Queries) GetAlertsByUserID(ctx context.Context, createdBy uuid.NullUUID) ([]Alert, error) {
+type GetAlertsByUserIDRow struct {
+	ID                 uuid.UUID      `json:"id"`
+	CreatedBy          uuid.NullUUID  `json:"created_by"`
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+	RiskTypeID         uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID        uuid.NullUUID  `json:"risk_topic_id"`
+	Message            string         `json:"message"`
+	Latitude           float64        `json:"latitude"`
+	Longitude          float64        `json:"longitude"`
+	Province           sql.NullString `json:"province"`
+	Municipality       sql.NullString `json:"municipality"`
+	Neighborhood       sql.NullString `json:"neighborhood"`
+	Address            sql.NullString `json:"address"`
+	RadiusMeters       int32          `json:"radius_meters"`
+	Severity           interface{}    `json:"severity"`
+	Status             interface{}    `json:"status"`
+	CreatedAt          sql.NullTime   `json:"created_at"`
+	ExpiresAt          sql.NullTime   `json:"expires_at"`
+	ResolvedAt         sql.NullTime   `json:"resolved_at"`
+	RiskTypeName       sql.NullString `json:"risk_type_name"`
+	RiskTypeIconPath   sql.NullString `json:"risk_type_icon_path"`
+	RiskTopicName      sql.NullString `json:"risk_topic_name"`
+	RiskTopicIconPath  sql.NullString `json:"risk_topic_icon_path"`
+}
+
+func (q *Queries) GetAlertsByUserID(ctx context.Context, createdBy uuid.NullUUID) ([]GetAlertsByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAlertsByUserID, createdBy)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Alert{}
+	items := []GetAlertsByUserIDRow{}
 	for rows.Next() {
-		var i Alert
+		var i GetAlertsByUserIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedBy,
@@ -265,6 +377,10 @@ func (q *Queries) GetAlertsByUserID(ctx context.Context, createdBy uuid.NullUUID
 			&i.CreatedAt,
 			&i.ExpiresAt,
 			&i.ResolvedAt,
+			&i.RiskTypeName,
+			&i.RiskTypeIconPath,
+			&i.RiskTopicName,
+			&i.RiskTopicIconPath,
 		); err != nil {
 			return nil, err
 		}
@@ -280,21 +396,55 @@ func (q *Queries) GetAlertsByUserID(ctx context.Context, createdBy uuid.NullUUID
 }
 
 const getSubscribedAlerts = `-- name: GetSubscribedAlerts :many
-SELECT a.id, a.created_by, a.anonymous_session_id, a.device_id, a.risk_type_id, a.risk_topic_id, a.message, a.latitude, a.longitude, a.province, a.municipality, a.neighborhood, a.address, a.radius_meters, a.severity, a.status, a.created_at, a.expires_at, a.resolved_at FROM alerts a
+SELECT 
+    a.id, a.created_by, a.anonymous_session_id, a.device_id, a.risk_type_id, a.risk_topic_id, a.message, a.latitude, a.longitude, a.province, a.municipality, a.neighborhood, a.address, a.radius_meters, a.severity, a.status, a.created_at, a.expires_at, a.resolved_at,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM alerts a
 INNER JOIN alert_subscriptions s ON a.id = s.alert_id
+LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
 WHERE s.user_id = $1
 ORDER BY s.subscribed_at DESC
 `
 
-func (q *Queries) GetSubscribedAlerts(ctx context.Context, userID uuid.NullUUID) ([]Alert, error) {
+type GetSubscribedAlertsRow struct {
+	ID                 uuid.UUID      `json:"id"`
+	CreatedBy          uuid.NullUUID  `json:"created_by"`
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+	RiskTypeID         uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID        uuid.NullUUID  `json:"risk_topic_id"`
+	Message            string         `json:"message"`
+	Latitude           float64        `json:"latitude"`
+	Longitude          float64        `json:"longitude"`
+	Province           sql.NullString `json:"province"`
+	Municipality       sql.NullString `json:"municipality"`
+	Neighborhood       sql.NullString `json:"neighborhood"`
+	Address            sql.NullString `json:"address"`
+	RadiusMeters       int32          `json:"radius_meters"`
+	Severity           interface{}    `json:"severity"`
+	Status             interface{}    `json:"status"`
+	CreatedAt          sql.NullTime   `json:"created_at"`
+	ExpiresAt          sql.NullTime   `json:"expires_at"`
+	ResolvedAt         sql.NullTime   `json:"resolved_at"`
+	RiskTypeName       sql.NullString `json:"risk_type_name"`
+	RiskTypeIconPath   sql.NullString `json:"risk_type_icon_path"`
+	RiskTopicName      sql.NullString `json:"risk_topic_name"`
+	RiskTopicIconPath  sql.NullString `json:"risk_topic_icon_path"`
+}
+
+func (q *Queries) GetSubscribedAlerts(ctx context.Context, userID uuid.NullUUID) ([]GetSubscribedAlertsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getSubscribedAlerts, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Alert{}
+	items := []GetSubscribedAlertsRow{}
 	for rows.Next() {
-		var i Alert
+		var i GetSubscribedAlertsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedBy,
@@ -315,6 +465,10 @@ func (q *Queries) GetSubscribedAlerts(ctx context.Context, userID uuid.NullUUID)
 			&i.CreatedAt,
 			&i.ExpiresAt,
 			&i.ResolvedAt,
+			&i.RiskTypeName,
+			&i.RiskTypeIconPath,
+			&i.RiskTopicName,
+			&i.RiskTopicIconPath,
 		); err != nil {
 			return nil, err
 		}
@@ -424,20 +578,54 @@ func (q *Queries) IsUserSubscribed(ctx context.Context, arg IsUserSubscribedPara
 }
 
 const listActiveAlerts = `-- name: ListActiveAlerts :many
-SELECT id, created_by, anonymous_session_id, device_id, risk_type_id, risk_topic_id, message, latitude, longitude, province, municipality, neighborhood, address, radius_meters, severity, status, created_at, expires_at, resolved_at FROM alerts
-WHERE status = 'active' AND (expires_at IS NULL OR expires_at > NOW())
-ORDER BY created_at DESC
+SELECT 
+    a.id, a.created_by, a.anonymous_session_id, a.device_id, a.risk_type_id, a.risk_topic_id, a.message, a.latitude, a.longitude, a.province, a.municipality, a.neighborhood, a.address, a.radius_meters, a.severity, a.status, a.created_at, a.expires_at, a.resolved_at,
+    rt.name as risk_type_name,
+    rt.icon_path as risk_type_icon_path,
+    rtopic.name as risk_topic_name,
+    rtopic.icon_path as risk_topic_icon_path
+FROM alerts a
+LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
+LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
+WHERE a.status = 'active' AND (a.expires_at IS NULL OR a.expires_at > NOW())
+ORDER BY a.created_at DESC
 `
 
-func (q *Queries) ListActiveAlerts(ctx context.Context) ([]Alert, error) {
+type ListActiveAlertsRow struct {
+	ID                 uuid.UUID      `json:"id"`
+	CreatedBy          uuid.NullUUID  `json:"created_by"`
+	AnonymousSessionID uuid.NullUUID  `json:"anonymous_session_id"`
+	DeviceID           sql.NullString `json:"device_id"`
+	RiskTypeID         uuid.UUID      `json:"risk_type_id"`
+	RiskTopicID        uuid.NullUUID  `json:"risk_topic_id"`
+	Message            string         `json:"message"`
+	Latitude           float64        `json:"latitude"`
+	Longitude          float64        `json:"longitude"`
+	Province           sql.NullString `json:"province"`
+	Municipality       sql.NullString `json:"municipality"`
+	Neighborhood       sql.NullString `json:"neighborhood"`
+	Address            sql.NullString `json:"address"`
+	RadiusMeters       int32          `json:"radius_meters"`
+	Severity           interface{}    `json:"severity"`
+	Status             interface{}    `json:"status"`
+	CreatedAt          sql.NullTime   `json:"created_at"`
+	ExpiresAt          sql.NullTime   `json:"expires_at"`
+	ResolvedAt         sql.NullTime   `json:"resolved_at"`
+	RiskTypeName       sql.NullString `json:"risk_type_name"`
+	RiskTypeIconPath   sql.NullString `json:"risk_type_icon_path"`
+	RiskTopicName      sql.NullString `json:"risk_topic_name"`
+	RiskTopicIconPath  sql.NullString `json:"risk_topic_icon_path"`
+}
+
+func (q *Queries) ListActiveAlerts(ctx context.Context) ([]ListActiveAlertsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listActiveAlerts)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Alert{}
+	items := []ListActiveAlertsRow{}
 	for rows.Next() {
-		var i Alert
+		var i ListActiveAlertsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedBy,
@@ -458,6 +646,10 @@ func (q *Queries) ListActiveAlerts(ctx context.Context) ([]Alert, error) {
 			&i.CreatedAt,
 			&i.ExpiresAt,
 			&i.ResolvedAt,
+			&i.RiskTypeName,
+			&i.RiskTypeIconPath,
+			&i.RiskTopicName,
+			&i.RiskTopicIconPath,
 		); err != nil {
 			return nil, err
 		}
