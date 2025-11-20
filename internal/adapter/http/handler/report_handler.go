@@ -373,21 +373,22 @@ func (h *ReportHandler) VoteReport(w http.ResponseWriter, r *http.Request) {
 	var userID *uuid.UUID
 	var anonymousSessionID *uuid.UUID
 
-	if hasUser {
+	switch {
+	case hasUser:
 		uid, err := dto.ParseUUID(userIDStr)
 		if err != nil {
 			util.Error(w, "invalid user ID", http.StatusBadRequest)
 			return
 		}
 		userID = &uid
-	} else if deviceID != "" {
+	case deviceID != "":
 		sessionID, err := uuid.Parse(deviceID)
 		if err != nil {
 			util.Error(w, "invalid device ID", http.StatusBadRequest)
 			return
 		}
 		anonymousSessionID = &sessionID
-	} else {
+	default:
 		util.Error(w, "authentication required", http.StatusUnauthorized)
 		return
 	}

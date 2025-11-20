@@ -8,6 +8,7 @@ import (
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/model"
 )
 
+//nolint:interfacebloat // repository interface naturally has many methods
 type UserRepository interface {
 	GenericRepository[model.User]
 	FindByEmail(ctx context.Context, email string) (*model.User, error)

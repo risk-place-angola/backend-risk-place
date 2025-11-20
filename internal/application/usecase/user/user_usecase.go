@@ -562,6 +562,7 @@ func (uc *UserUseCase) UpdateNotificationPreferences(ctx context.Context, userID
 	return nil
 }
 
+//nolint:nonamedreturns // multiple bool returns need names for clarity
 func (uc *UserUseCase) GetNotificationPreferences(ctx context.Context, userID uuid.UUID, deviceID string) (pushEnabled, smsEnabled bool, err error) {
 	if userID != uuid.Nil {
 		return uc.userRepo.GetNotificationPreferences(ctx, userID)

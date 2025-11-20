@@ -18,12 +18,14 @@ const (
 	MaxFileSize = 10 * 1024 * 1024 // 10MB
 )
 
-var AllowedExtensions = map[string]bool{
-	".png":  true,
-	".jpg":  true,
-	".jpeg": true,
-	".webp": true,
-	".svg":  true,
+func getAllowedExtensions() map[string]bool {
+	return map[string]bool{
+		".png":  true,
+		".jpg":  true,
+		".jpeg": true,
+		".webp": true,
+		".svg":  true,
+	}
 }
 
 type StorageHandler struct {
@@ -63,7 +65,7 @@ func (h *StorageHandler) uploadIcon(w http.ResponseWriter, r *http.Request, fold
 		writeJSONError(w, http.StatusBadRequest, "file is required")
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	if header.Size > MaxFileSize {
 		writeJSONError(w, http.StatusBadRequest, "file size exceeds 10MB")
@@ -71,7 +73,7 @@ func (h *StorageHandler) uploadIcon(w http.ResponseWriter, r *http.Request, fold
 	}
 
 	ext := strings.ToLower(filepath.Ext(header.Filename))
-	if !AllowedExtensions[ext] {
+	if !getAllowedExtensions()[ext] {
 		writeJSONError(w, http.StatusBadRequest, "invalid file type. Allowed: png, jpg, jpeg, webp, svg")
 		return
 	}
@@ -123,7 +125,7 @@ func (h *StorageHandler) ServeFile(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusNotFound, "file not found")
 		return
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	ext := strings.ToLower(filepath.Ext(path))
 	contentType := "application/octet-stream"
@@ -151,7 +153,9 @@ func (h *StorageHandler) ServeFile(w http.ResponseWriter, r *http.Request) {
 func writeJSON(w http.ResponseWriter, status int, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		slog.Error("failed to encode JSON response", "error", err)
+	}
 }
 
 func writeJSONError(w http.ResponseWriter, status int, message string) {

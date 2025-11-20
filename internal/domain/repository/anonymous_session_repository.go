@@ -6,6 +6,7 @@ import (
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/model"
 )
 
+//nolint:interfacebloat // repository interface naturally has many methods
 type AnonymousSessionRepository interface {
 	Create(ctx context.Context, session *model.AnonymousSession) error
 	FindByDeviceID(ctx context.Context, deviceID string) (*model.AnonymousSession, error)

@@ -86,7 +86,7 @@ func registerBroadcastHandler[T any](
 	userRepo domainrepository.UserRepository,
 	anonymousSessionRepo domainrepository.AnonymousSessionRepository,
 	notifierPush port.NotifierPushService,
-	notifierSMS port.NotifierSMSService,
+	_ port.NotifierSMSService,
 	translationService *service.TranslationService,
 	eventName string,
 	broadcast func(context.Context, *websocket.Hub, T),
@@ -166,18 +166,6 @@ func registerBroadcastHandler[T any](
 		}
 	})
 }
-
-func getMessage(e any) string {
-	switch v := e.(type) {
-	case event.AlertCreatedEvent:
-		return v.Message
-	case event.ReportCreatedEvent:
-		return v.Message
-	default:
-		return ""
-	}
-}
-
 func registerEventHandlers(dispatcher port.EventDispatcher, eventName string, handler func(e event.Event)) {
 	dispatcher.Register(eventName, handler)
 }

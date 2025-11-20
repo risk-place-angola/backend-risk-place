@@ -144,68 +144,6 @@ func (a alertRepoPG) IsUserSubscribed(ctx context.Context, alertID, userID uuid.
 	return result, nil
 }
 
-func (a alertRepoPG) toDomain(row sqlc.Alert) *model.Alert {
-	var status model.AlertStatus
-	if s, ok := row.Status.(string); ok {
-		status = model.AlertStatus(s)
-	}
-
-	var severity model.Severity
-	if sev, ok := row.Severity.(string); ok {
-		severity = model.Severity(sev)
-	}
-
-	alert := &model.Alert{
-		ID:           row.ID,
-		RiskTypeID:   row.RiskTypeID,
-		Message:      row.Message,
-		Latitude:     row.Latitude,
-		Longitude:    row.Longitude,
-		RadiusMeters: int(row.RadiusMeters),
-		Status:       status,
-		Severity:     severity,
-	}
-
-	if row.CreatedBy.Valid {
-		createdBy := row.CreatedBy.UUID
-		alert.CreatedBy = &createdBy
-	}
-
-	if row.RiskTopicID.Valid {
-		alert.RiskTopicID = row.RiskTopicID.UUID
-	}
-
-	if row.Province.Valid {
-		alert.Province = row.Province.String
-	}
-
-	if row.Municipality.Valid {
-		alert.Municipality = row.Municipality.String
-	}
-
-	if row.Neighborhood.Valid {
-		alert.Neighborhood = row.Neighborhood.String
-	}
-
-	if row.Address.Valid {
-		alert.Address = row.Address.String
-	}
-
-	if row.CreatedAt.Valid {
-		alert.CreatedAt = row.CreatedAt.Time
-	}
-
-	if row.ExpiresAt.Valid {
-		alert.ExpiresAt = row.ExpiresAt.Time
-	}
-
-	if row.ResolvedAt.Valid {
-		alert.ResolvedAt = row.ResolvedAt.Time
-	}
-
-	return alert
-}
-
 // convertToAlert is a generic helper function to convert any alert row type to domain model
 func (a alertRepoPG) convertToAlert(
 	id uuid.UUID,
@@ -379,64 +317,6 @@ func (a alertRepoPG) getAlertsByUserIDRowToModel(row sqlc.GetAlertsByUserIDRow) 
 
 // getSubscribedAlertsRowToModel converts GetSubscribedAlertsRow to domain model
 func (a alertRepoPG) getSubscribedAlertsRowToModel(row sqlc.GetSubscribedAlertsRow) *model.Alert {
-	return a.convertToAlert(
-		row.ID,
-		row.CreatedBy,
-		row.AnonymousSessionID,
-		row.DeviceID,
-		row.RiskTypeID,
-		row.RiskTopicID,
-		row.Message,
-		row.Latitude,
-		row.Longitude,
-		row.Province,
-		row.Municipality,
-		row.Neighborhood,
-		row.Address,
-		row.RadiusMeters,
-		row.Severity,
-		row.Status,
-		row.CreatedAt,
-		row.ExpiresAt,
-		row.ResolvedAt,
-		row.RiskTypeName,
-		row.RiskTypeIconPath,
-		row.RiskTopicName,
-		row.RiskTopicIconPath,
-	)
-}
-
-// getAlertsByAnonymousSessionIDRowToModel converts GetAlertsByAnonymousSessionIDRow to domain model
-func (a alertRepoPG) getAlertsByAnonymousSessionIDRowToModel(row sqlc.GetAlertsByAnonymousSessionIDRow) *model.Alert {
-	return a.convertToAlert(
-		row.ID,
-		row.CreatedBy,
-		row.AnonymousSessionID,
-		row.DeviceID,
-		row.RiskTypeID,
-		row.RiskTopicID,
-		row.Message,
-		row.Latitude,
-		row.Longitude,
-		row.Province,
-		row.Municipality,
-		row.Neighborhood,
-		row.Address,
-		row.RadiusMeters,
-		row.Severity,
-		row.Status,
-		row.CreatedAt,
-		row.ExpiresAt,
-		row.ResolvedAt,
-		row.RiskTypeName,
-		row.RiskTypeIconPath,
-		row.RiskTopicName,
-		row.RiskTopicIconPath,
-	)
-}
-
-// listActiveAlertsRowToModel converts ListActiveAlertsRow to domain model
-func (a alertRepoPG) listActiveAlertsRowToModel(row sqlc.ListActiveAlertsRow) *model.Alert {
 	return a.convertToAlert(
 		row.ID,
 		row.CreatedBy,

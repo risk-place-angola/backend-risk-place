@@ -137,12 +137,12 @@ func (s *ReportVerificationService) CalculateReportExpiryTime() time.Time {
 	return time.Now().Add(reportExpiryHours * time.Hour)
 }
 
-func clamp(value, min, max int) int {
-	if value < min {
-		return min
+func clamp(value, minVal, maxVal int) int {
+	if value < minVal {
+		return minVal
 	}
-	if value > max {
-		return max
+	if value > maxVal {
+		return maxVal
 	}
 	return value
 }

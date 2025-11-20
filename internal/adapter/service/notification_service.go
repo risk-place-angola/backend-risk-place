@@ -41,6 +41,7 @@ func (s *NotificationService) SendNotificationWithFallback(ctx context.Context, 
 	var phone, fcmToken string
 	var err error
 
+	//nolint:nestif // complex notification logic requires nested conditions
 	if userID != "" {
 		uid, parseErr := uuid.Parse(userID)
 		if parseErr != nil {
@@ -55,7 +56,7 @@ func (s *NotificationService) SendNotificationWithFallback(ctx context.Context, 
 			smsEnabled = false
 		}
 
-		language, phone, err = s.userRepo.GetUserLanguageAndPhone(ctx, uid)
+		_, phone, err = s.userRepo.GetUserLanguageAndPhone(ctx, uid)
 		if err != nil {
 			slog.Error("failed to get user language and phone", "error", err)
 		}
@@ -128,6 +129,7 @@ func (s *NotificationService) SendNotificationToMultiple(ctx context.Context, us
 
 	tokens = append(tokens, deviceTokens...)
 
+	//nolint:nestif // complex notification logic requires nested conditions
 	if len(tokens) > 0 {
 		err := s.pushService.NotifyPushMulti(ctx, tokens, msg.Title, msg.Body, data)
 		if err != nil {

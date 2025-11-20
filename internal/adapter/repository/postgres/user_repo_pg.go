@@ -212,6 +212,7 @@ func (u *userRepoPG) UpdateNotificationPreferences(ctx context.Context, userID u
 	return err
 }
 
+//nolint:nonamedreturns // multiple bool returns need names for clarity
 func (u *userRepoPG) GetNotificationPreferences(ctx context.Context, userID uuid.UUID) (pushEnabled, smsEnabled bool, err error) {
 	query := `
 		SELECT push_notification_enabled, sms_notification_enabled 
@@ -222,6 +223,7 @@ func (u *userRepoPG) GetNotificationPreferences(ctx context.Context, userID uuid
 	return
 }
 
+//nolint:nonamedreturns // multiple string returns need names for clarity
 func (u *userRepoPG) GetUserLanguageAndPhone(ctx context.Context, userID uuid.UUID) (language, phone string, err error) {
 	query := `
 		SELECT COALESCE(device_language, 'pt'), COALESCE(phone, '') 

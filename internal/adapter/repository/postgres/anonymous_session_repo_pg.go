@@ -327,6 +327,7 @@ func (r *anonymousSessionRepoPG) UpdateNotificationPreferences(ctx context.Conte
 	return nil
 }
 
+//nolint:nonamedreturns // multiple bool returns need names for clarity
 func (r *anonymousSessionRepoPG) GetNotificationPreferences(ctx context.Context, deviceID string) (pushEnabled, smsEnabled bool, err error) {
 	query := `
 		SELECT push_notification_enabled, sms_notification_enabled 
