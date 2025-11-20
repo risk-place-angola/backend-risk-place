@@ -36,13 +36,12 @@ func (s *nearbyUsersService) UpdateUserLocation(ctx context.Context, userID uuid
 	}
 
 	// Save history asynchronously without blocking the main request
-	// Use context.WithoutCancel to prevent cancellation from propagating to background task
-	go func() {
-		backgroundCtx := context.WithoutCancel(ctx)
-		if err := s.repo.SaveHistory(backgroundCtx, userID, lat, lon, speed, heading, deviceID); err != nil {
-			slog.Error("failed to save location history", slog.Any("error", err), slog.String("user_id", userID.String()))
+	// Create a detached context to prevent cancellation from propagating to background task
+	go func(bgCtx context.Context, uid uuid.UUID, latitude, longitude, spd, hdg float64, devID string) {
+		if err := s.repo.SaveHistory(bgCtx, uid, latitude, longitude, spd, hdg, devID); err != nil {
+			slog.Error("failed to save location history", slog.Any("error", err), slog.String("user_id", uid.String()))
 		}
-	}()
+	}(context.WithoutCancel(ctx), userID, lat, lon, speed, heading, deviceID)
 
 	return nil
 }
