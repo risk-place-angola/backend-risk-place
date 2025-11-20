@@ -118,11 +118,21 @@ func (h *Hub) sendNearbyUsersToClient(ctx context.Context, client *Client) {
 	}
 
 	const defaultRadius = 5000.0
+
+	slog.Debug("broadcasting nearby users to client",
+		slog.String("user_id", client.UserID),
+		slog.Float64("lat", client.lastLat),
+		slog.Float64("lon", client.lastLon))
+
 	users, err := h.nearbyUsersService.GetNearbyUsers(ctx, client.UserID, client.lastLat, client.lastLon, defaultRadius)
 	if err != nil {
 		slog.Error("failed to get nearby users for broadcast", "user_id", client.UserID, "error", err)
 		return
 	}
+
+	slog.Debug("got nearby users for broadcast",
+		slog.String("user_id", client.UserID),
+		slog.Int("count", len(users)))
 
 	responses := make([]NearbyUserResponse, len(users))
 	for i, u := range users {
@@ -168,16 +178,22 @@ func (h *Hub) handleIncomingMessage(ctx context.Context, c *Client, raw []byte) 
 		c.lastLat = payload.Latitude
 		c.lastLon = payload.Longitude
 
+		slog.Info("updating location via websocket",
+			slog.String("user_id", c.UserID),
+			slog.Float64("lat", payload.Latitude),
+			slog.Float64("lon", payload.Longitude),
+			slog.Bool("is_authenticated", c.IsAuthenticated))
+
 		err = h.locationStore.UpdateUserLocation(ctx, c.UserID, payload.Latitude, payload.Longitude)
 		if err != nil {
-			log.Printf("failed to update location: %v", err)
+			slog.Error("failed to update location store", slog.Any("error", err))
 			return
 		}
 
 		isAnonymous := !c.IsAuthenticated
 		err = h.nearbyUsersService.UpdateUserLocation(ctx, c.UserID, c.UserID, payload.Latitude, payload.Longitude, payload.Speed, payload.Heading, isAnonymous)
 		if err != nil {
-			log.Printf("failed to update user location: %v", err)
+			slog.Error("failed to update user location in nearby service", slog.Any("error", err))
 		}
 
 		c.SendJSON("location_updated", map[string]interface{}{"status": "ok"})
