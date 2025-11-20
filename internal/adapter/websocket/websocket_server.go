@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 
@@ -9,16 +10,19 @@ import (
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/http/util"
 )
 
+type contextKey string
+
+const (
+	maxWebSocketMessageSize            = 256
+	websocketContextKey     contextKey = "websocket"
+)
+
 type WSHandler struct {
 	Hub                *Hub
 	AuthMiddleware     middleware.AuthMiddleware
 	OptionalMiddleware *middleware.OptionalAuthMiddleware
 	upgrader           websocket.Upgrader
 }
-
-const (
-	maxWebSocketMessageSize = 256
-)
 
 func NewWSHandler(hub *Hub, authMiddleware middleware.AuthMiddleware, optionalMiddleware *middleware.OptionalAuthMiddleware) *WSHandler {
 	return &WSHandler{
@@ -75,5 +79,8 @@ func (h *WSHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	h.Hub.register <- client
 
 	go client.WritePump()
-	go client.ReadPump(r.Context())
+	// WebSocket connections need a long-lived context independent of the HTTP request
+	// r.Context() is canceled after the upgrade, so we use context.Background()
+	//nolint:contextcheck // WebSocket requires independent context after HTTP upgrade
+	go client.ReadPump(context.Background())
 }
