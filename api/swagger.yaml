@@ -902,6 +902,60 @@ definitions:
       sequence:
         type: integer
     type: object
+  handler.GetNearbyUsersRequest:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+      radius:
+        type: number
+    required:
+    - latitude
+    - longitude
+    type: object
+  handler.NearbyUsersResponse:
+    properties:
+      radius:
+        type: number
+      total_count:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/handler.UserLocation'
+        type: array
+    type: object
+  handler.UpdateLocationRequest:
+    properties:
+      heading:
+        type: number
+      latitude:
+        type: number
+      longitude:
+        type: number
+      speed:
+        type: number
+    required:
+    - latitude
+    - longitude
+    type: object
+  handler.UserLocation:
+    properties:
+      avatar_id:
+        type: string
+      color:
+        type: string
+      heading:
+        type: number
+      latitude:
+        type: number
+      longitude:
+        type: number
+      speed:
+        type: number
+      user_id:
+        type: string
+    type: object
   util.ErrorResponse:
     properties:
       error:
@@ -1314,6 +1368,86 @@ paths:
       summary: Update shared location coordinates
       tags:
       - location-sharing
+  /api/v1/users/location:
+    post:
+      consumes:
+      - application/json
+      description: Update current user location to be visible on the map for nearby
+        users
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location data with optional speed and heading
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user location for nearby users feature
+      tags:
+      - nearby-users
+  /api/v1/users/nearby:
+    post:
+      consumes:
+      - application/json
+      description: Retrieve list of nearby users with their anonymous avatars within
+        specified radius
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location and radius for searching nearby users
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.GetNearbyUsersRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.NearbyUsersResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "429":
+          description: Rate limit exceeded (max 1 request per 3 seconds)
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get nearby users on the map
+      tags:
+      - nearby-users
   /auth/confirm:
     post:
       consumes:
