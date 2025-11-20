@@ -475,6 +475,14 @@ func mapSlice[T any, R any](in []T, fn func(T) *R) []*R {
 }
 
 func (r *ReportPG) AddVote(ctx context.Context, vote *model.ReportVote) error {
+	if vote.AnonymousSessionID != nil {
+		return r.q.AddAnonymousReportVote(ctx, sqlc.AddAnonymousReportVoteParams{
+			ReportID:           vote.ReportID,
+			AnonymousSessionID: uuidPtrToNullUUID(vote.AnonymousSessionID),
+			VoteType:           string(vote.VoteType),
+		})
+	}
+
 	return r.q.AddUserReportVote(ctx, sqlc.AddUserReportVoteParams{
 		ReportID: vote.ReportID,
 		UserID:   uuidPtrToNullUUID(vote.UserID),
