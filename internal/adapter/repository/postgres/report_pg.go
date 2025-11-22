@@ -25,7 +25,6 @@ func NewReportRepoPG(db *sql.DB, locationStore port.LocationStore) repository.Re
 	}
 }
 
-// Common conversion logic
 func convertToReport(
 	id, userID, riskTypeID uuid.UUID,
 	riskTypeName, riskTypeIconPath sql.NullString,
@@ -39,6 +38,7 @@ func convertToReport(
 	resolvedAt sql.NullTime,
 	verificationCount, rejectionCount sql.NullInt32,
 	expiresAt, createdAt, updatedAt sql.NullTime,
+	isPrivate sql.NullBool,
 ) *model.Report {
 	reportStatus, ok := status.(model.ReportStatus)
 	if !ok {
@@ -94,94 +94,58 @@ func convertToReport(
 		VerificationCount: int(verificationCount.Int32),
 		RejectionCount:    int(rejectionCount.Int32),
 		ExpiresAt:         expiresAtTime,
+		IsPrivate:         isPrivate.Bool,
 		CreatedAt:         createdAt.Time,
 		UpdatedAt:         updatedAt.Time,
 	}
 }
 
+func mapReportRow(id, userID, riskTypeID uuid.UUID, riskTypeName, riskTypeIconPath sql.NullString,
+	riskTopicID uuid.NullUUID, riskTopicName, riskTopicIconPath, description sql.NullString,
+	latitude, longitude float64, province, municipality, neighborhood, address, imageUrl sql.NullString,
+	status interface{}, reviewedBy uuid.NullUUID, resolvedAt sql.NullTime,
+	verificationCount, rejectionCount sql.NullInt32, expiresAt, createdAt, updatedAt sql.NullTime,
+	isPrivate bool) *model.Report {
+	return convertToReport(id, userID, riskTypeID, riskTypeName, riskTypeIconPath,
+		riskTopicID, riskTopicName, riskTopicIconPath, description, latitude, longitude,
+		province, municipality, neighborhood, address, imageUrl, status, reviewedBy, resolvedAt,
+		verificationCount, rejectionCount, expiresAt, createdAt, updatedAt,
+		sql.NullBool{Bool: isPrivate, Valid: true})
+}
+
 func getReportByIDRowToModel(r sqlc.GetReportByIDRow) *model.Report {
-	return convertToReport(
-		r.ID, r.UserID, r.RiskTypeID,
-		r.RiskTypeName, r.RiskTypeIconPath,
-		r.RiskTopicID,
-		r.RiskTopicName, r.RiskTopicIconPath,
-		r.Description,
-		r.Latitude, r.Longitude,
-		r.Province, r.Municipality, r.Neighborhood, r.Address, r.ImageUrl,
-		r.Status,
-		r.ReviewedBy,
-		r.ResolvedAt,
-		r.VerificationCount, r.RejectionCount,
-		r.ExpiresAt, r.CreatedAt, r.UpdatedAt,
-	)
+	return mapReportRow(r.ID, r.UserID, r.RiskTypeID, r.RiskTypeName, r.RiskTypeIconPath,
+		r.RiskTopicID, r.RiskTopicName, r.RiskTopicIconPath, r.Description, r.Latitude, r.Longitude,
+		r.Province, r.Municipality, r.Neighborhood, r.Address, r.ImageUrl, r.Status, r.ReviewedBy,
+		r.ResolvedAt, r.VerificationCount, r.RejectionCount, r.ExpiresAt, r.CreatedAt, r.UpdatedAt, r.IsPrivate)
 }
 
 func listReportsByStatusRowToModel(r sqlc.ListReportsByStatusRow) *model.Report {
-	return convertToReport(
-		r.ID, r.UserID, r.RiskTypeID,
-		r.RiskTypeName, r.RiskTypeIconPath,
-		r.RiskTopicID,
-		r.RiskTopicName, r.RiskTopicIconPath,
-		r.Description,
-		r.Latitude, r.Longitude,
-		r.Province, r.Municipality, r.Neighborhood, r.Address, r.ImageUrl,
-		r.Status,
-		r.ReviewedBy,
-		r.ResolvedAt,
-		r.VerificationCount, r.RejectionCount,
-		r.ExpiresAt, r.CreatedAt, r.UpdatedAt,
-	)
+	return mapReportRow(r.ID, r.UserID, r.RiskTypeID, r.RiskTypeName, r.RiskTypeIconPath,
+		r.RiskTopicID, r.RiskTopicName, r.RiskTopicIconPath, r.Description, r.Latitude, r.Longitude,
+		r.Province, r.Municipality, r.Neighborhood, r.Address, r.ImageUrl, r.Status, r.ReviewedBy,
+		r.ResolvedAt, r.VerificationCount, r.RejectionCount, r.ExpiresAt, r.CreatedAt, r.UpdatedAt, r.IsPrivate)
 }
 
 func listReportsByUserRowToModel(r sqlc.ListReportsByUserRow) *model.Report {
-	return convertToReport(
-		r.ID, r.UserID, r.RiskTypeID,
-		r.RiskTypeName, r.RiskTypeIconPath,
-		r.RiskTopicID,
-		r.RiskTopicName, r.RiskTopicIconPath,
-		r.Description,
-		r.Latitude, r.Longitude,
-		r.Province, r.Municipality, r.Neighborhood, r.Address, r.ImageUrl,
-		r.Status,
-		r.ReviewedBy,
-		r.ResolvedAt,
-		r.VerificationCount, r.RejectionCount,
-		r.ExpiresAt, r.CreatedAt, r.UpdatedAt,
-	)
+	return mapReportRow(r.ID, r.UserID, r.RiskTypeID, r.RiskTypeName, r.RiskTypeIconPath,
+		r.RiskTopicID, r.RiskTopicName, r.RiskTopicIconPath, r.Description, r.Latitude, r.Longitude,
+		r.Province, r.Municipality, r.Neighborhood, r.Address, r.ImageUrl, r.Status, r.ReviewedBy,
+		r.ResolvedAt, r.VerificationCount, r.RejectionCount, r.ExpiresAt, r.CreatedAt, r.UpdatedAt, r.IsPrivate)
 }
 
 func listReportsByIDsRowToModel(r sqlc.ListReportsByIDsRow) *model.Report {
-	return convertToReport(
-		r.ID, r.UserID, r.RiskTypeID,
-		r.RiskTypeName, r.RiskTypeIconPath,
-		r.RiskTopicID,
-		r.RiskTopicName, r.RiskTopicIconPath,
-		r.Description,
-		r.Latitude, r.Longitude,
-		r.Province, r.Municipality, r.Neighborhood, r.Address, r.ImageUrl,
-		r.Status,
-		r.ReviewedBy,
-		r.ResolvedAt,
-		r.VerificationCount, r.RejectionCount,
-		r.ExpiresAt, r.CreatedAt, r.UpdatedAt,
-	)
+	return mapReportRow(r.ID, r.UserID, r.RiskTypeID, r.RiskTypeName, r.RiskTypeIconPath,
+		r.RiskTopicID, r.RiskTopicName, r.RiskTopicIconPath, r.Description, r.Latitude, r.Longitude,
+		r.Province, r.Municipality, r.Neighborhood, r.Address, r.ImageUrl, r.Status, r.ReviewedBy,
+		r.ResolvedAt, r.VerificationCount, r.RejectionCount, r.ExpiresAt, r.CreatedAt, r.UpdatedAt, r.IsPrivate)
 }
 
 func listReportsWithPaginationRowToModel(r sqlc.ListReportsWithPaginationRow) *model.Report {
-	return convertToReport(
-		r.ID, r.UserID, r.RiskTypeID,
-		r.RiskTypeName, r.RiskTypeIconPath,
-		r.RiskTopicID,
-		r.RiskTopicName, r.RiskTopicIconPath,
-		r.Description,
-		r.Latitude, r.Longitude,
-		r.Province, r.Municipality, r.Neighborhood, r.Address, r.ImageUrl,
-		r.Status,
-		r.ReviewedBy,
-		r.ResolvedAt,
-		r.VerificationCount, r.RejectionCount,
-		r.ExpiresAt, r.CreatedAt, r.UpdatedAt,
-	)
+	return mapReportRow(r.ID, r.UserID, r.RiskTypeID, r.RiskTypeName, r.RiskTypeIconPath,
+		r.RiskTopicID, r.RiskTopicName, r.RiskTopicIconPath, r.Description, r.Latitude, r.Longitude,
+		r.Province, r.Municipality, r.Neighborhood, r.Address, r.ImageUrl, r.Status, r.ReviewedBy,
+		r.ResolvedAt, r.VerificationCount, r.RejectionCount, r.ExpiresAt, r.CreatedAt, r.UpdatedAt, r.IsPrivate)
 }
 
 func (r *ReportPG) Create(ctx context.Context, m *model.Report) error {
@@ -314,20 +278,17 @@ func (r *ReportPG) CreateReportNotification(ctx context.Context, reportID uuid.U
 }
 
 func (r *ReportPG) FindByRadius(ctx context.Context, lat float64, lon float64, radiusMeters float64) ([]*model.Report, error) {
-	// 1. Busca IDs dos reports próximos usando Redis (ultra-rápido)
 	reportIDs, err := r.locationStore.FindReportsInRadius(ctx, lat, lon, radiusMeters)
 	if err != nil {
 		slog.Error("failed to find reports in radius from redis", "error", err)
 		return nil, err
 	}
 
-	// Se não encontrou nenhum report próximo, retorna lista vazia
 	if len(reportIDs) == 0 {
 		slog.Info("no reports found in radius")
 		return []*model.Report{}, nil
 	}
 
-	// 2. Converte strings para UUIDs
 	uuids := make([]uuid.UUID, 0, len(reportIDs))
 	for _, id := range reportIDs {
 		reportUUID, err := uuid.Parse(id)
@@ -338,7 +299,6 @@ func (r *ReportPG) FindByRadius(ctx context.Context, lat float64, lon float64, r
 		uuids = append(uuids, reportUUID)
 	}
 
-	// 3. Busca os dados completos dos reports no PostgreSQL
 	items, err := r.q.ListReportsByIDs(ctx, uuids)
 	if err != nil {
 		slog.Error("failed to find reports by ids", "error", err)
@@ -404,26 +364,21 @@ func (r *ReportPG) ListWithPagination(ctx context.Context, params repository.Lis
 }
 
 func (r *ReportPG) FindByRadiusWithDistance(ctx context.Context, lat float64, lon float64, radiusMeters float64, limit int) ([]repository.ReportWithDistance, error) {
-	// 1. Busca reports com distâncias JÁ CALCULADAS e ORDENADAS
-	// O Redis usa algoritmo otimizado em C e retorna resultados já ordenados por distância
 	geoResults, err := r.locationStore.FindReportsInRadiusWithDistance(ctx, lat, lon, radiusMeters)
 	if err != nil {
 		slog.Error("failed to find reports with distance from redis", "error", err)
 		return nil, err
 	}
 
-	// Se não encontrou nenhum report próximo, retorna lista vazia
 	if len(geoResults) == 0 {
 		slog.Info("no reports found in radius")
 		return []repository.ReportWithDistance{}, nil
 	}
 
-	// 2. Aplica limite ANTES de buscar no PostgreSQL (economiza queries)
 	if limit > 0 && limit < len(geoResults) {
 		geoResults = geoResults[:limit]
 	}
 
-	// 3. Converte IDs para UUIDs e cria mapa de distâncias
 	uuids := make([]uuid.UUID, 0, len(geoResults))
 	distanceMap := make(map[string]float64, len(geoResults))
 
@@ -437,21 +392,17 @@ func (r *ReportPG) FindByRadiusWithDistance(ctx context.Context, lat float64, lo
 		distanceMap[gr.Member] = gr.Distance
 	}
 
-	// 4. Busca dados completos em UMA ÚNICA query batch no PostgreSQL
 	items, err := r.q.ListReportsByIDs(ctx, uuids)
 	if err != nil {
 		slog.Error("failed to find reports by ids", "error", err)
 		return nil, err
 	}
 
-	// 5. Monta resultado final mantendo a ordem do Redis (já ordenada por distância)
-	// Creates um mapa para lookup rápido O(1)
 	reportMap := make(map[string]*model.Report, len(items))
 	for _, item := range items {
 		reportMap[item.ID.String()] = listReportsByIDsRowToModel(item)
 	}
 
-	// Reconstrói na ordem correta (ordem do Redis)
 	result := make([]repository.ReportWithDistance, 0, len(geoResults))
 	for _, gr := range geoResults {
 		if report, exists := reportMap[gr.Member]; exists {
@@ -563,20 +514,10 @@ func (r *ReportPG) FindDuplicates(ctx context.Context, lat, lon float64, riskTyp
 }
 
 func findDuplicateReportsRowToModel(r sqlc.FindDuplicateReportsRow) *model.Report {
-	return convertToReport(
-		r.ID, r.UserID, r.RiskTypeID,
-		r.RiskTypeName, r.RiskTypeIconPath,
-		r.RiskTopicID,
-		r.RiskTopicName, r.RiskTopicIconPath,
-		r.Description,
-		r.Latitude, r.Longitude,
-		r.Province, r.Municipality, r.Neighborhood, r.Address, r.ImageUrl,
-		r.Status,
-		r.ReviewedBy,
-		r.ResolvedAt,
-		r.VerificationCount, r.RejectionCount,
-		r.ExpiresAt, r.CreatedAt, r.UpdatedAt,
-	)
+	return mapReportRow(r.ID, r.UserID, r.RiskTypeID, r.RiskTypeName, r.RiskTypeIconPath,
+		r.RiskTopicID, r.RiskTopicName, r.RiskTopicIconPath, r.Description, r.Latitude, r.Longitude,
+		r.Province, r.Municipality, r.Neighborhood, r.Address, r.ImageUrl, r.Status, r.ReviewedBy,
+		r.ResolvedAt, r.VerificationCount, r.RejectionCount, r.ExpiresAt, r.CreatedAt, r.UpdatedAt, r.IsPrivate)
 }
 
 func (r *ReportPG) ExpireOldReports(ctx context.Context, before time.Time) error {

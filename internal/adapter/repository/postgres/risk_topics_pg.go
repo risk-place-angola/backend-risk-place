@@ -49,6 +49,7 @@ func (r *RiskTopicPG) ListRiskTopics(ctx context.Context, riskTypeID *string) ([
 			Name:        rt.Name,
 			Description: description,
 			IconPath:    iconPath,
+			IsSensitive: rt.IsSensitive,
 			CreatedAt:   rt.CreatedAt.Time,
 			UpdatedAt:   rt.UpdatedAt.Time,
 		})
@@ -78,6 +79,7 @@ func (r *RiskTopicPG) GetRiskTopicByID(ctx context.Context, id string) (model.Ri
 		Name:        rt.Name,
 		Description: description,
 		IconPath:    iconPath,
+		IsSensitive: rt.IsSensitive,
 		CreatedAt:   rt.CreatedAt.Time,
 		UpdatedAt:   rt.UpdatedAt.Time,
 	}, nil

@@ -195,6 +195,7 @@ CREATE TABLE risk_topics (
     name TEXT NOT NULL,
     description TEXT,
     icon_path TEXT,
+    is_sensitive BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     UNIQUE (risk_type_id, name)
@@ -219,6 +220,7 @@ CREATE TABLE reports (
     verification_count INT DEFAULT 0,
     rejection_count INT DEFAULT 0,
     expires_at TIMESTAMP,
+    is_private BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP
 );
@@ -337,6 +339,8 @@ CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
 CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_reports_status_created ON reports(status, created_at);
 CREATE INDEX IF NOT EXISTS idx_reports_expires_at ON reports(expires_at);
+CREATE INDEX IF NOT EXISTS idx_reports_is_private ON reports(is_private);
+CREATE INDEX IF NOT EXISTS idx_reports_status_private ON reports(status, is_private);
 
 CREATE INDEX IF NOT EXISTS idx_reports_geo ON reports USING GIST (geography(ST_MakePoint(longitude, latitude)));
 

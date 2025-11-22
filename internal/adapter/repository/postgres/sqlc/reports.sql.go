@@ -49,7 +49,7 @@ func (q *Queries) AddUserReportVote(ctx context.Context, arg AddUserReportVotePa
 
 const countReports = `-- name: CountReports :one
 SELECT COUNT(*) FROM reports
-WHERE ($1::text IS NULL OR status = $1::report_status)
+WHERE ($1::text IS NULL OR status = $1::report_status) AND is_private = FALSE
 `
 
 func (q *Queries) CountReports(ctx context.Context, status sql.NullString) (int64, error) {
@@ -144,7 +144,7 @@ func (q *Queries) ExpireOldReports(ctx context.Context, expiresAt sql.NullTime) 
 
 const findDuplicateReports = `-- name: FindDuplicateReports :many
 SELECT 
-    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description, r.latitude, r.longitude, r.province, r.municipality, r.neighborhood, r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at, r.verification_count, r.rejection_count, r.expires_at, r.created_at, r.updated_at,
+    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description, r.latitude, r.longitude, r.province, r.municipality, r.neighborhood, r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at, r.verification_count, r.rejection_count, r.expires_at, r.is_private, r.created_at, r.updated_at,
     rt.name as risk_type_name,
     rt.icon_path as risk_type_icon_path,
     rtopic.name as risk_topic_name,
@@ -154,6 +154,7 @@ LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
 WHERE r.risk_type_id = $1
   AND r.status = 'pending'
+  AND r.is_private = FALSE
   AND r.created_at > $2
   AND ST_DWithin(
     ST_MakePoint(r.longitude, r.latitude)::geography,
@@ -190,6 +191,7 @@ type FindDuplicateReportsRow struct {
 	VerificationCount sql.NullInt32  `json:"verification_count"`
 	RejectionCount    sql.NullInt32  `json:"rejection_count"`
 	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	IsPrivate         bool           `json:"is_private"`
 	CreatedAt         sql.NullTime   `json:"created_at"`
 	UpdatedAt         sql.NullTime   `json:"updated_at"`
 	RiskTypeName      sql.NullString `json:"risk_type_name"`
@@ -232,6 +234,7 @@ func (q *Queries) FindDuplicateReports(ctx context.Context, arg FindDuplicateRep
 			&i.VerificationCount,
 			&i.RejectionCount,
 			&i.ExpiresAt,
+			&i.IsPrivate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.RiskTypeName,
@@ -277,7 +280,7 @@ func (q *Queries) GetAnonymousVote(ctx context.Context, arg GetAnonymousVotePara
 
 const getReportByID = `-- name: GetReportByID :one
 SELECT 
-    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description, r.latitude, r.longitude, r.province, r.municipality, r.neighborhood, r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at, r.verification_count, r.rejection_count, r.expires_at, r.created_at, r.updated_at,
+    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description, r.latitude, r.longitude, r.province, r.municipality, r.neighborhood, r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at, r.verification_count, r.rejection_count, r.expires_at, r.is_private, r.created_at, r.updated_at,
     rt.name as risk_type_name,
     rt.icon_path as risk_type_icon_path,
     rtopic.name as risk_topic_name,
@@ -307,6 +310,7 @@ type GetReportByIDRow struct {
 	VerificationCount sql.NullInt32  `json:"verification_count"`
 	RejectionCount    sql.NullInt32  `json:"rejection_count"`
 	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	IsPrivate         bool           `json:"is_private"`
 	CreatedAt         sql.NullTime   `json:"created_at"`
 	UpdatedAt         sql.NullTime   `json:"updated_at"`
 	RiskTypeName      sql.NullString `json:"risk_type_name"`
@@ -337,6 +341,7 @@ func (q *Queries) GetReportByID(ctx context.Context, id uuid.UUID) (GetReportByI
 		&i.VerificationCount,
 		&i.RejectionCount,
 		&i.ExpiresAt,
+		&i.IsPrivate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.RiskTypeName,
@@ -393,7 +398,7 @@ SELECT
     r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description,
     r.latitude, r.longitude, r.province, r.municipality, r.neighborhood,
     r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at,
-    r.verification_count, r.rejection_count, r.expires_at,
+    r.verification_count, r.rejection_count, r.expires_at, r.is_private,
     r.created_at, r.updated_at,
     rt.name as risk_type_name,
     rt.icon_path as risk_type_icon_path,
@@ -402,7 +407,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE r.id = ANY($1::uuid[])
+WHERE r.id = ANY($1::uuid[]) AND r.is_private = FALSE
 ORDER BY r.created_at DESC
 `
 
@@ -425,6 +430,7 @@ type ListReportsByIDsRow struct {
 	VerificationCount sql.NullInt32  `json:"verification_count"`
 	RejectionCount    sql.NullInt32  `json:"rejection_count"`
 	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	IsPrivate         bool           `json:"is_private"`
 	CreatedAt         sql.NullTime   `json:"created_at"`
 	UpdatedAt         sql.NullTime   `json:"updated_at"`
 	RiskTypeName      sql.NullString `json:"risk_type_name"`
@@ -461,6 +467,7 @@ func (q *Queries) ListReportsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([
 			&i.VerificationCount,
 			&i.RejectionCount,
 			&i.ExpiresAt,
+			&i.IsPrivate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.RiskTypeName,
@@ -483,7 +490,7 @@ func (q *Queries) ListReportsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([
 
 const listReportsByStatus = `-- name: ListReportsByStatus :many
 SELECT 
-    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description, r.latitude, r.longitude, r.province, r.municipality, r.neighborhood, r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at, r.verification_count, r.rejection_count, r.expires_at, r.created_at, r.updated_at,
+    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description, r.latitude, r.longitude, r.province, r.municipality, r.neighborhood, r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at, r.verification_count, r.rejection_count, r.expires_at, r.is_private, r.created_at, r.updated_at,
     rt.name as risk_type_name,
     rt.icon_path as risk_type_icon_path,
     rtopic.name as risk_topic_name,
@@ -491,7 +498,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE r.status = $1 
+WHERE r.status = $1 AND r.is_private = FALSE
 ORDER BY r.created_at DESC
 `
 
@@ -514,6 +521,7 @@ type ListReportsByStatusRow struct {
 	VerificationCount sql.NullInt32  `json:"verification_count"`
 	RejectionCount    sql.NullInt32  `json:"rejection_count"`
 	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	IsPrivate         bool           `json:"is_private"`
 	CreatedAt         sql.NullTime   `json:"created_at"`
 	UpdatedAt         sql.NullTime   `json:"updated_at"`
 	RiskTypeName      sql.NullString `json:"risk_type_name"`
@@ -550,6 +558,7 @@ func (q *Queries) ListReportsByStatus(ctx context.Context, status interface{}) (
 			&i.VerificationCount,
 			&i.RejectionCount,
 			&i.ExpiresAt,
+			&i.IsPrivate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.RiskTypeName,
@@ -572,7 +581,7 @@ func (q *Queries) ListReportsByStatus(ctx context.Context, status interface{}) (
 
 const listReportsByUser = `-- name: ListReportsByUser :many
 SELECT 
-    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description, r.latitude, r.longitude, r.province, r.municipality, r.neighborhood, r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at, r.verification_count, r.rejection_count, r.expires_at, r.created_at, r.updated_at,
+    r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description, r.latitude, r.longitude, r.province, r.municipality, r.neighborhood, r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at, r.verification_count, r.rejection_count, r.expires_at, r.is_private, r.created_at, r.updated_at,
     rt.name as risk_type_name,
     rt.icon_path as risk_type_icon_path,
     rtopic.name as risk_topic_name,
@@ -603,6 +612,7 @@ type ListReportsByUserRow struct {
 	VerificationCount sql.NullInt32  `json:"verification_count"`
 	RejectionCount    sql.NullInt32  `json:"rejection_count"`
 	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	IsPrivate         bool           `json:"is_private"`
 	CreatedAt         sql.NullTime   `json:"created_at"`
 	UpdatedAt         sql.NullTime   `json:"updated_at"`
 	RiskTypeName      sql.NullString `json:"risk_type_name"`
@@ -639,6 +649,7 @@ func (q *Queries) ListReportsByUser(ctx context.Context, userID uuid.UUID) ([]Li
 			&i.VerificationCount,
 			&i.RejectionCount,
 			&i.ExpiresAt,
+			&i.IsPrivate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.RiskTypeName,
@@ -664,7 +675,7 @@ SELECT
     r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description,
     r.latitude, r.longitude, r.province, r.municipality, r.neighborhood,
     r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at,
-    r.verification_count, r.rejection_count, r.expires_at,
+    r.verification_count, r.rejection_count, r.expires_at, r.is_private,
     r.created_at, r.updated_at,
     rt.name as risk_type_name,
     rt.icon_path as risk_type_icon_path,
@@ -673,7 +684,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE ($4::text IS NULL OR r.status = $4::report_status)
+WHERE ($4::text IS NULL OR r.status = $4::report_status) AND r.is_private = FALSE
 ORDER BY
     CASE WHEN $1 = 'desc' THEN r.created_at END DESC,
     CASE WHEN $1 = 'asc' THEN r.created_at END ASC
@@ -706,6 +717,7 @@ type ListReportsWithPaginationRow struct {
 	VerificationCount sql.NullInt32  `json:"verification_count"`
 	RejectionCount    sql.NullInt32  `json:"rejection_count"`
 	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	IsPrivate         bool           `json:"is_private"`
 	CreatedAt         sql.NullTime   `json:"created_at"`
 	UpdatedAt         sql.NullTime   `json:"updated_at"`
 	RiskTypeName      sql.NullString `json:"risk_type_name"`
@@ -747,6 +759,7 @@ func (q *Queries) ListReportsWithPagination(ctx context.Context, arg ListReports
 			&i.VerificationCount,
 			&i.RejectionCount,
 			&i.ExpiresAt,
+			&i.IsPrivate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.RiskTypeName,

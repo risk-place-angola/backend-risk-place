@@ -38,6 +38,7 @@ type Report struct {
 	VerificationCount int
 	RejectionCount    int
 	ExpiresAt         *time.Time
+	IsPrivate         bool
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 }

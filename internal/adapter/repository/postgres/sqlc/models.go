@@ -208,6 +208,7 @@ type Report struct {
 	VerificationCount sql.NullInt32  `json:"verification_count"`
 	RejectionCount    sql.NullInt32  `json:"rejection_count"`
 	ExpiresAt         sql.NullTime   `json:"expires_at"`
+	IsPrivate         bool           `json:"is_private"`
 	CreatedAt         sql.NullTime   `json:"created_at"`
 	UpdatedAt         sql.NullTime   `json:"updated_at"`
 }
@@ -227,6 +228,7 @@ type RiskTopic struct {
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
 	IconPath    sql.NullString `json:"icon_path"`
+	IsSensitive bool           `json:"is_sensitive"`
 	CreatedAt   sql.NullTime   `json:"created_at"`
 	UpdatedAt   sql.NullTime   `json:"updated_at"`
 }
@@ -295,6 +297,33 @@ type User struct {
 	UpdatedAt                  sql.NullTime    `json:"updated_at"`
 	DeletedAt                  sql.NullTime    `json:"deleted_at"`
 	LinkedDeviceID             sql.NullString  `json:"linked_device_id"`
+}
+
+type UserLocation struct {
+	ID          uuid.UUID       `json:"id"`
+	UserID      uuid.UUID       `json:"user_id"`
+	DeviceID    sql.NullString  `json:"device_id"`
+	Latitude    float64         `json:"latitude"`
+	Longitude   float64         `json:"longitude"`
+	Location    interface{}     `json:"location"`
+	Speed       sql.NullFloat64 `json:"speed"`
+	Heading     sql.NullFloat64 `json:"heading"`
+	AvatarID    int32           `json:"avatar_id"`
+	Color       string          `json:"color"`
+	IsAnonymous sql.NullBool    `json:"is_anonymous"`
+	LastUpdate  sql.NullTime    `json:"last_update"`
+	CreatedAt   sql.NullTime    `json:"created_at"`
+}
+
+type UserLocationHistory struct {
+	ID        uuid.UUID       `json:"id"`
+	UserID    uuid.UUID       `json:"user_id"`
+	DeviceID  sql.NullString  `json:"device_id"`
+	Latitude  float64         `json:"latitude"`
+	Longitude float64         `json:"longitude"`
+	Speed     sql.NullFloat64 `json:"speed"`
+	Heading   sql.NullFloat64 `json:"heading"`
+	CreatedAt sql.NullTime    `json:"created_at"`
 }
 
 type UserRole struct {

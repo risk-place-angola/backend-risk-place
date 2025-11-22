@@ -22,6 +22,7 @@ type RiskTopic struct {
 	Name        string
 	Description *string
 	IconPath    *string
+	IsSensitive bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

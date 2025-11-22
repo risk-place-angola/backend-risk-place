@@ -19,7 +19,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE r.status = $1 
+WHERE r.status = $1 AND r.is_private = FALSE
 ORDER BY r.created_at DESC;
 
 -- name: ListReportsByUser :many
@@ -92,7 +92,7 @@ SELECT
     r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description,
     r.latitude, r.longitude, r.province, r.municipality, r.neighborhood,
     r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at,
-    r.verification_count, r.rejection_count, r.expires_at,
+    r.verification_count, r.rejection_count, r.expires_at, r.is_private,
     r.created_at, r.updated_at,
     rt.name as risk_type_name,
     rt.icon_path as risk_type_icon_path,
@@ -101,7 +101,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE r.id = ANY($1::uuid[])
+WHERE r.id = ANY($1::uuid[]) AND r.is_private = FALSE
 ORDER BY r.created_at DESC;
 
 -- name: CreateReportNotification :exec
@@ -113,7 +113,7 @@ SELECT
     r.id, r.user_id, r.risk_type_id, r.risk_topic_id, r.description,
     r.latitude, r.longitude, r.province, r.municipality, r.neighborhood,
     r.address, r.image_url, r.status, r.reviewed_by, r.resolved_at,
-    r.verification_count, r.rejection_count, r.expires_at,
+    r.verification_count, r.rejection_count, r.expires_at, r.is_private,
     r.created_at, r.updated_at,
     rt.name as risk_type_name,
     rt.icon_path as risk_type_icon_path,
@@ -122,7 +122,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE (sqlc.narg('status')::text IS NULL OR r.status = sqlc.narg('status')::report_status)
+WHERE (sqlc.narg('status')::text IS NULL OR r.status = sqlc.narg('status')::report_status) AND r.is_private = FALSE
 ORDER BY
     CASE WHEN $1 = 'desc' THEN r.created_at END DESC,
     CASE WHEN $1 = 'asc' THEN r.created_at END ASC
@@ -130,7 +130,7 @@ LIMIT $2 OFFSET $3;
 
 -- name: CountReports :one
 SELECT COUNT(*) FROM reports
-WHERE (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::report_status);
+WHERE (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::report_status) AND is_private = FALSE;
 
 -- name: AddUserReportVote :exec
 INSERT INTO report_votes (report_id, user_id, vote_type)
@@ -171,6 +171,7 @@ LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
 WHERE r.risk_type_id = $1
   AND r.status = 'pending'
+  AND r.is_private = FALSE
   AND r.created_at > $2
   AND ST_DWithin(
     ST_MakePoint(r.longitude, r.latitude)::geography,

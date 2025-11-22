@@ -17,6 +17,7 @@ import (
 type ReportUseCase struct {
 	repo            repository.ReportRepository
 	riskTypesRepo   repository.RiskTypesRepository
+	riskTopicsRepo  repository.RiskTopicsRepository
 	locationStore   port.LocationStore
 	geoService      port.GeolocationService
 	eventDispatcher port.EventDispatcher
@@ -27,6 +28,7 @@ func NewReportUseCase(
 	eventDispatcher port.EventDispatcher,
 	geoService port.GeolocationService,
 	riskTypesRepo repository.RiskTypesRepository,
+	riskTopicsRepo repository.RiskTopicsRepository,
 	locationStore port.LocationStore,
 ) *ReportUseCase {
 	return &ReportUseCase{
@@ -34,6 +36,7 @@ func NewReportUseCase(
 		eventDispatcher: eventDispatcher,
 		geoService:      geoService,
 		riskTypesRepo:   riskTypesRepo,
+		riskTopicsRepo:  riskTopicsRepo,
 		locationStore:   locationStore,
 	}
 }
@@ -51,10 +54,17 @@ func (uc *ReportUseCase) Create(ctx context.Context, dto dto.ReportCreate) (*mod
 		return nil, err
 	}
 
+	riskTopicID := uuid.MustParse(dto.RiskTopicID)
+	riskTopic, err := uc.riskTopicsRepo.GetRiskTopicByID(ctx, dto.RiskTopicID)
+	if err != nil {
+		slog.Error("failed to get risk topic", "error", err)
+		return nil, err
+	}
+
 	report := &model.Report{
 		ID:           uuid.New(),
 		RiskTypeID:   uuid.MustParse(dto.RiskTypeID),
-		RiskTopicID:  uuid.MustParse(dto.RiskTopicID),
+		RiskTopicID:  riskTopicID,
 		Description:  dto.Description,
 		Province:     dto.Province,
 		Municipality: dto.Municipality,
@@ -65,6 +75,7 @@ func (uc *ReportUseCase) Create(ctx context.Context, dto dto.ReportCreate) (*mod
 		Latitude:     dto.Latitude,
 		Longitude:    dto.Longitude,
 		Status:       model.ReportStatusPending,
+		IsPrivate:    riskTopic.IsSensitive,
 		CreatedAt:    time.Now(),
 	}
 

@@ -77,6 +77,7 @@ func NewUserApplication(
 			eventDispatcher,
 			geoService,
 			riskTypeRepo,
+			riskTopicRepo,
 			locationStore,
 		),
 		RiskUseCase: risk.NewRiskUseCase(
