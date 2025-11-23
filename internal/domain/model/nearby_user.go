@@ -59,6 +59,10 @@ func GenerateAnonymousID(userID uuid.UUID) string {
 	for _, b := range userID.String() {
 		hash = hash*hashMultiplier + int(b)
 	}
+	// Ensure hash is positive for consistent seed
+	if hash < 0 {
+		hash = -hash
+	}
 	return "neter_" + generateRandomString(anonymousIDLength, hash)
 }
 
@@ -67,9 +71,16 @@ func AssignAvatar(userID uuid.UUID) (int, string) {
 	for _, b := range userID.String() {
 		hash = hash*hashMultiplier + int(b)
 	}
+	
+	// Ensure hash is positive for array indexing
+	if hash < 0 {
+		hash = -hash
+	}
+	
 	avatarID := (hash % totalAvatars) + 1
 	colors := getAvatarColors()
-	color := colors[hash%len(colors)]
+	colorIndex := hash % len(colors)
+	color := colors[colorIndex]
 	return avatarID, color
 }
 
