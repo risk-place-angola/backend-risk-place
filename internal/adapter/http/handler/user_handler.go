@@ -171,25 +171,24 @@ func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 // ForgotPassword godoc
 // @Summary Initiate password reset
-// @Description Send a password reset code to the user's email
+// @Description Send a password reset code to the user's email or phone
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param email body object{email=string} true "User email"
+// @Param identifier body object{identifier=string} true "User email or phone"
 // @Success 200 {string} string "password reset code sent"
 // @Failure 400 {object} util.ErrorResponse
-// @Failure 404 {object} util.ErrorResponse
 // @Router /auth/password/forgot [post]
 func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Email string `json:"email"`
+		Identifier string `json:"identifier"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		util.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	err := h.userUseCase.UserUseCase.ForgotPassword(r.Context(), req.Email)
+	err := h.userUseCase.UserUseCase.ForgotPassword(r.Context(), req.Identifier)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrUserAccountNotExists):
@@ -209,22 +208,21 @@ func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param reset body object{email=string,password=string} true "Password reset data"
+// @Param reset body object{identifier=string,password=string} true "Password reset data"
 // @Success 200 {string} string "password reset successfully"
 // @Failure 400 {object} util.ErrorResponse
-// @Failure 404 {object} util.ErrorResponse
 // @Router /auth/password/reset [post]
 func (h *UserHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Identifier string `json:"identifier"`
+		Password   string `json:"password"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		util.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	err := h.userUseCase.UserUseCase.ResetPassword(r.Context(), req.Email, req.Password)
+	err := h.userUseCase.UserUseCase.ResetPassword(r.Context(), req.Identifier, req.Password)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrUserAccountNotExists):
@@ -246,10 +244,9 @@ func (h *UserHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param confirmation body object{email=string,code=string} true "Signup confirmation data"
+// @Param confirmation body object{identifier=string,code=string} true "Signup confirmation data"
 // @Success 204 {string} string "signup confirmed successfully"
 // @Failure 400 {object} util.ErrorResponse
-// @Failure 404 {object} util.ErrorResponse
 // @Router /auth/confirm [post]
 func (h *UserHandler) ConfirmSignup(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -258,15 +255,15 @@ func (h *UserHandler) ConfirmSignup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Email string `json:"email"`
-		Code  string `json:"code"`
+		Identifier string `json:"identifier"`
+		Code       string `json:"code"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		util.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	err := h.userUseCase.UserUseCase.VerifyCode(r.Context(), req.Email, req.Code)
+	err := h.userUseCase.UserUseCase.VerifyCode(r.Context(), req.Identifier, req.Code)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrUserNotFound):
@@ -290,22 +287,22 @@ func (h *UserHandler) ConfirmSignup(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param request body object{email=string} true "Email"
+// @Param request body object{identifier=string} true "Email or phone"
 // @Success 204
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 500 {object} util.ErrorResponse
 // @Router /auth/resend-code [post]
 func (h *UserHandler) ResendCode(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Email string `json:"email"`
+		Identifier string `json:"identifier"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		util.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.userUseCase.UserUseCase.ResendVerificationCode(r.Context(), req.Email); err != nil {
-		slog.Error("Failed to resend verification code", "email", req.Email, "error", err)
+	if err := h.userUseCase.UserUseCase.ResendVerificationCode(r.Context(), req.Identifier); err != nil {
+		slog.Error("Failed to resend verification code", "identifier", req.Identifier, "error", err)
 		util.Error(w, "failed to resend verification code", http.StatusInternalServerError)
 		return
 	}
