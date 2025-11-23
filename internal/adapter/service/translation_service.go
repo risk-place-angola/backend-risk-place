@@ -222,6 +222,28 @@ func (ts *TranslationService) loadMessages() {
 			Body:  "Code already sent, please wait",
 		},
 	}
+
+	ts.messages["verification_locked"] = map[Language]NotificationMessage{
+		LanguagePortuguese: {
+			Title: "Conta Bloqueada",
+			Body:  "Muitas tentativas incorretas. Aguarde 15 minutos",
+		},
+		LanguageEnglish: {
+			Title: "Account Locked",
+			Body:  "Too many incorrect attempts. Wait 15 minutes",
+		},
+	}
+
+	ts.messages["verification_resend_cooldown"] = map[Language]NotificationMessage{
+		LanguagePortuguese: {
+			Title: "Aguarde",
+			Body:  "Aguarde 60 segundos antes de reenviar",
+		},
+		LanguageEnglish: {
+			Title: "Please Wait",
+			Body:  "Wait 60 seconds before resending",
+		},
+	}
 }
 
 func (ts *TranslationService) GetMessage(key string, lang Language, riskType string) NotificationMessage {
