@@ -14,7 +14,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type EmailVerification struct {
+type AccountVerification struct {
 	Code         string
 	CodeVerified bool
 	ExpiresAt    time.Time
@@ -53,11 +53,11 @@ type User struct {
 	DeviceLanguage    string
 	TrustScore        int
 	ReportsSubmitted  int
-	ReportsVerified   int
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
-	DeletedAt         *time.Time
-	EmailVerification EmailVerification
+	ReportsVerified      int
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	DeletedAt            *time.Time
+	AccountVerification  AccountVerification
 }
 
 const (
@@ -90,11 +90,11 @@ func NewUser(
 	return user, nil
 }
 
-func (u *User) VerifyEmail(code string) bool {
-	if u.EmailVerification.Code == "" {
+func (u *User) VerifyCode(code string) bool {
+	if u.AccountVerification.Code == "" {
 		return false
 	}
-	return u.EmailVerification.Code == code && time.Now().Before(u.EmailVerification.ExpiresAt)
+	return u.AccountVerification.Code == code && time.Now().Before(u.AccountVerification.ExpiresAt)
 }
 
 func (u *User) Validate() error {
@@ -161,19 +161,19 @@ func GenerateConfirmationCode() string { // Generates a 6-digit code
 
 func (u *User) GenerateVerificationCode() string {
 	code := GenerateConfirmationCode()
-	u.EmailVerification.Code = code
-	u.EmailVerification.ExpiresAt = time.Now().Add(config.CodeExpirationDuration)
-	u.EmailVerification.Verified = false
-	return u.EmailVerification.Code
+	u.AccountVerification.Code = code
+	u.AccountVerification.ExpiresAt = time.Now().Add(config.CodeExpirationDuration)
+	u.AccountVerification.Verified = false
+	return u.AccountVerification.Code
 }
 
 func (c *User) SetGeneratedCode() error {
-	genCode, err := bcrypt.GenerateFromPassword([]byte(c.EmailVerification.Code), bcrypt.DefaultCost)
+	genCode, err := bcrypt.GenerateFromPassword([]byte(c.AccountVerification.Code), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("error generating password %s", err.Error())
 	}
 
-	c.EmailVerification.Code = string(genCode)
+	c.AccountVerification.Code = string(genCode)
 
 	return nil
 }
