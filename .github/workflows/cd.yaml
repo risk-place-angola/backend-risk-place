@@ -123,9 +123,13 @@ jobs:
             # Wait a bit for containers to stabilize
             sleep 15
             
-            # Check all backend_core containers (matches backend_core-1, backend_core-2, etc)
-            TOTAL=$(docker ps --filter "name=backend-risk-place.*backend_core" --format "{{.Names}}" | wc -l | tr -d ' ')
-            HEALTHY=$(docker ps --filter "name=backend-risk-place.*backend_core" --filter "health=healthy" --format "{{.Names}}" | wc -l | tr -d ' ')
+            # First, let's see what containers exist
+            echo "All running containers:"
+            docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+            
+            # Check all backend_core containers (substring match)
+            TOTAL=$(docker ps --filter "name=backend_core" --format "{{.Names}}" | wc -l | tr -d ' ')
+            HEALTHY=$(docker ps --filter "name=backend_core" --filter "health=healthy" --format "{{.Names}}" | wc -l | tr -d ' ')
             
             echo "📊 Deployment status: $HEALTHY/$TOTAL containers healthy"
             
@@ -135,12 +139,12 @@ jobs:
               # Show status of all containers
               echo ""
               echo "Container status:"
-              docker ps --filter "name=backend-risk-place.*backend_core" --format "table {{.Names}}\t{{.Status}}"
+              docker ps --filter "name=backend_core" --format "table {{.Names}}\t{{.Status}}"
               
               # Show logs from first container
               echo ""
               echo "Recent logs (first instance):"
-              FIRST=$(docker ps --filter "name=backend-risk-place.*backend_core" --format "{{.Names}}" | head -1)
+              FIRST=$(docker ps --filter "name=backend_core" --format "{{.Names}}" | head -1)
               docker logs --tail 30 "$FIRST"
               
               exit 0
@@ -151,12 +155,12 @@ jobs:
               
               echo ""
               echo "Container details:"
-              docker ps -a --filter "name=backend-risk-place.*backend_core" --format "table {{.Names}}\t{{.Status}}"
+              docker ps -a --filter "name=backend_core" --format "table {{.Names}}\t{{.Status}}"
               
               # Show logs from all containers
               echo ""
               echo "Logs from all containers:"
-              docker ps --filter "name=backend-risk-place.*backend_core" --format "{{.Names}}" | while read container; do
+              docker ps --filter "name=backend_core" --format "{{.Names}}" | while read container; do
                 echo "--- $container ---"
                 docker logs --tail 50 "$container" 2>&1
               done
