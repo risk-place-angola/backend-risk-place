@@ -3,6 +3,9 @@
 [![Go Version](https://img.shields.io/badge/Go-1.25.3+-00ADD8?style=flat&logo=go)](https://golang.org)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![CI](https://github.com/risk-place-angola/backend-risk-place/actions/workflows/ci.yaml/badge.svg)](https://github.com/risk-place-angola/backend-risk-place/actions/workflows/ci.yaml)
+[![CD](https://github.com/risk-place-angola/backend-risk-place/actions/workflows/cd.yaml/badge.svg)](https://github.com/risk-place-angola/backend-risk-place/actions/workflows/cd.yaml)
+[![Docker](https://img.shields.io/badge/docker-riskplaceangola%2Fbackend--core-blue?logo=docker)](https://hub.docker.com/r/riskplaceangola/backend-core)
 
 **Risk Place Angola (RPA)** is an open-source platform designed to map, monitor, and report risk locations across Angola, connecting citizens, emergency entities, and local communities in real-time.
 
@@ -252,6 +255,54 @@ make swagger
 | **Twilio** | SMS & voice notifications | `TWILIO_*` env vars |
 | **WebSocket Hub** | Real-time alert broadcasting | Built-in |
 | **SMTP** | Email notifications (via Mailpit for dev) | `EMAIL_*` env vars |
+
+## 🚢 CI/CD & Deployment
+
+This project uses GitHub Actions for automated CI/CD:
+
+### Continuous Integration (CI)
+Runs on Pull Requests from `develop` → `main`:
+- ✅ Security scanning (govulncheck)
+- ✅ Code linting (golangci-lint)
+- ✅ Unit tests
+- ✅ Build verification
+
+### Continuous Deployment (CD)
+> ⚠️ **Note for Maintainers**: Deployment configuration is in a private repository for security reasons.
+
+The project supports automated deployment via GitHub Actions:
+- 🐳 Builds optimized Docker image
+- 📤 Pushes to Docker Hub
+- 🚀 Automated server deployment
+- ✅ Health check verification
+
+### Contributing
+```bash
+# 1. Fork the repository
+# 2. Create feature branch: git checkout -b feature/my-feature
+# 3. Commit changes: git commit -am 'Add new feature'
+# 4. Push to branch: git push origin feature/my-feature
+# 5. Create Pull Request to develop branch
+```
+
+**Documentation:**
+- 📖 [CI/CD Overview](./docs/CI-CD-OVERVIEW.md)
+- 📚 [Contributing Guide](./CONTRIBUTING.md)
+
+### Docker Commands
+```bash
+# Build production image
+make docker-build
+
+# Test locally
+make docker-run
+
+# View logs
+make docker-logs
+
+# Stop container
+make docker-stop
+```
 
 ## 🧪 Testing
 

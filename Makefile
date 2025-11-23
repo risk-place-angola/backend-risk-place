@@ -63,3 +63,53 @@ githooks:
 	@echo "→ Installing git hooks"
 	@git config core.hooksPath .githooks
 	@echo "✓ Git hooks installed"
+
+# Docker targets
+.PHONY: docker-build docker-push docker-run docker-stop docker-clean
+
+docker-build:
+	@echo "→ Building production Docker image..."
+	@docker build -f Dockerfile.prod -t riskplaceangola/backend-core:latest .
+	@echo "✓ Docker image built"
+
+docker-push:
+	@echo "→ Pushing Docker image to Docker Hub..."
+	@docker push riskplaceangola/backend-core:latest
+	@echo "✓ Docker image pushed"
+
+docker-run:
+	@echo "→ Running Docker container locally..."
+	@docker run -d \
+		--name backend_core_local \
+		-p 8090:8090 \
+		--env-file .env \
+		riskplaceangola/backend-core:latest
+	@echo "✓ Container started at http://localhost:8090"
+
+docker-stop:
+	@echo "→ Stopping Docker container..."
+	@docker stop backend_core_local || true
+	@docker rm backend_core_local || true
+	@echo "✓ Container stopped"
+
+docker-clean:
+	@echo "→ Cleaning Docker artifacts..."
+	@docker rmi riskplaceangola/backend-core:latest || true
+	@docker system prune -f
+	@echo "✓ Docker artifacts cleaned"
+
+docker-logs:
+	@docker logs -f backend_core_local
+
+# Development helpers
+.PHONY: dev-setup dev-run
+
+dev-setup:
+	@echo "→ Setting up development environment..."
+	@go mod download
+	@make githooks
+	@echo "✓ Development environment ready"
+
+dev-run:
+	@echo "→ Running application in development mode..."
+	@go run ./cmd/api

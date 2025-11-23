@@ -1,11 +1,56 @@
-.github
-docs
-tmp
-.env*
-!.env
+# Git
+.git
 .gitignore
-*.out
+.github
+
+# Documentation
 *.md
-docker-compose.yml
+docs/
+LICENSE
+
+# Development files
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Test files
+*_test.go
+test/
+coverage.txt
+coverage.html
+*.out
+
+# Temporary files
+tmp/
+*.tmp
+*.log
+
+# Build artifacts
+main
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Docker files (keep only Dockerfile.prod for build)
+docker-compose*.yml
 Dockerfile
 Dockerfile.dev
+
+# CI/CD
+.github/
+
+# Scripts
+scripts/
+
+# OS
+.DS_Store
+Thumbs.db
