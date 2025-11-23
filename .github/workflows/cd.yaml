@@ -73,8 +73,28 @@ jobs:
 
       - name: Create .env file from base64 secret
         run: |
-          echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 --decode > .env
-          echo "✅ .env file created successfully"
+          echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 --decode | iconv -f utf-8 -t utf-8 > .env
+          
+          # Validate .env file format
+          if [ ! -s .env ]; then
+            echo "❌ .env file is empty or invalid"
+            exit 1
+          fi
+          
+          # Check for null bytes or corruption
+          if grep -q $'\x00' .env 2>/dev/null; then
+            echo "❌ .env file contains null bytes (corrupted)"
+            exit 1
+          fi
+          
+          # Test loading variables
+          export $(grep -v "^#" .env | xargs) 2>/dev/null || {
+            echo "❌ Failed to parse .env file"
+            exit 1
+          }
+          
+          echo "✅ .env file created and validated successfully"
+          echo "   Variables found: $(grep -c "=" .env)"
 
       - name: Copy files to server
         uses: appleboy/scp-action@v0.1.7
