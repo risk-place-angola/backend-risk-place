@@ -272,6 +272,8 @@ func (h *UserHandler) ConfirmSignup(w http.ResponseWriter, r *http.Request) {
 			util.Error(w, "invalid verification code", http.StatusBadRequest)
 		case errors.Is(err, domainErrors.ErrExpiredCode):
 			util.Error(w, "verification code expired", http.StatusBadRequest)
+		case errors.Is(err, domainErrors.ErrVerificationLocked):
+			util.Error(w, "Too many incorrect attempts. Wait 15 minutes", http.StatusBadRequest)
 		default:
 			util.Error(w, "internal error", http.StatusInternalServerError)
 		}
@@ -302,8 +304,17 @@ func (h *UserHandler) ResendCode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.userUseCase.UserUseCase.ResendVerificationCode(r.Context(), req.Identifier); err != nil {
-		slog.Error("Failed to resend verification code", "identifier", req.Identifier, "error", err)
-		util.Error(w, "failed to resend verification code", http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, domainErrors.ErrVerificationLocked):
+			util.Error(w, "Too many incorrect attempts. Wait 15 minutes", http.StatusBadRequest)
+		case errors.Is(err, domainErrors.ErrVerificationCooldown):
+			util.Error(w, "Wait 60 seconds before resending", http.StatusBadRequest)
+		case errors.Is(err, domainErrors.ErrVerificationCodePending):
+			util.Error(w, "Code already sent, please wait", http.StatusBadRequest)
+		default:
+			slog.Error("Failed to resend verification code", "identifier", req.Identifier, "error", err)
+			util.Error(w, "failed to resend verification code", http.StatusInternalServerError)
+		}
 		return
 	}
 

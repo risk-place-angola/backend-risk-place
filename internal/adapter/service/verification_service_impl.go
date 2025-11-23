@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/port"
+	domainErrors "github.com/risk-place-angola/backend-risk-place/internal/domain/errors"
 	domainrepository "github.com/risk-place-angola/backend-risk-place/internal/domain/repository"
 	domainService "github.com/risk-place-angola/backend-risk-place/internal/domain/service"
 )
@@ -77,9 +78,7 @@ func (s *verificationServiceImpl) VerifyCode(ctx context.Context, userID uuid.UU
 	lockoutKey := fmt.Sprintf("verification:lockout:%s", userID.String())
 
 	if _, err := s.cache.Get(ctx, lockoutKey); err == nil {
-		lang := s.getUserLanguage(ctx, userID)
-		msg := s.translationService.GetMessage("verification_locked", lang, "")
-		return false, fmt.Errorf("%s", msg.Body)
+		return false, domainErrors.ErrVerificationLocked
 	}
 
 	storedCode, err := s.cache.Get(ctx, key)
@@ -110,21 +109,15 @@ func (s *verificationServiceImpl) ResendCode(ctx context.Context, userID uuid.UU
 	lockoutKey := fmt.Sprintf("verification:lockout:%s", userID.String())
 
 	if _, err := s.cache.Get(ctx, lockoutKey); err == nil {
-		lang := s.getUserLanguage(ctx, userID)
-		msg := s.translationService.GetMessage("verification_locked", lang, "")
-		return fmt.Errorf("%s", msg.Body)
+		return domainErrors.ErrVerificationLocked
 	}
 
 	if _, err := s.cache.Get(ctx, cooldownKey); err == nil {
-		lang := s.getUserLanguage(ctx, userID)
-		msg := s.translationService.GetMessage("verification_resend_cooldown", lang, "")
-		return fmt.Errorf("%s", msg.Body)
+		return domainErrors.ErrVerificationCooldown
 	}
 
 	if _, err := s.cache.Get(ctx, key); err == nil {
-		lang := s.getUserLanguage(ctx, userID)
-		msg := s.translationService.GetMessage("verification_code_wait", lang, "")
-		return fmt.Errorf("%s", msg.Body)
+		return domainErrors.ErrVerificationCodePending
 	}
 
 	if err := s.cache.Set(ctx, cooldownKey, "1", resendCooldown); err != nil {
