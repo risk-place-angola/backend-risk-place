@@ -13,6 +13,7 @@ type UserRepository interface {
 	GenericRepository[model.User]
 	FindByEmail(ctx context.Context, email string) (*model.User, error)
 	AddCodeToUser(ctx context.Context, userID uuid.UUID, code string, expiration time.Time) error
+	MarkEmailVerified(ctx context.Context, userID uuid.UUID) error
 	UpdateUserPassword(ctx context.Context, userID uuid.UUID, newPassword string) error
 	UserHasPermission(ctx context.Context, userID uuid.UUID, permission string) (bool, error)
 	ListAllDeviceTokensExceptUser(ctx context.Context, excludeUserID uuid.UUID) ([]string, error)
