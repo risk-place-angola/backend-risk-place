@@ -35,3 +35,26 @@ func Error(w http.ResponseWriter, message interface{}, code int) {
 	w.WriteHeader(code)
 	_, _ = w.Write(buf.Bytes())
 }
+
+type SuccessResponse struct {
+	Success bool        `json:"success"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
+func ResponseWithMessage(w http.ResponseWriter, message string, data interface{}, code int) {
+	payload := SuccessResponse{
+		Success: true,
+		Message: message,
+		Data:    data,
+	}
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(payload); err != nil {
+		http.Error(w, `{"success":false,"error":{"message":"failed to encode response","code":500}}`, http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	_, _ = w.Write(buf.Bytes())
+}

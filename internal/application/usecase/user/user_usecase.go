@@ -2,7 +2,7 @@ package user
 
 import (
 	"context"
-	stdErrors "errors"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -76,6 +76,9 @@ func (uc *UserUseCase) Signup(ctx context.Context, input dto.RegisterUserInput, 
 	}
 
 	if err := uc.verificationService.SendCode(ctx, user.ID, user.Phone, user.Email); err != nil {
+		if errors.Is(err, domainErrors.ErrSentViaEmail) {
+			return &dto.RegisterUserOutput{ID: user.ID}, err
+		}
 		slog.Error("Failed to send verification code", "user_id", user.ID, "error", err)
 		return nil, fmt.Errorf("failed to send verification code: %w", err)
 	}
@@ -193,7 +196,7 @@ func (uc *UserUseCase) Login(ctx context.Context, identifier, rawPassword, devic
 func (uc *UserUseCase) Refresh(ctx context.Context, refreshToken string) (*dto.UserSignInDTO, error) {
 	_, claims, err := uc.token.ParseRefresh(refreshToken)
 	if err != nil {
-		if stdErrors.Is(err, domainErrors.ErrExpiredToken) {
+		if errors.Is(err, domainErrors.ErrExpiredToken) {
 			return nil, domainErrors.ErrExpiredToken
 		}
 		return nil, domainErrors.ErrInvalidToken
@@ -254,7 +257,7 @@ func (uc *UserUseCase) Logout(ctx context.Context, userID uuid.UUID) error {
 func (uc *UserUseCase) ForgotPassword(ctx context.Context, identifier string) error {
 	getAccount, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
-		if stdErrors.Is(err, domainErrors.ErrUserNotFound) {
+		if errors.Is(err, domainErrors.ErrUserNotFound) {
 			slog.Error("User account not found", "identifier", identifier)
 			return domainErrors.ErrUserAccountNotExists
 		}
@@ -277,7 +280,7 @@ func (uc *UserUseCase) ForgotPassword(ctx context.Context, identifier string) er
 func (uc *UserUseCase) ResetPassword(ctx context.Context, identifier, newPassword string) error {
 	user, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
-		if stdErrors.Is(err, domainErrors.ErrUserNotFound) {
+		if errors.Is(err, domainErrors.ErrUserNotFound) {
 			slog.Error("User account not found", "identifier", identifier)
 			return domainErrors.ErrUserAccountNotExists
 		}
@@ -311,7 +314,7 @@ func (uc *UserUseCase) ResetPassword(ctx context.Context, identifier, newPasswor
 func (uc *UserUseCase) VerifyCode(ctx context.Context, identifier, code string) error {
 	user, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
-		if stdErrors.Is(err, domainErrors.ErrUserNotFound) {
+		if errors.Is(err, domainErrors.ErrUserNotFound) {
 			slog.Error("User account not found", "identifier", identifier)
 			return domainErrors.ErrUserAccountNotExists
 		}
@@ -343,17 +346,18 @@ func (uc *UserUseCase) VerifyCode(ctx context.Context, identifier, code string) 
 	return nil
 }
 
-func (uc *UserUseCase) ResendVerificationCode(ctx context.Context, identifier string) error {
+func (uc *UserUseCase) ResendVerificationCode(ctx context.Context, identifier string) (string, error) {
 	user, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if user.AccountVerification.Verified {
-		return fmt.Errorf("account already verified")
+		return "", fmt.Errorf("account already verified")
 	}
 
-	return uc.verificationService.ResendCode(ctx, user.ID, user.Phone, user.Email)
+	err = uc.verificationService.ResendCode(ctx, user.ID, user.Phone, user.Email)
+	return user.Email, err
 }
 
 // FindUserByID retrieves a user's profile by their ID.

@@ -53,6 +53,13 @@ func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 
 	userOut, err := h.userUseCase.UserUseCase.Signup(r.Context(), req, deviceID)
 	if err != nil {
+		if errors.Is(err, domainErrors.ErrSentViaEmail) {
+			util.ResponseWithMessage(w, "Verification code sent via email", map[string]interface{}{
+				"id":    userOut.ID,
+				"email": req.Email,
+			}, http.StatusCreated)
+			return
+		}
 		slog.Error("error during signup", slog.Any("error", err))
 		util.Error(w, "failed to create account", http.StatusBadRequest)
 		return
@@ -303,12 +310,17 @@ func (h *UserHandler) ResendCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.userUseCase.UserUseCase.ResendVerificationCode(r.Context(), req.Identifier); err != nil {
+	email, err := h.userUseCase.UserUseCase.ResendVerificationCode(r.Context(), req.Identifier)
+	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrVerificationLocked):
 			util.Error(w, "Too many incorrect attempts. Wait 15 minutes", http.StatusBadRequest)
 		case errors.Is(err, domainErrors.ErrVerificationCooldown):
 			util.Error(w, "Wait 60 seconds before resending", http.StatusBadRequest)
+		case errors.Is(err, domainErrors.ErrSentViaEmail):
+			util.ResponseWithMessage(w, "Verification code sent via email", map[string]interface{}{
+				"email": email,
+			}, http.StatusOK)
 		default:
 			slog.Error("Failed to resend verification code", "identifier", req.Identifier, "error", err)
 			util.Error(w, "failed to resend verification code", http.StatusInternalServerError)

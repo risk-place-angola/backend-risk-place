@@ -66,7 +66,7 @@ func (s *verificationServiceImpl) SendCode(ctx context.Context, userID uuid.UUID
 		if emailErr := s.sendViaEmail(ctx, email, code, lang); emailErr != nil {
 			return fmt.Errorf("both SMS and email failed: SMS=%w, Email=%w", err, emailErr)
 		}
-		return nil
+		return domainErrors.ErrSentViaEmail
 	}
 
 	return nil
