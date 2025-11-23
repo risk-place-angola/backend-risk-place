@@ -108,13 +108,8 @@ func (u *userRepoPG) FindAll(ctx context.Context) ([]*model.User, error) {
 	panic("implement me")
 }
 
-func (u *userRepoPG) FindByEmail(ctx context.Context, email string) (*model.User, error) {
-	userRow, err := u.q.GetUserByEmail(ctx, email)
-	if err != nil {
-		return nil, err
-	}
-
-	user := &model.User{
+func (u *userRepoPG) mapUserRow(userRow sqlc.User) *model.User {
+	return &model.User{
 		ID:       userRow.ID,
 		Name:     userRow.Name,
 		Email:    userRow.Email,
@@ -133,8 +128,22 @@ func (u *userRepoPG) FindByEmail(ctx context.Context, email string) (*model.User
 		CreatedAt: userRow.CreatedAt.Time,
 		UpdatedAt: userRow.UpdatedAt.Time,
 	}
+}
 
-	return user, nil
+func (u *userRepoPG) FindByEmail(ctx context.Context, email string) (*model.User, error) {
+	userRow, err := u.q.GetUserByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	return u.mapUserRow(userRow), nil
+}
+
+func (u *userRepoPG) FindByEmailOrPhone(ctx context.Context, identifier string) (*model.User, error) {
+	userRow, err := u.q.GetUserByEmailOrPhone(ctx, identifier)
+	if err != nil {
+		return nil, err
+	}
+	return u.mapUserRow(userRow), nil
 }
 
 func (u *userRepoPG) AddCodeToUser(ctx context.Context, userID uuid.UUID, code string, expiration time.Time) error {

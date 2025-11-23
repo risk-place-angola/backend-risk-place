@@ -112,14 +112,16 @@ func NewContainer() (*Container, error) {
 	notifierFCM := notifier.NewFCMNotifier(firebaseApp)
 	notifierSMS := notifier.NewSMSNotifier(twilioSMS, cfg.TwilioConfig)
 
+	translationService := service.NewTranslationService()
+
 	verificationService := service.NewVerificationService(
 		rdb,
 		notifierSMS,
 		emailService,
 		cfg.FrontendURL,
+		translationService,
+		userRepoPG,
 	)
-
-	translationService := service.NewTranslationService()
 	reportVerificationService := service.NewReportVerificationService(reportRepoPG)
 
 	eventlistener.RegisterEventListeners(

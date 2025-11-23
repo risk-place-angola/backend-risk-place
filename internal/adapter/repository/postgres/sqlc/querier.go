@@ -102,6 +102,7 @@ type Querier interface {
 	GetSubscribedAlerts(ctx context.Context, userID uuid.NullUUID) ([]GetSubscribedAlertsRow, error)
 	GetSubscribedAlertsAnonymous(ctx context.Context, arg GetSubscribedAlertsAnonymousParams) ([]Alert, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserByEmailOrPhone(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	// Retorna histórico completo de migrações de um usuário
 	GetUserMigrationHistory(ctx context.Context, userID uuid.UUID) ([]GetUserMigrationHistoryRow, error)

@@ -54,7 +54,7 @@ func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	userOut, err := h.userUseCase.UserUseCase.Signup(r.Context(), req, deviceID)
 	if err != nil {
 		slog.Error("error during signup", slog.Any("error", err))
-		util.Error(w, err.Error(), http.StatusInternalServerError)
+		util.Error(w, "failed to create account", http.StatusBadRequest)
 		return
 	}
 
@@ -63,7 +63,7 @@ func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 
 // Login godoc
 // @Summary Login a user
-// @Description Login a user. If X-Device-ID header is provided, anonymous user data will be migrated to the authenticated account.
+// @Description Login a user with email or phone. If X-Device-ID header is provided, anonymous user data will be migrated to the authenticated account.
 // @Tags auth
 // @Accept json
 // @Produce json
@@ -71,13 +71,13 @@ func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 // @Param credentials body dto.LoginInput true "User login credentials"
 // @Success 200 {object} dto.UserSignInDTO
 // @Failure 400 {object} util.ErrorResponse
-// @Failure 401 {object} util.ErrorResponse
+// @Failure 403 {object} util.ErrorResponse
 // @Router /auth/login [post]
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginInput
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		util.Error(w, "invalid request", http.StatusBadRequest)
+		util.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -86,11 +86,11 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		deviceID = r.Header.Get("Device-Id")
 	}
 
-	token, err := h.userUseCase.UserUseCase.Login(r.Context(), req.Email, req.Password, deviceID, req.DeviceFCMToken, req.DeviceLanguage)
+	token, err := h.userUseCase.UserUseCase.Login(r.Context(), req.Identifier, req.Password, deviceID, req.DeviceFCMToken, req.DeviceLanguage)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrInvalidCredentials):
-			util.Error(w, "invalid credentials", http.StatusUnauthorized)
+			util.Error(w, "invalid credentials", http.StatusBadRequest)
 		case errors.Is(err, domainErrors.ErrAccountNotVerified):
 			util.Error(w, "account not verified", http.StatusForbidden)
 		default:
@@ -112,6 +112,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} dto.UserSignInDTO
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 401 {object} util.ErrorResponse
+// @Failure 403 {object} util.ErrorResponse
 // @Router /auth/refresh [post]
 func (h *UserHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var req struct {
@@ -170,29 +171,28 @@ func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 // ForgotPassword godoc
 // @Summary Initiate password reset
-// @Description Send a password reset code to the user's email
+// @Description Send a password reset code to the user's email or phone
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param email body object{email=string} true "User email"
+// @Param identifier body object{identifier=string} true "User email or phone"
 // @Success 200 {string} string "password reset code sent"
 // @Failure 400 {object} util.ErrorResponse
-// @Failure 404 {object} util.ErrorResponse
 // @Router /auth/password/forgot [post]
 func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Email string `json:"email"`
+		Identifier string `json:"identifier"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		util.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	err := h.userUseCase.UserUseCase.ForgotPassword(r.Context(), req.Email)
+	err := h.userUseCase.UserUseCase.ForgotPassword(r.Context(), req.Identifier)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrUserAccountNotExists):
-			util.Error(w, "user not found", http.StatusNotFound)
+			util.Error(w, "user not found", http.StatusBadRequest)
 		default:
 			util.Error(w, "internal error", http.StatusInternalServerError)
 		}
@@ -208,28 +208,27 @@ func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param reset body object{email=string,password=string} true "Password reset data"
+// @Param reset body object{identifier=string,password=string} true "Password reset data"
 // @Success 200 {string} string "password reset successfully"
 // @Failure 400 {object} util.ErrorResponse
-// @Failure 404 {object} util.ErrorResponse
 // @Router /auth/password/reset [post]
 func (h *UserHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Identifier string `json:"identifier"`
+		Password   string `json:"password"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		util.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	err := h.userUseCase.UserUseCase.ResetPassword(r.Context(), req.Email, req.Password)
+	err := h.userUseCase.UserUseCase.ResetPassword(r.Context(), req.Identifier, req.Password)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrUserAccountNotExists):
-			util.Error(w, "user not found", http.StatusNotFound)
+			util.Error(w, "user not found", http.StatusBadRequest)
 		case errors.Is(err, domainErrors.ErrInvalidCode):
-			util.Error(w, "invalid confirmation code", http.StatusBadRequest)
+			util.Error(w, "code not verified", http.StatusBadRequest)
 		default:
 			util.Error(w, "internal error", http.StatusInternalServerError)
 		}
@@ -245,10 +244,9 @@ func (h *UserHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param confirmation body object{email=string,code=string} true "Signup confirmation data"
+// @Param confirmation body object{identifier=string,code=string} true "Signup confirmation data"
 // @Success 204 {string} string "signup confirmed successfully"
 // @Failure 400 {object} util.ErrorResponse
-// @Failure 404 {object} util.ErrorResponse
 // @Router /auth/confirm [post]
 func (h *UserHandler) ConfirmSignup(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -257,19 +255,19 @@ func (h *UserHandler) ConfirmSignup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Email string `json:"email"`
-		Code  string `json:"code"`
+		Identifier string `json:"identifier"`
+		Code       string `json:"code"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		util.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	err := h.userUseCase.UserUseCase.VerifyCode(r.Context(), req.Email, req.Code)
+	err := h.userUseCase.UserUseCase.VerifyCode(r.Context(), req.Identifier, req.Code)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrUserNotFound):
-			util.Error(w, "user not found", http.StatusNotFound)
+			util.Error(w, "user not found", http.StatusBadRequest)
 		case errors.Is(err, domainErrors.ErrInvalidCode):
 			util.Error(w, "invalid verification code", http.StatusBadRequest)
 		case errors.Is(err, domainErrors.ErrExpiredCode):
@@ -289,22 +287,22 @@ func (h *UserHandler) ConfirmSignup(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param request body object{email=string} true "Email"
+// @Param request body object{identifier=string} true "Email or phone"
 // @Success 204
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 500 {object} util.ErrorResponse
 // @Router /auth/resend-code [post]
 func (h *UserHandler) ResendCode(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Email string `json:"email"`
+		Identifier string `json:"identifier"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		util.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.userUseCase.UserUseCase.ResendVerificationCode(r.Context(), req.Email); err != nil {
-		slog.Error("Failed to resend verification code", "email", req.Email, "error", err)
+	if err := h.userUseCase.UserUseCase.ResendVerificationCode(r.Context(), req.Identifier); err != nil {
+		slog.Error("Failed to resend verification code", "identifier", req.Identifier, "error", err)
 		util.Error(w, "failed to resend verification code", http.StatusInternalServerError)
 		return
 	}

@@ -790,7 +790,7 @@ const docTemplate = `{
         },
         "/auth/login": {
             "post": {
-                "description": "Login a user. If X-Device-ID header is provided, anonymous user data will be migrated to the authenticated account.",
+                "description": "Login a user with email or phone. If X-Device-ID header is provided, anonymous user data will be migrated to the authenticated account.",
                 "consumes": [
                     "application/json"
                 ],
@@ -831,8 +831,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -1017,6 +1017,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -2937,7 +2943,7 @@ const docTemplate = `{
                 "device_language": {
                     "type": "string"
                 },
-                "email": {
+                "identifier": {
                     "type": "string"
                 },
                 "password": {
