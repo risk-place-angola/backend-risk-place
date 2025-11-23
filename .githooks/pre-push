@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+set -e
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+echo "🔍 Running security scan..."
+make sec-scan || { echo "${RED}❌ Security scan failed.${NC}"; exit 1; }
+
+echo "⚙️ Building app..."
+make build || { echo "${RED}❌ Build failed.${NC}"; exit 1; }
+
+echo "${GREEN}✅ All checks passed!${NC}"

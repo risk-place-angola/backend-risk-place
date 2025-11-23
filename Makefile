@@ -1,39 +1,115 @@
-GO_BUILD = go build
-GOFLAGS  = CGO_ENABLED=0
-DATABASE_HOST     ?= localhost
-DATABASE_PORT     ?= $(shell grep "DB_PORT" .env | cut -d '=' -f2)
-DATABASE_NAME 	  ?= $(shell grep "DB_NAME" .env | cut -d '=' -f2)
-DATABASE_USERNAME ?= $(shell grep "DB_USERNAME" .env | cut -d '=' -f2)
-DATABASE_PASSWORD ?= $(shell grep "DB_PASSWORD" .env | cut -d '=' -f2)
-DATABSE_DSN       ?= ${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
+.PHONY: lint, test, sec-scan, build, print-gcl-url, clean-gcl, swagger, githooks
 
-# Version of migrations - this is optionally used on goto command
-V?=
+OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+ARCH_RAW := $(shell uname -m)
+ifeq ($(ARCH_RAW),x86_64)
+  ARCH := amd64
+else ifeq ($(ARCH_RAW),aarch64)
+  ARCH := arm64
+else
+  ARCH := $(ARCH_RAW)
+endif
 
-# Number of migrations - this is optionally used on up and down commands
-N?=
+GCL_VERSION ?= v2.4.0
+GCL_VER_STR := $(patsubst v%,%,$(GCL_VERSION))
+BIN_DIR := tmp
+GCL := $(BIN_DIR)/golangci-lint
 
-.PHONY: migrate_setup migrate_up migrate_down migrate_goto migrate_drop_db
-migrate_setup:
-	@if [ -z "$$(which migrate)" ]; then echo "Installing golang-migrate..."; go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest; fi
+# URL do tarball
+GCL_URL := https://github.com/golangci/golangci-lint/releases/download/$(GCL_VERSION)/golangci-lint-$(GCL_VER_STR)-$(OS)-$(ARCH).tar.gz
+GCL_TAR_PATH := golangci-lint-$(GCL_VER_STR)-$(OS)-$(ARCH)/golangci-lint
 
-migrate_up: migrate_setup
-	@ migrate -database 'postgres://${DATABSE_DSN}?sslmode=disable' -path $$(pwd)/migrations up $(N)
+$(GCL):
+	@echo "→ Installing golangci-lint $(GCL_VERSION) for $(OS)/$(ARCH)"
+	@mkdir -p $(BIN_DIR)
+	@curl -fsSL --retry 3 "$(GCL_URL)" \
+	 | tar xz --strip-components=1 -C $(BIN_DIR) "$(GCL_TAR_PATH)"
+	@chmod +x $(GCL)
+	@echo "✓ golangci-lint installed at $(GCL)"
 
-migrate_down: migrate_setup
-	@ migrate -database 'postgres://${DATABSE_DSN}?sslmode=disable' -path $$(pwd)/migrations down $(N)
+lint: $(GCL)
+	@$(GCL) run -c .golangci.yml ./...
 
-migrate_goto: migrate_setup
-	@ migrate -database 'postgres://${DATABSE_DSN}?sslmode=disable' -path $$(pwd)/migrations goto $(V)
+test:
+	@go test -cover -covermode=atomic -coverprofile=coverage.out  ./...
 
-migrate_drop_db: migrate_setup
-	@ migrate -database 'postgres://${DATABSE_DSN}?sslmode=disable' -path $$(pwd)/migrations drop
+sec-scan:
+	@govulncheck -scan symbol -show verbose ./...
+
+build:
+	@go build -o tmp/main ./cmd/api
+
+clean-test:
+	@go clean -cache -modcache -i -r
+	@rm -f coverage.out
+
+print-gcl-url:
+	@echo "URL   : $(GCL_URL)"
+	@echo "PATH  : $(GCL_TAR_PATH)"
+	@echo "OS/ARCH: $(OS)/$(ARCH)"
+
+clean-gcl:
+	@rm -rf $(BIN_DIR)
+
+sqlc:
+	@sqlc generate
 
 .PHONY: swagger
 swagger:
-	@swag init -g util/swagger.go -o api
+	@swag init -g internal/config/swagger.go -o api
 
-## build: Build app binary
-.PHONY: build
-build:
-	$(GOFLAGS) $(GO_BUILD) -a -v -ldflags="-w -s" -o bin/app main.go
+.PHONY: githooks
+githooks:
+	@echo "→ Installing git hooks"
+	@git config core.hooksPath .githooks
+	@echo "✓ Git hooks installed"
+
+# Docker targets
+.PHONY: docker-build docker-push docker-run docker-stop docker-clean
+
+docker-build:
+	@echo "→ Building production Docker image..."
+	@docker build -f Dockerfile.prod -t riskplaceangola/backend-core:latest .
+	@echo "✓ Docker image built"
+
+docker-push:
+	@echo "→ Pushing Docker image to Docker Hub..."
+	@docker push riskplaceangola/backend-core:latest
+	@echo "✓ Docker image pushed"
+
+docker-run:
+	@echo "→ Running Docker container locally..."
+	@docker run -d \
+		--name backend_core_local \
+		-p 8090:8090 \
+		--env-file .env \
+		riskplaceangola/backend-core:latest
+	@echo "✓ Container started at http://localhost:8090"
+
+docker-stop:
+	@echo "→ Stopping Docker container..."
+	@docker stop backend_core_local || true
+	@docker rm backend_core_local || true
+	@echo "✓ Container stopped"
+
+docker-clean:
+	@echo "→ Cleaning Docker artifacts..."
+	@docker rmi riskplaceangola/backend-core:latest || true
+	@docker system prune -f
+	@echo "✓ Docker artifacts cleaned"
+
+docker-logs:
+	@docker logs -f backend_core_local
+
+# Development helpers
+.PHONY: dev-setup dev-run
+
+dev-setup:
+	@echo "→ Setting up development environment..."
+	@go mod download
+	@make githooks
+	@echo "✓ Development environment ready"
+
+dev-run:
+	@echo "→ Running application in development mode..."
+	@go run ./cmd/api

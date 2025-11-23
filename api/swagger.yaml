@@ -1,703 +1,2067 @@
-basePath: /
+basePath: /api/v1
 definitions:
-  entities.EventState:
-    enum:
-    - pending
-    - in_review
-    - finished
-    - in_progress
-    - in_resolution
-    - closed
-    - false_alarm
-    - false_alert
-    type: string
-    x-enum-varnames:
-    - Pending
-    - InReview
-    - Finished
-    - InProgress
-    - InResolution
-    - Closed
-    - FalseAlarm
-    - FalseAlert
-  entities.NullTime:
+  dto.AddressDTO:
     properties:
-      time:
+      country:
         type: string
-      valid:
+      municipality:
+        type: string
+      neighborhood:
+        type: string
+      province:
+        type: string
+      zipCode:
+        type: string
+    type: object
+  dto.Alert:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+      message:
+        type: string
+      radius:
+        type: number
+      risk_topic_icon_url:
+        type: string
+      risk_topic_id:
+        type: string
+      risk_type_icon_url:
+        type: string
+      risk_type_id:
+        type: string
+      severity:
+        type: string
+      user_id:
+        type: string
+    type: object
+  dto.AlertSubscriptionResponse:
+    properties:
+      message:
+        type: string
+      success:
         type: boolean
     type: object
-  entities.Warning:
+  dto.CreateEmergencyContactInput:
+    properties:
+      is_priority:
+        type: boolean
+      name:
+        type: string
+      phone:
+        type: string
+      relation:
+        enum:
+        - family
+        - friend
+        - colleague
+        - neighbor
+        - other
+        type: string
+    required:
+    - name
+    - phone
+    - relation
+    type: object
+  dto.CreateLocationSharingRequest:
+    properties:
+      duration_minutes:
+        maximum: 1440
+        minimum: 1
+        type: integer
+      latitude:
+        type: number
+      longitude:
+        type: number
+    required:
+    - duration_minutes
+    - latitude
+    - longitude
+    type: object
+  dto.DeviceResponse:
+    properties:
+      alert_radius_meters:
+        type: integer
+      device_id:
+        type: string
+      fcm_token:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      message:
+        type: string
+      platform:
+        type: string
+    type: object
+  dto.EmergencyAlertInput:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+      message:
+        type: string
+    required:
+    - latitude
+    - longitude
+    type: object
+  dto.EmergencyAlertResponse:
+    properties:
+      contacts_notified:
+        type: integer
+      message:
+        type: string
+      notified_contacts:
+        items:
+          type: string
+        type: array
+      success:
+        type: boolean
+    type: object
+  dto.EmergencyContactResponse:
     properties:
       created_at:
         type: string
-      deleted_at:
-        $ref: '#/definitions/entities.NullTime'
-      event_state:
-        $ref: '#/definitions/entities.EventState'
-      fact:
+      id:
+        type: string
+      is_priority:
+        type: boolean
+      name:
+        type: string
+      phone:
+        type: string
+      relation:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  dto.IncidentDTO:
+    properties:
+      created_at:
+        type: string
+      days_ago:
+        type: integer
+      distance_km:
+        type: number
+      latitude:
+        type: number
+      longitude:
+        type: number
+      report_id:
+        type: string
+      risk_topic:
+        type: string
+      risk_type:
+        type: string
+      weight_factor:
+        type: number
+    type: object
+  dto.ListReportsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.ReportDTO'
+        type: array
+      pagination:
+        $ref: '#/definitions/dto.PaginationMetadata'
+    type: object
+  dto.LocationSharingResponse:
+    properties:
+      expires_at:
         type: string
       id:
         type: string
-      is_anonymous:
-        type: boolean
-      is_victim:
+      share_link:
+        type: string
+      token:
+        type: string
+    type: object
+  dto.LoginInput:
+    properties:
+      device_fcm_token:
+        type: string
+      device_language:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  dto.MyAlertResponse:
+    properties:
+      address:
+        type: string
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      is_subscribed:
         type: boolean
       latitude:
         type: number
       longitude:
         type: number
-      reported_by:
+      message:
         type: string
-      stop_alerting:
+      municipality:
+        type: string
+      neighborhood:
+        type: string
+      province:
+        type: string
+      radius_meters:
+        type: integer
+      resolved_at:
+        type: string
+      risk_topic_icon_url:
+        type: string
+      risk_topic_name:
+        type: string
+      risk_type_icon_url:
+        type: string
+      risk_type_name:
+        type: string
+      severity:
+        type: string
+      status:
+        type: string
+      subscribers:
+        type: integer
+    type: object
+  dto.NavigateToSavedLocationRequest:
+    properties:
+      current_lat:
+        type: number
+      current_lon:
+        type: number
+    required:
+    - current_lat
+    - current_lon
+    type: object
+  dto.NearbyReportsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.ReportWithDistance'
+        type: array
+    type: object
+  dto.NotificationPreferencesRequest:
+    properties:
+      push_enabled:
         type: boolean
+      sms_enabled:
+        type: boolean
+    type: object
+  dto.NotificationPreferencesResponse:
+    properties:
+      push_enabled:
+        type: boolean
+      sms_enabled:
+        type: boolean
+    type: object
+  dto.PaginationMetadata:
+    properties:
+      has_more:
+        type: boolean
+      has_previous:
+        type: boolean
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  dto.PublicLocationResponse:
+    properties:
+      expires_at:
+        type: string
+      is_active:
+        type: boolean
+      last_updated:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      user_name:
+        type: string
+    type: object
+  dto.RegisterDeviceRequest:
+    properties:
+      alert_radius_meters:
+        type: integer
+      device_id:
+        minLength: 16
+        type: string
+      fcm_token:
+        type: string
+      language:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      model:
+        type: string
+      platform:
+        enum:
+        - ios
+        - android
+        - web
+        type: string
+    required:
+    - device_id
+    type: object
+  dto.RegisterUserInput:
+    properties:
+      device_fcm_token:
+        type: string
+      device_language:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+    type: object
+  dto.RegisterUserOutput:
+    properties:
+      id:
+        type: string
+    type: object
+  dto.ReportCreate:
+    properties:
+      address:
+        type: string
+      description:
+        type: string
+      image_url:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      municipality:
+        type: string
+      neighborhood:
+        type: string
+      province:
+        type: string
+      risk_topic_id:
+        type: string
+      risk_type_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  dto.ReportDTO:
+    properties:
+      address:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      municipality:
+        type: string
+      neighborhood:
+        type: string
+      province:
+        type: string
+      rejection_count:
+        type: integer
+      resolved_at:
+        type: string
+      reviewed_by:
+        type: string
+      risk_topic_icon_url:
+        type: string
+      risk_topic_id:
+        type: string
+      risk_topic_name:
+        type: string
+      risk_type_icon_url:
+        type: string
+      risk_type_id:
+        type: string
+      risk_type_name:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      verification_count:
+        type: integer
+    type: object
+  dto.ReportWithDistance:
+    properties:
+      address:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      distance:
+        description: Distance in meters
+        type: number
+      expires_at:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      municipality:
+        type: string
+      neighborhood:
+        type: string
+      province:
+        type: string
+      rejection_count:
+        type: integer
+      resolved_at:
+        type: string
+      reviewed_by:
+        type: string
+      risk_topic_icon_url:
+        type: string
+      risk_topic_id:
+        type: string
+      risk_topic_name:
+        type: string
+      risk_type_icon_url:
+        type: string
+      risk_type_id:
+        type: string
+      risk_type_name:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      verification_count:
+        type: integer
+    type: object
+  dto.ResolveReportRequest:
+    properties:
+      moderator_id:
+        type: string
+    required:
+    - moderator_id
+    type: object
+  dto.RiskTopicResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      icon_url:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      risk_type_id:
+        type: string
       updated_at:
         type: string
     type: object
-  erfce.CreateErfceDTO:
+  dto.RiskTopicsListResponse:
     properties:
-      email:
-        type: string
-      name:
-        type: string
-      password:
-        type: string
-    type: object
-  erfce.DTO:
-    properties:
-      email:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-    type: object
-  erfce.LoginDTO:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    type: object
-  erfce.UpdateErfceDTO:
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-      password:
-        type: string
-    type: object
-  rest.ErrorResponse:
-    properties:
-      message:
-        type: string
-    type: object
-  rest.SuccessResponse:
-    properties:
-      message:
-        type: string
-    type: object
-  user.CreateUserDTO:
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-      password:
-        type: string
-      phone:
-        type: string
-    type: object
-  user.DTO:
-    properties:
-      email:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      phone:
-        type: string
-      warnings:
+      data:
         items:
-          $ref: '#/definitions/entities.Warning'
+          $ref: '#/definitions/dto.RiskTopicResponse'
         type: array
     type: object
-  user.LoginDTO:
+  dto.RiskTypeResponse:
     properties:
-      email:
+      created_at:
         type: string
-      password:
+      default_radius:
+        type: integer
+      description:
         type: string
-    type: object
-  user.UpdateUserDTO:
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-      password:
-        type: string
-      phone:
-        type: string
-    type: object
-  warning_usecase.DTO:
-    properties:
-      event_state:
-        type: string
-      fact:
+      icon_url:
         type: string
       id:
         type: string
-      is_anonymous:
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RiskTypesListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.RiskTypeResponse'
+        type: array
+    type: object
+  dto.SafeRouteResponse:
+    properties:
+      calculated_at:
+        type: string
+      destination_lat:
+        type: number
+      destination_lon:
+        type: number
+      distance_km:
+        type: number
+      estimated_duration_minutes:
+        type: integer
+      id:
+        type: string
+      incident_count:
+        type: integer
+      incidents:
+        items:
+          $ref: '#/definitions/dto.IncidentDTO'
+        type: array
+      origin_lat:
+        type: number
+      origin_lon:
+        type: number
+      risk_level:
+        type: string
+      safety_score:
+        type: number
+      waypoints:
+        items:
+          $ref: '#/definitions/dto.WaypointDTO'
+        type: array
+    type: object
+  dto.SafetySettingsResponse:
+    properties:
+      anonymous_reports:
+        example: false
         type: boolean
-      is_victim:
+      auto_alerts_enabled:
+        example: false
         type: boolean
+      created_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      danger_zones_enabled:
+        example: true
+        type: boolean
+      high_risk_end_time:
+        example: "06:00"
+        type: string
+      high_risk_start_time:
+        example: "22:00"
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      location_history_enabled:
+        example: true
+        type: boolean
+      location_sharing_enabled:
+        example: false
+        type: boolean
+      night_mode_enabled:
+        example: false
+        type: boolean
+      night_mode_end_time:
+        example: "06:00"
+        type: string
+      night_mode_start_time:
+        example: "22:00"
+        type: string
+      notification_alert_radius_mins:
+        example: 1000
+        type: integer
+      notification_alert_types:
+        example:
+        - high
+        - critical
+        items:
+          type: string
+        type: array
+      notification_report_radius_mins:
+        example: 500
+        type: integer
+      notification_report_types:
+        example:
+        - verified
+        items:
+          type: string
+        type: array
+      notifications_enabled:
+        example: true
+        type: boolean
+      profile_visibility:
+        enum:
+        - public
+        - friends
+        - private
+        example: public
+        type: string
+      show_online_status:
+        example: true
+        type: boolean
+      time_based_alerts_enabled:
+        example: false
+        type: boolean
+      updated_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      user_id:
+        example: 550e8400-e29b-41d4-a716-446655440001
+        type: string
+    type: object
+  dto.SavedLocationDTO:
+    properties:
+      address:
+        type: string
       latitude:
         type: number
       longitude:
         type: number
-      reported_by:
+      name:
         type: string
-      stop_alerting:
+    type: object
+  dto.UpdateAlertInput:
+    properties:
+      message:
+        type: string
+      radius_meters:
+        maximum: 10000
+        minimum: 100
+        type: integer
+      severity:
+        enum:
+        - low
+        - medium
+        - high
+        - critical
+        type: string
+    required:
+    - message
+    - radius_meters
+    - severity
+    type: object
+  dto.UpdateDeviceInfoRequest:
+    properties:
+      device_fcm_token:
+        type: string
+      device_language:
+        enum:
+        - pt
+        - en
+        type: string
+    type: object
+  dto.UpdateDeviceLocationRequest:
+    properties:
+      device_id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+    required:
+    - device_id
+    - latitude
+    - longitude
+    type: object
+  dto.UpdateEmergencyContactInput:
+    properties:
+      is_priority:
+        type: boolean
+      name:
+        type: string
+      phone:
+        type: string
+      relation:
+        enum:
+        - family
+        - friend
+        - colleague
+        - neighbor
+        - other
+        type: string
+    required:
+    - name
+    - phone
+    - relation
+    type: object
+  dto.UpdateLocationRequest:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    required:
+    - latitude
+    - longitude
+    type: object
+  dto.UpdateProfileRequest:
+    properties:
+      home_address:
+        $ref: '#/definitions/dto.SavedLocationDTO'
+      work_address:
+        $ref: '#/definitions/dto.SavedLocationDTO'
+    type: object
+  dto.UpdateReportLocationRequest:
+    properties:
+      address:
+        type: string
+      latitude:
+        maximum: 90
+        minimum: -90
+        type: number
+      longitude:
+        maximum: 180
+        minimum: -180
+        type: number
+      municipality:
+        type: string
+      neighborhood:
+        type: string
+      province:
+        type: string
+    required:
+    - latitude
+    - longitude
+    type: object
+  dto.UpdateReportLocationResponse:
+    properties:
+      id:
+        type: string
+      message:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.UpdateSafetySettingsInput:
+    properties:
+      anonymous_reports:
+        type: boolean
+      auto_alerts_enabled:
+        type: boolean
+      danger_zones_enabled:
+        type: boolean
+      high_risk_end_time:
+        example: "06:00"
+        type: string
+      high_risk_start_time:
+        example: "22:00"
+        type: string
+      location_history_enabled:
+        type: boolean
+      location_sharing_enabled:
+        type: boolean
+      night_mode_enabled:
+        type: boolean
+      night_mode_end_time:
+        example: "06:00"
+        type: string
+      night_mode_start_time:
+        example: "22:00"
+        type: string
+      notification_alert_radius_mins:
+        type: integer
+      notification_alert_types:
+        items:
+          type: string
+        type: array
+      notification_report_radius_mins:
+        type: integer
+      notification_report_types:
+        items:
+          type: string
+        type: array
+      notifications_enabled:
+        type: boolean
+      profile_visibility:
+        enum:
+        - public
+        - friends
+        - private
+        type: string
+      show_online_status:
+        type: boolean
+      time_based_alerts_enabled:
         type: boolean
     type: object
-  warning_usecase.UpdateWarningDTO:
+  dto.UserProfileOutput:
     properties:
-      event_state:
+      address:
+        $ref: '#/definitions/dto.AddressDTO'
+      email:
         type: string
-      fact:
+      home_address:
+        $ref: '#/definitions/dto.SavedLocationDTO'
+      id:
         type: string
-      is_anonymous:
-        type: boolean
-      is_victim:
-        type: boolean
+      name:
+        type: string
+      nif:
+        type: string
+      phone:
+        type: string
+      role_name:
+        items:
+          type: string
+        type: array
+      work_address:
+        $ref: '#/definitions/dto.SavedLocationDTO'
+    type: object
+  dto.UserProfileResponse:
+    properties:
+      active_role:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      role_name:
+        items:
+          type: string
+        type: array
+    type: object
+  dto.UserSignInDTO:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      token_type:
+        type: string
+      user:
+        $ref: '#/definitions/dto.UserProfileResponse'
+    type: object
+  dto.VerifyReportRequest:
+    properties:
+      moderator_id:
+        type: string
+    required:
+    - moderator_id
+    type: object
+  dto.VoteReportRequest:
+    properties:
+      vote_type:
+        enum:
+        - upvote
+        - downvote
+        type: string
+    required:
+    - vote_type
+    type: object
+  dto.VoteReportResponse:
+    properties:
+      rejection_count:
+        type: integer
+      report_id:
+        type: string
+      verification_count:
+        type: integer
+      vote_type:
+        type: string
+    type: object
+  dto.WaypointDTO:
+    properties:
       latitude:
-        type: string
+        type: number
       longitude:
+        type: number
+      sequence:
+        type: integer
+    type: object
+  handler.GetNearbyUsersRequest:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+      radius:
+        type: number
+    required:
+    - latitude
+    - longitude
+    type: object
+  handler.NearbyUsersResponse:
+    properties:
+      radius:
+        type: number
+      total_count:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/handler.UserLocation'
+        type: array
+    type: object
+  handler.UpdateLocationRequest:
+    properties:
+      heading:
+        type: number
+      latitude:
+        type: number
+      longitude:
+        type: number
+      speed:
+        type: number
+    required:
+    - latitude
+    - longitude
+    type: object
+  handler.UserLocation:
+    properties:
+      avatar_id:
         type: string
-      reported_by:
+      color:
         type: string
-      stop_alerting:
+      heading:
+        type: number
+      latitude:
+        type: number
+      longitude:
+        type: number
+      speed:
+        type: number
+      user_id:
+        type: string
+    type: object
+  util.ErrorResponse:
+    properties:
+      error:
+        properties:
+          code:
+            type: integer
+          message: {}
+        type: object
+      success:
         type: boolean
     type: object
 info:
   contact:
+    email: support@riskplace.ao
     name: API Support
-    url: http://www.swagger.io/support
-  description: This is a sample server Risk Place Angola server.
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
+    url: http://www.riskplace.ao
+  description: |-
+    This is the API documentation for the Risk Place Angola application.
+
+    ## Environments
+    - **Development**: https://risk-place-angola-904a.onrender.com
+    - **Local**: http://localhost:8000
+
+    ## WebSocket Integration Guide
+    For detailed instructions on integrating WebSocket in mobile applications, please refer to our [WebSocket Notification Guide](https://github.com/risk-place-angola/backend-risk-place/blob/develop/docs/MOBILE_WEBSOCKET_INTEGRATION.md)
   title: Risk Place Angola API
   version: 1.0.0
 paths:
-  /:
-    get:
-      consumes:
-      - application/json
-      description: Home page of the API server of Risk Place Angola
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Hello, Angola!
-          schema:
-            type: string
-      summary: Home
-      tags:
-      - Home
-  /api/v1/erfce:
-    get:
-      consumes:
-      - application/json
-      description: Find All Erfce
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/erfce.DTO'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Find All Erfce
-      tags:
-      - Erfce
+  /alerts:
     post:
       consumes:
       - application/json
-      description: Create Erfce
+      description: Create a new alert.
       parameters:
-      - description: Erfce
+      - description: Alert
         in: body
-        name: erfce
+        name: alert
         required: true
         schema:
-          $ref: '#/definitions/erfce.CreateErfceDTO'
+          $ref: '#/definitions/dto.Alert'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/erfce.DTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Create Erfce
-      tags:
-      - Erfce
-  /api/v1/erfce/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete Erfce
-      parameters:
-      - description: Erfce ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/rest.SuccessResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Delete Erfce
-      tags:
-      - Erfce
-    get:
-      consumes:
-      - application/json
-      description: Find Erfce By ID
-      parameters:
-      - description: Erfce ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/erfce.DTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Find Erfce By ID
-      tags:
-      - Erfce
-    put:
-      consumes:
-      - application/json
-      description: Update Erfce
-      parameters:
-      - description: Erfce ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Erfce
-        in: body
-        name: erfce
-        required: true
-        schema:
-          $ref: '#/definitions/erfce.UpdateErfceDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/erfce.DTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Update Erfce
-      tags:
-      - Erfce
-  /api/v1/erfce/login:
-    post:
-      consumes:
-      - application/json
-      description: Login Erfce
-      parameters:
-      - description: Erfce
-        in: body
-        name: erfce
-        required: true
-        schema:
-          $ref: '#/definitions/erfce.LoginDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/erfce.DTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Login Erfce
-      tags:
-      - Erfce
-  /api/v1/erfce/warning:
-    get:
-      consumes:
-      - application/json
-      description: Find All Erfce Warnings
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/erfce.DTO'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Find All Erfce Warnings
-      tags:
-      - Erfce
-  /api/v1/erfce/warning/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Find Erfce Warnings By ID
-      parameters:
-      - description: Erfce ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/erfce.DTO'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Find Erfce Warnings By ID
-      tags:
-      - Erfce
-  /api/v1/user:
-    get:
-      consumes:
-      - application/json
-      description: Find All User
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/user.DTO'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Find All User
-      tags:
-      - User
-    post:
-      consumes:
-      - application/json
-      description: Create User
-      parameters:
-      - description: User
-        in: body
-        name: user
-        required: true
-        schema:
-          $ref: '#/definitions/user.CreateUserDTO'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/user.DTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Create User
-      tags:
-      - User
-  /api/v1/user/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete User
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/rest.SuccessResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Delete User
-      tags:
-      - User
-    get:
-      consumes:
-      - application/json
-      description: Find User By ID
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/user.DTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Find User By ID
-      tags:
-      - User
-    put:
-      consumes:
-      - application/json
-      description: Update User
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: User
-        in: body
-        name: user
-        required: true
-        schema:
-          $ref: '#/definitions/user.UpdateUserDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/user.DTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Update User
-      tags:
-      - User
-  /api/v1/user/login:
-    post:
-      consumes:
-      - application/json
-      description: Login User
-      parameters:
-      - description: User
-        in: body
-        name: user
-        required: true
-        schema:
-          $ref: '#/definitions/user.LoginDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/user.DTO'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Login User
-      tags:
-      - User
-  /api/v1/user/warning:
-    get:
-      consumes:
-      - application/json
-      description: Find All User Warnings
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/user.DTO'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Find All User Warnings
-      tags:
-      - User
-  /api/v1/user/warning/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Find User Warnings By ID
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/user.DTO'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.ErrorResponse'
-      summary: Find User Warnings By ID
-      tags:
-      - User
-  /api/v1/warning:
-    get:
-      consumes:
-      - application/json
-      description: Find all warnings
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/warning_usecase.DTO'
-            type: array
+            $ref: '#/definitions/dto.Alert'
         "400":
           description: Bad Request
           schema:
-            type: string
-      summary: Find all warnings
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new alert.
       tags:
-      - Warning
+      - alerts
+  /alerts/{id}:
+    delete:
+      description: Delete an alert created by the authenticated user
+      parameters:
+      - description: Alert ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete an alert
+      tags:
+      - my-alerts
+    put:
+      consumes:
+      - application/json
+      description: Update an alert created by the authenticated user
+      parameters:
+      - description: Alert ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated alert data
+        in: body
+        name: alert
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateAlertInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MyAlertResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an alert
+      tags:
+      - my-alerts
+  /alerts/{id}/subscribe:
+    post:
+      description: Subscribe to receive notifications for an alert
+      parameters:
+      - description: Alert ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AlertSubscriptionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Subscribe to an alert
+      tags:
+      - my-alerts
+  /alerts/{id}/unsubscribe:
+    delete:
+      description: Unsubscribe from receiving notifications for an alert
+      parameters:
+      - description: Alert ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AlertSubscriptionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unsubscribe from an alert
+      tags:
+      - my-alerts
+  /api/v1/devices/location:
+    put:
+      consumes:
+      - application/json
+      description: Update the location of an anonymous device for proximity-based
+        notifications
+      parameters:
+      - description: Location update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateDeviceLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Update device location
+      tags:
+      - devices
+  /api/v1/devices/register:
     post:
       consumes:
       - application/json
-      description: Create a warning
+      description: Register or update an anonymous device for receiving notifications
+        without authentication
       parameters:
-      - description: Reported by
-        in: formData
-        name: reported_by
+      - description: Device registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterDeviceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DeviceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Register anonymous device
+      tags:
+      - devices
+  /api/v1/location-sharing:
+    post:
+      consumes:
+      - application/json
+      description: Create a new location sharing session with expiration time (supports
+        both authenticated and anonymous users)
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location Sharing Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateLocationSharingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.LocationSharingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create location sharing session
+      tags:
+      - location-sharing
+  /api/v1/location-sharing/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deactivate an active location sharing session (supports both authenticated
+        and anonymous users)
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location Sharing ID
+        in: path
+        name: id
         required: true
         type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Stop location sharing
+      tags:
+      - location-sharing
+  /api/v1/location-sharing/{id}/location:
+    put:
+      consumes:
+      - application/json
+      description: Update the current coordinates of an active location sharing session
+        (supports both authenticated and anonymous users)
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location Sharing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Location Update Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update shared location coordinates
+      tags:
+      - location-sharing
+  /api/v1/users/location:
+    post:
+      consumes:
+      - application/json
+      description: Update current user location to be visible on the map for nearby
+        users
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location data with optional speed and heading
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user location for nearby users feature
+      tags:
+      - nearby-users
+  /api/v1/users/nearby:
+    post:
+      consumes:
+      - application/json
+      description: Retrieve list of nearby users with their anonymous avatars within
+        specified radius
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location and radius for searching nearby users
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.GetNearbyUsersRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.NearbyUsersResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "429":
+          description: Rate limit exceeded (max 1 request per 3 seconds)
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get nearby users on the map
+      tags:
+      - nearby-users
+  /auth/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Confirm user signup using the verification code
+      parameters:
+      - description: Signup confirmation data
+        in: body
+        name: confirmation
+        required: true
+        schema:
+          properties:
+            code:
+              type: string
+            email:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: signup confirmed successfully
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Confirm user signup
+      tags:
+      - auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login a user. If X-Device-ID header is provided, anonymous user
+        data will be migrated to the authenticated account.
+      parameters:
+      - description: Device ID for anonymous data migration
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: User login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserSignInDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Login a user
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Logout user and invalidate session
+      responses:
+        "200":
+          description: logout successful
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout user
+      tags:
+      - auth
+  /auth/password/forgot:
+    post:
+      consumes:
+      - application/json
+      description: Send a password reset code to the user's email
+      parameters:
+      - description: User email
+        in: body
+        name: email
+        required: true
+        schema:
+          properties:
+            email:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: password reset code sent
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Initiate password reset
+      tags:
+      - auth
+  /auth/password/reset:
+    post:
+      consumes:
+      - application/json
+      description: Reset user password using the reset code
+      parameters:
+      - description: Password reset data
+        in: body
+        name: reset
+        required: true
+        schema:
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: password reset successfully
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Reset user password
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get new access and refresh tokens using refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: refresh_token
+        required: true
+        schema:
+          properties:
+            refresh_token:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserSignInDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Refresh access token
+      tags:
+      - auth
+  /auth/resend-code:
+    post:
+      consumes:
+      - application/json
+      description: Resend verification code to user's phone (SMS) or email
+      parameters:
+      - description: Email
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            email:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Resend verification code
+      tags:
+      - auth
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user. If X-Device-ID header is provided, anonymous
+        user data will be migrated to the new account.
+      parameters:
+      - description: Device ID for anonymous data migration
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: User registration data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterUserInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.RegisterUserOutput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - auth
+  /emergency/alert:
+    post:
+      consumes:
+      - application/json
+      description: Send an emergency SMS alert with location to all priority emergency
+        contacts
+      parameters:
+      - description: Emergency alert data with location
+        in: body
+        name: alert
+        required: true
+        schema:
+          $ref: '#/definitions/dto.EmergencyAlertInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.EmergencyAlertResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Send emergency alert to all priority contacts
+      tags:
+      - emergency
+  /reports:
+    get:
+      consumes:
+      - application/json
+      description: List all reports in the system with pagination and filters
+      parameters:
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 20, max: 100)'
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by status (pending, verified, resolved)
+        in: query
+        name: status
+        type: string
+      - description: 'Sort field (default: created_at)'
+        in: query
+        name: sort
+        type: string
+      - description: 'Sort order (asc, desc) (default: desc)'
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ListReportsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all reports with pagination
+      tags:
+      - reports
+    post:
+      consumes:
+      - application/json
+      description: Create a new report
+      parameters:
+      - description: Report to create
+        in: body
+        name: report
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReportCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.ReportDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new report
+      tags:
+      - reports
+  /reports/{id}/location:
+    put:
+      consumes:
+      - application/json
+      description: Update the geographic location of a report (used when user drags
+        marker on map)
+      parameters:
+      - description: Report ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New location data
+        in: body
+        name: location
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateReportLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UpdateReportLocationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update report location
+      tags:
+      - reports
+  /reports/{id}/resolve:
+    post:
+      consumes:
+      - application/json
+      description: Resolve a report by its ID
+      parameters:
+      - description: Report ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Resolution data
+        in: body
+        name: resolve
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ResolveReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Resolve a report
+      tags:
+      - reports
+  /reports/{id}/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verify a report by its ID
+      parameters:
+      - description: Report ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Verification data
+        in: body
+        name: verify
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VerifyReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Verify a report
+      tags:
+      - reports
+  /reports/{id}/vote:
+    post:
+      consumes:
+      - application/json
+      description: Upvote or downvote a report to verify its authenticity
+      parameters:
+      - description: Report ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-Id
+        type: string
+      - description: Vote data
+        in: body
+        name: vote
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VoteReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.VoteReportResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - OptionalAuth: []
+      summary: Vote on a report
+      tags:
+      - reports
+  /reports/nearby:
+    get:
+      consumes:
+      - application/json
+      description: List reports near the specified location with calculated distance
+      parameters:
       - description: Latitude
-        in: formData
+        in: query
         name: latitude
         required: true
-        type: string
+        type: number
       - description: Longitude
-        in: formData
+        in: query
         name: longitude
         required: true
-        type: string
-      - description: Fact
-        in: formData
-        name: fact
+        type: number
+      - description: Radius in meters
+        in: query
+        name: radius
         required: true
-        type: file
+        type: number
+      - description: 'Maximum number of results (default: 50)'
+        in: query
+        name: limit
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            type: string
+            $ref: '#/definitions/dto.NearbyReportsResponse'
         "400":
           description: Bad Request
           schema:
-            type: string
-      summary: Create a warning
-      tags:
-      - Warning
-  /api/v1/warning/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Remove warning
-      parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
           schema:
-            type: string
-        "400":
-          description: Bad Request
-          schema:
-            type: string
-      summary: Remove warning
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List nearby reports with distance
       tags:
-      - Warning
+      - reports
+  /risks/topics:
     get:
       consumes:
       - application/json
-      description: Find warning by ID
+      description: Retrieve risk topics, optionally filtered by risk_type_id query
+        parameter.
       parameters:
-      - description: ID
+      - description: Filter by risk type ID (UUID)
+        in: query
+        name: risk_type_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RiskTopicsListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: List risk topics.
+      tags:
+      - risks
+  /risks/topics/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific risk topic by its UUID
+      parameters:
+      - description: Risk Topic ID (UUID)
         in: path
         name: id
         required: true
@@ -708,55 +2072,636 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/warning_usecase.DTO'
+            $ref: '#/definitions/dto.RiskTopicResponse'
         "400":
           description: Bad Request
           schema:
-            type: string
-      summary: Find warning by ID
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Get a risk topic by ID
       tags:
-      - Warning
+      - risks
+  /risks/types:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all available risk types with their default radius.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RiskTypesListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: List all risk types.
+      tags:
+      - risks
+  /risks/types/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific risk type by its UUID
+      parameters:
+      - description: Risk Type ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RiskTypeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Get a risk type by ID
+      tags:
+      - risks
+  /routes/navigate-home:
+    post:
+      consumes:
+      - application/json
+      description: Calculate a safe route from current location to the user's saved
+        home address
+      parameters:
+      - description: Current location coordinates
+        in: body
+        name: location
+        required: true
+        schema:
+          $ref: '#/definitions/dto.NavigateToSavedLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Safe route calculated successfully
+          schema:
+            $ref: '#/definitions/dto.SafeRouteResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid JWT token
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Home address not configured
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Failed to calculate route
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Calculate safe route to home address
+      tags:
+      - routes
+  /routes/navigate-work:
+    post:
+      consumes:
+      - application/json
+      description: Calculate a safe route from current location to the user's saved
+        work address
+      parameters:
+      - description: Current location coordinates
+        in: body
+        name: location
+        required: true
+        schema:
+          $ref: '#/definitions/dto.NavigateToSavedLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Safe route calculated successfully
+          schema:
+            $ref: '#/definitions/dto.SafeRouteResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid JWT token
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Work address not configured
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Failed to calculate route
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Calculate safe route to work address
+      tags:
+      - routes
+  /share/{token}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve public location information using share token
+      parameters:
+      - description: Share Token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.PublicLocationResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "410":
+          description: Gone
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Get shared location by token
+      tags:
+      - location-sharing
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      description: Get information about the currently authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserProfileOutput'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user info
+      tags:
+      - users
+  /users/me/alerts/created:
+    get:
+      description: Retrieve all alerts that were created by the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.MyAlertResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all alerts created by the current user
+      tags:
+      - my-alerts
+  /users/me/alerts/subscribed:
+    get:
+      description: Retrieve all alerts that the authenticated user has subscribed
+        to
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.MyAlertResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all alerts the user is subscribed to
+      tags:
+      - my-alerts
+  /users/me/device:
     put:
       consumes:
       - application/json
-      description: Update a warning
+      description: Update FCM token and device language for push notifications
       parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Update Warning
+      - description: Device information
         in: body
-        name: update_warning
+        name: device
         required: true
         schema:
-          $ref: '#/definitions/warning_usecase.UpdateWarningDTO'
+          $ref: '#/definitions/dto.UpdateDeviceInfoRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/warning_usecase.UpdateWarningDTO'
+            additionalProperties:
+              type: string
+            type: object
         "400":
           description: Bad Request
           schema:
-            type: string
-      summary: Update a warning
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user device information
       tags:
-      - Warning
-  /ws:
+      - notifications
+  /users/me/emergency-contacts:
     get:
-      consumes:
-      - application/json
-      description: websocket url ws://host/ws or use authentication ssl wss://host/ws
+      description: Retrieve all emergency contacts configured by the authenticated
+        user
       produces:
       - application/json
-      responses: {}
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.EmergencyContactResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
       security:
-      - ApiKeyAuth: []
-      summary: Websocket server
+      - BearerAuth: []
+      summary: Get all emergency contacts for the current user
       tags:
-      - Websocket
+      - emergency-contacts
+    post:
+      consumes:
+      - application/json
+      description: Add a new emergency contact for the authenticated user
+      parameters:
+      - description: Emergency contact data
+        in: body
+        name: contact
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateEmergencyContactInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.EmergencyContactResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new emergency contact
+      tags:
+      - emergency-contacts
+  /users/me/emergency-contacts/{id}:
+    delete:
+      description: Delete an emergency contact for the authenticated user
+      parameters:
+      - description: Emergency Contact ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete an emergency contact
+      tags:
+      - emergency-contacts
+    put:
+      consumes:
+      - application/json
+      description: Update an existing emergency contact for the authenticated user
+      parameters:
+      - description: Emergency Contact ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated emergency contact data
+        in: body
+        name: contact
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateEmergencyContactInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.EmergencyContactResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an emergency contact
+      tags:
+      - emergency-contacts
+  /users/me/notifications/preferences:
+    get:
+      description: Get push and SMS notification preferences for authenticated users
+        or anonymous sessions
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.NotificationPreferencesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Get notification preferences
+      tags:
+      - notifications
+    put:
+      consumes:
+      - application/json
+      description: Update push and SMS notification preferences for authenticated
+        users or anonymous sessions
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-Id
+        type: string
+      - description: Notification preferences
+        in: body
+        name: preferences
+        required: true
+        schema:
+          $ref: '#/definitions/dto.NotificationPreferencesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Update notification preferences
+      tags:
+      - notifications
+  /users/me/settings:
+    get:
+      description: Retrieve safety settings for the authenticated user. Creates default
+        settings if none exist.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SafetySettingsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user safety settings
+      tags:
+      - safety-settings
+    put:
+      consumes:
+      - application/json
+      description: Update safety settings for the authenticated user. All fields are
+        optional.
+      parameters:
+      - description: Updated settings
+        in: body
+        name: settings
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateSafetySettingsInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SafetySettingsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user safety settings
+      tags:
+      - safety-settings
+  /users/profile:
+    put:
+      consumes:
+      - application/json
+      description: Update user profile to save home and work addresses for navigation
+      parameters:
+      - description: Profile update with home/work addresses
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profile updated successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid JWT token
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user profile with saved locations
+      tags:
+      - users
+  /ws/alerts:
+    get:
+      description: Upgrade HTTP connection to WebSocket for real-time alerts. Supports
+        both authenticated (JWT) and anonymous (device_id) connections
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Handle WebSocket connections for alerts
+      tags:
+      - websocket
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+  DeviceID:
+    description: Unique device identifier for tracking and analytics.
+    in: header
+    name: X-Device-ID
+    type: apiKey
 swagger: "2.0"

@@ -1,32 +1,127 @@
-## Descrição da PR
-Deixar claro e bem descrito o que a PR resolve, quais alterações foram realizadas e um cenário esperado. Deve ser escrito em português e resumido para um rápido entendimento.
+## Description
 
-## Informações
-* (issue) #
+<!-- Provide a clear and concise description of what this PR accomplishes -->
 
-#### Tipo da PR
-- [ ] Nova funcionalidade.
-- [ ] Ajuste de funcionalidade existente.
-- [ ] BUGFIX - Correções de problemas ou melhorias.
+### What does this PR do?
 
-### Código
-- [ ] Desacoplado e isolado.
-- [ ] Não inclui comentários redundantes Ex.: `# Precisei alterar isso por conta disso`.
-- [ ] Enviei a demonstração da implementação (caso necessário).
-- [ ] Link para documentação da implementação (caso necessário).
-- [ ] Atualização do `Readme.md` (caso necessário).
-- [ ] Não contem código em *WIP*, caso seja para `origin/master`.
-- [ ] Requer instalação/atualização de dependências.
-- [ ] Contém testes automatizados.
+<!-- Describe the changes made in this pull request -->
 
-### Merge
-- [ ] Estou seguindo o processo de GitFlow.
-- [ ] Estou seguindo as práticas descritas nos [guias de contribuição](../CONTRIBUTING.md)
+### Why is this change needed?
 
-### Aprovadores
-- [ ] Marquei ao menos 2 revisores para o PR.
-- [ ] Um dos revisores é Code Owner. CC: @Paulo-Lopes-Estevao 
+<!-- Explain the problem this PR solves or the feature it adds -->
 
-### Informações adicionais
-*Adicione qualquer informação que ache relevante e contribua para o entendimento da PR.*
+### Related Issues
 
+<!-- Link to related issues using #issue_number or "Closes #issue_number" if it resolves an issue -->
+
+Closes #
+
+## Type of Change
+
+- [ ] 🐛 Bug fix
+- [ ] ✨ New feature
+- [ ] 💥 Breaking change
+- [ ] 📝 Documentation update
+- [ ] ♻️ Code refactoring
+- [ ] 🎨 Style/UI changes
+- [ ] ⚡ Performance improvement
+- [ ] ✅ Test coverage improvement
+- [ ] 🔧 Configuration change
+- [ ] 🔨 Build/CI/CD changes
+
+## Changes Made
+
+- 
+- 
+- 
+
+## Testing
+
+### How Has This Been Tested?
+
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] Manual testing
+- [ ] End-to-end tests
+
+### Test Coverage
+
+- Test coverage: __%
+- New tests added: Yes / No
+
+### Testing Steps
+
+1. 
+2. 
+3. 
+
+## Screenshots/Videos
+
+### Before
+
+### After
+
+## Code Quality Checklist
+
+- [ ] Code follows the project's coding standards and style guidelines
+- [ ] Self-reviewed the changes
+- [ ] Code formatted (`go fmt`)
+- [ ] Comments added for complex logic
+- [ ] Clean Architecture principles respected
+- [ ] No redundant or WIP code in main/master
+
+### Documentation
+
+- [ ] Documentation updated
+- [ ] README.md updated if needed
+- [ ] API documentation (Swagger) updated if needed
+- [ ] Migration guide added if breaking change
+
+### Dependencies
+
+- [ ] New dependencies required are justified
+- [ ] `go.mod` and `go.sum` updated
+- [ ] Dependencies security-scanned
+
+## Git Workflow Compliance
+
+- [ ] Following GitFlow
+- [ ] Branch naming conventions followed
+- [ ] Conventional commit messages used
+- [ ] Branch rebased with target branch
+- [ ] No merge conflicts
+
+## Breaking Changes
+
+- [ ] Introduces breaking changes
+- [ ] Migration guide included if needed
+
+## Performance Impact
+
+- [ ] No performance impact
+- [ ] Performance improved
+- [ ] Performance may be affected
+
+**Details:**
+
+## Security Considerations
+
+- [ ] No security implications
+- [ ] Security improved
+- [ ] Potential security concerns
+
+**Details:**
+
+## Deployment Notes
+
+- [ ] Database migrations required
+- [ ] Environment variables updated
+- [ ] Configuration changes required
+- [ ] Service restart required
+- [ ] Other services updated
+
+### Required Environment Variables
+
+```bash
+# Example
+NEW_VAR=value

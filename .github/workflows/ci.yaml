@@ -1,52 +1,44 @@
 name: ci-project
 
 on:
-  push:
-    branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
 
 jobs:
-  build:
+  go-ci:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:9.4
-
-        env:
-          POSTGRES_PASSWORD: jsow92j29u8whona9
-          POSTGRES_USER: postgres
-          POSTGRES_DB: riskplace
-
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.19.2
+          go-version-file: go.mod
 
-      - name: Build
-        run: go build -v ./...
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/.cache/golangci-lint
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: ${{ runner.os }}-go-
+
+      - name: Security scan
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-file: go.mod
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: latest
+          args: -c ./.golangci.yml ./... -v --timeout=5m
 
       - name: Test
-        run: go test -v ./...
-        env:
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_USERNAME: postgres
-          DB_PASSWORD: jsow92j29u8whona9
-          DB_NAME: riskplace
-          SSL_MODE: disable
+        run: make test
 
-      - name: Test coverage
-        run: go test -v ./... -coverprofile=coverage.out -covermode=atomic
+      - name: Build
+        run: make build
