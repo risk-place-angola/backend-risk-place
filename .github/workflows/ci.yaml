@@ -2,7 +2,7 @@ name: ci-project
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
     types: [opened, synchronize, reopened]
 
 jobs:
