@@ -5,6 +5,9 @@ VALUES ($1, $2, $3, $4, $5);
 -- name: GetUserByEmail :one
 SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL LIMIT 1;
 
+-- name: GetUserByEmailOrPhone :one
+SELECT * FROM users WHERE (email = $1 OR phone = $1) AND deleted_at IS NULL LIMIT 1;
+
 -- name: GetUserByID :one
 SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1;
 
