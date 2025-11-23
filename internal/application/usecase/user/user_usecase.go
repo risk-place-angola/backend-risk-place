@@ -103,20 +103,20 @@ func (uc *UserUseCase) Signup(ctx context.Context, input dto.RegisterUserInput, 
 	return &dto.RegisterUserOutput{ID: user.ID}, nil
 }
 
-func (uc *UserUseCase) Login(ctx context.Context, email, rawPassword, deviceID, fcmToken, deviceLanguage string) (*dto.UserSignInDTO, error) {
-	u, err := uc.userRepo.FindByEmail(ctx, email)
+func (uc *UserUseCase) Login(ctx context.Context, identifier, rawPassword, deviceID, fcmToken, deviceLanguage string) (*dto.UserSignInDTO, error) {
+	u, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil || u == nil {
-		slog.Error("User not found", "email", email, "error", err)
+		slog.Error("User not found", "identifier", identifier, "error", err)
 		return nil, domainErrors.ErrInvalidCredentials
 	}
 
 	if !uc.hasher.Compare(u.Password, rawPassword) {
-		slog.Error("Password mismatch for user", "email", email)
+		slog.Error("Password mismatch for user", "identifier", identifier)
 		return nil, domainErrors.ErrInvalidCredentials
 	}
 
 	if !u.AccountVerification.Verified {
-		slog.Warn("Login attempt with unverified account, resending code", "email", email, "user_id", u.ID)
+		slog.Warn("Login attempt with unverified account, resending code", "identifier", identifier, "user_id", u.ID)
 		if err := uc.verificationService.ResendCode(ctx, u.ID, u.Phone, u.Email); err != nil {
 			slog.Error("Failed to resend verification code", "user_id", u.ID, "error", err)
 		}
