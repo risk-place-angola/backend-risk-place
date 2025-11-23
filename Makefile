@@ -34,6 +34,7 @@ test:
 	@go test -cover -covermode=atomic -coverprofile=coverage.out  ./...
 
 sec-scan:
+	@command -v govulncheck >/dev/null 2>&1 || { echo "govulncheck not found, installing..."; go install golang.org/x/vuln/cmd/govulncheck@latest; }
 	@govulncheck -scan symbol -show verbose ./...
 
 build:
