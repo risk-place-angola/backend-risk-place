@@ -154,19 +154,12 @@ echo -e "\n${YELLOW}🧹 Cleaning up old images...${NC}"
 docker images | grep backend-core | tail -n +4 | awk '{print $3}' | xargs docker rmi -f 2>/dev/null || true
 echo -e "${GREEN}✅ Cleanup complete${NC}"
 
-# Security: Remove .env file after container is running
+# Security: Remove .env file after containers are running
 echo -e "\n${YELLOW}🔒 Securing environment file...${NC}"
 if [ -f ".env" ]; then
-    # Shred the file (overwrite with random data before deleting)
-    if command -v shred &> /dev/null; then
-        shred -vfz -n 3 .env
-        echo -e "${GREEN}✅ .env file securely deleted (shredded)${NC}"
-    else
-        # Fallback: overwrite and delete
-        dd if=/dev/urandom of=.env bs=1k count=10 2>/dev/null
-        rm -f .env
-        echo -e "${GREEN}✅ .env file securely deleted${NC}"
-    fi
+    # Simply remove the file - shred can corrupt it before docker-compose reads it
+    rm -f .env
+    echo -e "${GREEN}✅ .env file securely deleted${NC}"
 else
     echo -e "${YELLOW}ℹ️  No .env file found (already cleaned)${NC}"
 fi

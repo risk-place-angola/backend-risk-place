@@ -107,10 +107,12 @@ jobs:
             # Run deployment with specific version and replicas (includes .env cleanup)
             ./scripts/deploy.sh "main-$IMAGE_TAG" "$REPLICAS"
             
-            # Double-check .env is removed
+            # Verify .env was removed by deploy.sh
             if [ -f .env ]; then
-              echo "⚠️  Warning: .env still exists, force removing..."
-              shred -vfz -n 3 .env 2>/dev/null || rm -f .env
+              echo "⚠️  Warning: .env still exists after deploy, removing..."
+              rm -f .env
+            else
+              echo "✅ .env file properly cleaned up"
             fi
 
       - name: Verify deployment
