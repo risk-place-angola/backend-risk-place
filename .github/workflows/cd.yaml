@@ -81,8 +81,8 @@ jobs:
             exit 1
           fi
           
-          # Check for null bytes or corruption
-          if grep -q $'\x00' .env 2>/dev/null; then
+          # Check for null bytes or corruption (more reliable method)
+          if ! cat .env | tr -d '\0' | diff -q - .env >/dev/null 2>&1; then
             echo "❌ .env file contains null bytes (corrupted)"
             exit 1
           fi
