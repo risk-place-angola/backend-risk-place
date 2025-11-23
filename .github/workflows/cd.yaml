@@ -127,11 +127,32 @@ jobs:
             echo "All running containers:"
             docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
             
+            echo ""
+            echo "All containers (including stopped):"
+            docker ps -a --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+            
             # Check all backend_core containers (substring match)
             TOTAL=$(docker ps --filter "name=backend_core" --format "{{.Names}}" | wc -l | tr -d ' ')
             HEALTHY=$(docker ps --filter "name=backend_core" --filter "health=healthy" --format "{{.Names}}" | wc -l | tr -d ' ')
             
+            echo ""
             echo "📊 Deployment status: $HEALTHY/$TOTAL containers healthy"
+            
+            # If no containers found, check if deployment failed
+            if [ "$TOTAL" -eq 0 ]; then
+              echo "❌ No backend_core containers found!"
+              echo ""
+              echo "Checking docker-compose status:"
+              cd ~/backend-risk-place
+              docker compose -f docker-compose.prod.yml ps || docker-compose -f docker-compose.prod.yml ps
+              echo ""
+              echo "Checking if docker-compose.prod.yml exists:"
+              ls -la docker-compose.prod.yml
+              echo ""
+              echo "Recent docker events:"
+              docker events --since 5m --until 0s | grep backend || echo "No backend events found"
+              exit 1
+            fi
             
             if [ "$HEALTHY" -ge 3 ]; then
               echo "✅ Deployment successful - $HEALTHY instances running"
