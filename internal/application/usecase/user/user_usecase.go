@@ -333,12 +333,9 @@ func (uc *UserUseCase) VerifyCode(ctx context.Context, email, code string) error
 		return domainErrors.ErrInvalidCode
 	}
 
-	user.EmailVerification.CodeVerified = true
-	user.EmailVerification.Verified = true
-
-	err = uc.userRepo.Save(ctx, user)
+	err = uc.userRepo.MarkEmailVerified(ctx, user.ID)
 	if err != nil {
-		slog.Error("Error saving user after code verification", "user_id", user.ID, "error", err)
+		slog.Error("Error marking email as verified", "user_id", user.ID, "error", err)
 		return err
 	}
 
