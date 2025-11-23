@@ -110,16 +110,17 @@ func (uc *UserUseCase) Login(ctx context.Context, email, rawPassword, deviceID, 
 		return nil, domainErrors.ErrInvalidCredentials
 	}
 
-	/*
-		if !u.EmailVerification.Verified {
-			slog.Error("Email not verified for user", "email", email)
-			return nil, domainErrors.ErrEmailNotVerified
-		}
-	*/
-
 	if !uc.hasher.Compare(u.Password, rawPassword) {
 		slog.Error("Password mismatch for user", "email", email)
 		return nil, domainErrors.ErrInvalidCredentials
+	}
+
+	if !u.AccountVerification.Verified {
+		slog.Warn("Login attempt with unverified account, resending code", "email", email, "user_id", u.ID)
+		if err := uc.verificationService.ResendCode(ctx, u.ID, u.Phone, u.Email); err != nil {
+			slog.Error("Failed to resend verification code", "user_id", u.ID, "error", err)
+		}
+		return nil, domainErrors.ErrAccountNotVerified
 	}
 
 	if fcmToken != "" || deviceLanguage != "" {
@@ -206,8 +207,8 @@ func (uc *UserUseCase) Refresh(ctx context.Context, refreshToken string) (*dto.U
 	if err != nil || user == nil || user.ID == uuid.Nil {
 		return nil, domainErrors.ErrInvalidToken
 	}
-	if !user.EmailVerification.Verified {
-		return nil, domainErrors.ErrEmailNotVerified
+	if !user.AccountVerification.Verified {
+		return nil, domainErrors.ErrAccountNotVerified
 	}
 
 	roles, err := uc.roleRepo.GetUserRoles(ctx, user.ID)
@@ -288,7 +289,7 @@ func (uc *UserUseCase) ResetPassword(ctx context.Context, email, newPassword str
 		return domainErrors.ErrUserAccountNotExists
 	}
 
-	if !user.EmailVerification.CodeVerified {
+	if !user.AccountVerification.CodeVerified {
 		slog.Error("Code not verified for user", "user_id", user.ID)
 		return domainErrors.ErrInvalidCode
 	}
@@ -333,9 +334,9 @@ func (uc *UserUseCase) VerifyCode(ctx context.Context, email, code string) error
 		return domainErrors.ErrInvalidCode
 	}
 
-	err = uc.userRepo.MarkEmailVerified(ctx, user.ID)
+	err = uc.userRepo.MarkAccountVerified(ctx, user.ID)
 	if err != nil {
-		slog.Error("Error marking email as verified", "user_id", user.ID, "error", err)
+		slog.Error("Error marking account as verified", "user_id", user.ID, "error", err)
 		return err
 	}
 
@@ -348,8 +349,8 @@ func (uc *UserUseCase) ResendVerificationCode(ctx context.Context, email string)
 		return err
 	}
 
-	if user.EmailVerification.Verified {
-		return fmt.Errorf("user already verified")
+	if user.AccountVerification.Verified {
+		return fmt.Errorf("account already verified")
 	}
 
 	return uc.verificationService.ResendCode(ctx, user.ID, user.Phone, user.Email)
