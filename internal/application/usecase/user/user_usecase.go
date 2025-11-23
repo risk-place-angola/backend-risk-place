@@ -251,18 +251,18 @@ func (uc *UserUseCase) Logout(ctx context.Context, userID uuid.UUID) error {
 	return nil
 }
 
-func (uc *UserUseCase) ForgotPassword(ctx context.Context, email string) error {
-	getAccount, err := uc.userRepo.FindByEmail(ctx, email)
+func (uc *UserUseCase) ForgotPassword(ctx context.Context, identifier string) error {
+	getAccount, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
 		if stdErrors.Is(err, domainErrors.ErrUserNotFound) {
-			slog.Error("User account not found", "email", email)
+			slog.Error("User account not found", "identifier", identifier)
 			return domainErrors.ErrUserAccountNotExists
 		}
 		return err
 	}
 
 	if getAccount.ID == uuid.Nil {
-		slog.Error("User account not found", "email", email, "user_id", "nil")
+		slog.Error("User account not found", "identifier", identifier, "user_id", "nil")
 		return domainErrors.ErrUserAccountNotExists
 	}
 
@@ -274,18 +274,18 @@ func (uc *UserUseCase) ForgotPassword(ctx context.Context, email string) error {
 	return nil
 }
 
-func (uc *UserUseCase) ResetPassword(ctx context.Context, email, newPassword string) error {
-	user, err := uc.userRepo.FindByEmail(ctx, email)
+func (uc *UserUseCase) ResetPassword(ctx context.Context, identifier, newPassword string) error {
+	user, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
 		if stdErrors.Is(err, domainErrors.ErrUserNotFound) {
-			slog.Error("User account not found", "email", email)
+			slog.Error("User account not found", "identifier", identifier)
 			return domainErrors.ErrUserAccountNotExists
 		}
 		return err
 	}
 
 	if user.ID == uuid.Nil {
-		slog.Error("User account not found", "email", email, "user_id", "nil")
+		slog.Error("User account not found", "identifier", identifier, "user_id", "nil")
 		return domainErrors.ErrUserAccountNotExists
 	}
 
@@ -308,18 +308,18 @@ func (uc *UserUseCase) ResetPassword(ctx context.Context, email, newPassword str
 	return nil
 }
 
-func (uc *UserUseCase) VerifyCode(ctx context.Context, email, code string) error {
-	user, err := uc.userRepo.FindByEmail(ctx, email)
+func (uc *UserUseCase) VerifyCode(ctx context.Context, identifier, code string) error {
+	user, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
 		if stdErrors.Is(err, domainErrors.ErrUserNotFound) {
-			slog.Error("User account not found", "email", email)
+			slog.Error("User account not found", "identifier", identifier)
 			return domainErrors.ErrUserAccountNotExists
 		}
 		return err
 	}
 
 	if user.ID == uuid.Nil {
-		slog.Error("User account not found", "email", email, "user_id", "nil")
+		slog.Error("User account not found", "identifier", identifier, "user_id", "nil")
 		return domainErrors.ErrUserAccountNotExists
 	}
 
@@ -343,8 +343,8 @@ func (uc *UserUseCase) VerifyCode(ctx context.Context, email, code string) error
 	return nil
 }
 
-func (uc *UserUseCase) ResendVerificationCode(ctx context.Context, email string) error {
-	user, err := uc.userRepo.FindByEmail(ctx, email)
+func (uc *UserUseCase) ResendVerificationCode(ctx context.Context, identifier string) error {
+	user, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
 		return err
 	}
