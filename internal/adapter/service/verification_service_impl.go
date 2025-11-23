@@ -10,20 +10,23 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/port"
+	domainrepository "github.com/risk-place-angola/backend-risk-place/internal/domain/repository"
 	domainService "github.com/risk-place-angola/backend-risk-place/internal/domain/service"
 )
 
 const (
-	verificationCodeTTL      = 10 * time.Minute
+	verificationCodeTTL      = 2 * time.Minute
 	verificationCodeMaxValue = 1000000
 	verificationCodeFormat   = "%06d"
 )
 
 type verificationServiceImpl struct {
-	cache        port.Cache
-	smsNotifier  port.NotifierSMSService
-	emailService port.EmailService
-	frontendURL  string
+	cache              port.Cache
+	smsNotifier        port.NotifierSMSService
+	emailService       port.EmailService
+	frontendURL        string
+	translationService *TranslationService
+	userRepo           domainrepository.UserRepository
 }
 
 func NewVerificationService(
@@ -31,12 +34,16 @@ func NewVerificationService(
 	smsNotifier port.NotifierSMSService,
 	emailService port.EmailService,
 	frontendURL string,
+	translationService *TranslationService,
+	userRepo domainrepository.UserRepository,
 ) domainService.VerificationService {
 	return &verificationServiceImpl{
-		cache:        cache,
-		smsNotifier:  smsNotifier,
-		emailService: emailService,
-		frontendURL:  frontendURL,
+		cache:              cache,
+		smsNotifier:        smsNotifier,
+		emailService:       emailService,
+		frontendURL:        frontendURL,
+		translationService: translationService,
+		userRepo:           userRepo,
 	}
 }
 
@@ -48,9 +55,11 @@ func (s *verificationServiceImpl) SendCode(ctx context.Context, userID uuid.UUID
 		return fmt.Errorf("failed to store code: %w", err)
 	}
 
-	if err := s.sendViaSMS(ctx, phone, code); err != nil {
+	lang := s.getUserLanguage(ctx, userID)
+
+	if err := s.sendViaSMS(ctx, phone, code, lang); err != nil {
 		slog.Warn("SMS send failed, falling back to email", "user_id", userID, "error", err)
-		if emailErr := s.sendViaEmail(ctx, email, code); emailErr != nil {
+		if emailErr := s.sendViaEmail(ctx, email, code, lang); emailErr != nil {
 			return fmt.Errorf("both SMS and email failed: SMS=%w, Email=%w", err, emailErr)
 		}
 		return nil
@@ -82,25 +91,37 @@ func (s *verificationServiceImpl) ResendCode(ctx context.Context, userID uuid.UU
 	key := fmt.Sprintf("verification:%s", userID.String())
 
 	if _, err := s.cache.Get(ctx, key); err == nil {
-		return fmt.Errorf("code already sent, please wait")
+		lang := s.getUserLanguage(ctx, userID)
+		msg := s.translationService.GetMessage("verification_code_wait", lang, "")
+		return fmt.Errorf("%s", msg.Body)
 	}
 
 	return s.SendCode(ctx, userID, phone, email)
 }
 
-func (s *verificationServiceImpl) sendViaSMS(ctx context.Context, phone, code string) error {
-	message := fmt.Sprintf("Seu código de verificação Risk Place: %s. Válido por 10 minutos.", code)
+func (s *verificationServiceImpl) sendViaSMS(ctx context.Context, phone, code string, lang Language) error {
+	msg := s.translationService.GetMessage("verification_code_sms", lang, "")
+	message := fmt.Sprintf("%s: %s. %s", msg.Title, code, msg.Body)
 	return s.smsNotifier.NotifySMS(ctx, phone, message)
 }
 
-func (s *verificationServiceImpl) sendViaEmail(ctx context.Context, email, code string) error {
+func (s *verificationServiceImpl) sendViaEmail(ctx context.Context, email, code string, lang Language) error {
+	msg := s.translationService.GetMessage("verification_code_email", lang, "")
 	htmlBody := fmt.Sprintf(`
-		<h2>Verificação de Conta - Risk Place Angola</h2>
-		<p>Seu código de verificação: <strong>%s</strong></p>
-		<p>O código expira em 10 minutos.</p>
-	`, code)
+		<h2>%s</h2>
+		<p>%s: <strong>%s</strong></p>
+	`, msg.Title, msg.Body, code)
 
-	return s.emailService.SendHTMLEmail(ctx, email, "Código de Verificação", htmlBody)
+	return s.emailService.SendHTMLEmail(ctx, email, msg.Title, htmlBody)
+}
+
+func (s *verificationServiceImpl) getUserLanguage(ctx context.Context, userID uuid.UUID) Language {
+	language, _, err := s.userRepo.GetUserLanguageAndPhone(ctx, userID)
+	if err != nil {
+		slog.Warn("Failed to get user language, using default", "user_id", userID, "error", err)
+		return LanguagePortuguese
+	}
+	return s.translationService.ParseLanguage(language)
 }
 
 func (s *verificationServiceImpl) generateCode() string {
