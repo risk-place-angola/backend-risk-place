@@ -63,7 +63,7 @@ ELAPSED=0
 HEALTHY_COUNT=0
 
 while [ $ELAPSED -lt $TIMEOUT ]; do
-    # Count healthy containers
+    # Count healthy containers (matches backend-risk-place-backend_core-1, etc)
     HEALTHY_COUNT=$(docker ps --filter "name=backend_core" --filter "health=healthy" --format "{{.Names}}" 2>/dev/null | wc -l | tr -d ' ')
     TOTAL_COUNT=$(docker ps --filter "name=backend_core" --format "{{.Names}}" 2>/dev/null | wc -l | tr -d ' ')
     
