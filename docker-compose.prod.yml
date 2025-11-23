@@ -3,7 +3,7 @@ version: '3.8'
 services:
   backend_core:
     image: riskplaceangola/backend-core:latest
-    container_name: backend_core
+    # container_name removed to allow --scale replicas
     restart: unless-stopped
     
     networks:
