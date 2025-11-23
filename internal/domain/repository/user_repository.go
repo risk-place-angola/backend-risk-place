@@ -12,6 +12,7 @@ import (
 type UserRepository interface {
 	GenericRepository[model.User]
 	FindByEmail(ctx context.Context, email string) (*model.User, error)
+	FindByEmailOrPhone(ctx context.Context, identifier string) (*model.User, error)
 	AddCodeToUser(ctx context.Context, userID uuid.UUID, code string, expiration time.Time) error
 	MarkAccountVerified(ctx context.Context, userID uuid.UUID) error
 	UpdateUserPassword(ctx context.Context, userID uuid.UUID, newPassword string) error
