@@ -104,7 +104,6 @@ func (s *verificationServiceImpl) VerifyCode(ctx context.Context, userID uuid.UU
 }
 
 func (s *verificationServiceImpl) ResendCode(ctx context.Context, userID uuid.UUID, phone, email string) error {
-	key := fmt.Sprintf("verification:%s", userID.String())
 	cooldownKey := fmt.Sprintf("verification:resend:%s", userID.String())
 	lockoutKey := fmt.Sprintf("verification:lockout:%s", userID.String())
 
@@ -114,10 +113,6 @@ func (s *verificationServiceImpl) ResendCode(ctx context.Context, userID uuid.UU
 
 	if _, err := s.cache.Get(ctx, cooldownKey); err == nil {
 		return domainErrors.ErrVerificationCooldown
-	}
-
-	if _, err := s.cache.Get(ctx, key); err == nil {
-		return domainErrors.ErrVerificationCodePending
 	}
 
 	if err := s.cache.Set(ctx, cooldownKey, "1", resendCooldown); err != nil {

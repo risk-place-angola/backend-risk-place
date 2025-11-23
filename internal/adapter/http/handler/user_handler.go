@@ -309,8 +309,6 @@ func (h *UserHandler) ResendCode(w http.ResponseWriter, r *http.Request) {
 			util.Error(w, "Too many incorrect attempts. Wait 15 minutes", http.StatusBadRequest)
 		case errors.Is(err, domainErrors.ErrVerificationCooldown):
 			util.Error(w, "Wait 60 seconds before resending", http.StatusBadRequest)
-		case errors.Is(err, domainErrors.ErrVerificationCodePending):
-			util.Error(w, "Code already sent, please wait", http.StatusBadRequest)
 		default:
 			slog.Error("Failed to resend verification code", "identifier", req.Identifier, "error", err)
 			util.Error(w, "failed to resend verification code", http.StatusInternalServerError)
