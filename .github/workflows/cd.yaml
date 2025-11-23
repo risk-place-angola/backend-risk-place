@@ -73,7 +73,7 @@ jobs:
 
       - name: Create .env file from base64 secret
         run: |
-          echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 --decode | iconv -f utf-8 -t utf-8 > .env
+          echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 --decode > .env
           
           # Validate .env file format
           if [ ! -s .env ]; then
@@ -81,20 +81,21 @@ jobs:
             exit 1
           fi
           
-          # Check for null bytes or corruption (more reliable method)
+          # Check for null bytes or corruption
           if ! cat .env | tr -d '\0' | diff -q - .env >/dev/null 2>&1; then
             echo "❌ .env file contains null bytes (corrupted)"
             exit 1
           fi
           
-          # Test loading variables
-          export $(grep -v "^#" .env | xargs) 2>/dev/null || {
-            echo "❌ Failed to parse .env file"
+          # Verify file has valid environment variables
+          VAR_COUNT=$(grep -c "=" .env 2>/dev/null || echo "0")
+          if [ "$VAR_COUNT" -lt 10 ]; then
+            echo "❌ .env file has too few variables ($VAR_COUNT found, expected at least 10)"
             exit 1
-          }
+          fi
           
           echo "✅ .env file created and validated successfully"
-          echo "   Variables found: $(grep -c "=" .env)"
+          echo "   Variables found: $VAR_COUNT"
 
       - name: Copy files to server
         uses: appleboy/scp-action@v0.1.7
