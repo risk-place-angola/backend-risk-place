@@ -14,7 +14,7 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	mw := NewMWSet(container)
 	g := NewGroups(mux, mw)
 
-	g.Public.HandleFunc("GET health", healthCheckHandler)
+	mux.HandleFunc("GET /health", healthCheckHandler)
 	g.Public.HandleFunc("POST /api/v1/devices/register", container.DeviceHandler.RegisterDevice)
 	g.Public.HandleFunc("PUT /api/v1/devices/location", container.DeviceHandler.UpdateDeviceLocation)
 
