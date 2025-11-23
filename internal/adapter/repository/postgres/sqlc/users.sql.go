@@ -113,6 +113,59 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	return i, err
 }
 
+const getUserByEmailOrPhone = `-- name: GetUserByEmailOrPhone :one
+SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, account_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, push_notification_enabled, sms_notification_enabled, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, trust_score, reports_submitted, reports_verified, created_at, updated_at, deleted_at, linked_device_id FROM users WHERE (email = $1 OR phone = $1) AND deleted_at IS NULL LIMIT 1
+`
+
+func (q *Queries) GetUserByEmailOrPhone(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmailOrPhone, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.Phone,
+		&i.Latitude,
+		&i.Longitude,
+		&i.AlertRadiusMeters,
+		&i.EmailVerified,
+		&i.AccountVerified,
+		&i.EmailVerificationCode,
+		&i.EmailVerificationExpiresAt,
+		&i.Nif,
+		&i.Province,
+		&i.Municipality,
+		&i.Neighborhood,
+		&i.Address,
+		&i.ZipCode,
+		&i.Country,
+		&i.PushNotificationEnabled,
+		&i.SmsNotificationEnabled,
+		&i.LastLogin,
+		&i.HomeAddressName,
+		&i.HomeAddressAddress,
+		&i.HomeAddressLat,
+		&i.HomeAddressLon,
+		&i.WorkAddressName,
+		&i.WorkAddressAddress,
+		&i.WorkAddressLat,
+		&i.WorkAddressLon,
+		&i.FailedAttempts,
+		&i.LockedUntil,
+		&i.DeviceFcmToken,
+		&i.DeviceLanguage,
+		&i.TrustScore,
+		&i.ReportsSubmitted,
+		&i.ReportsVerified,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.LinkedDeviceID,
+	)
+	return i, err
+}
+
 const getUserByID = `-- name: GetUserByID :one
 SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, account_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, push_notification_enabled, sms_notification_enabled, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, trust_score, reports_submitted, reports_verified, created_at, updated_at, deleted_at, linked_device_id FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1
 `
