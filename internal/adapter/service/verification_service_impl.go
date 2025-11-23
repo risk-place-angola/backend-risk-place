@@ -15,9 +15,12 @@ import (
 )
 
 const (
-	verificationCodeTTL      = 10 * time.Minute
-	verificationCodeMaxValue = 1000000
-	verificationCodeFormat   = "%06d"
+	verificationCodeTTL       = 10 * time.Minute
+	verificationCodeMaxValue  = 1000000
+	verificationCodeFormat    = "%06d"
+	maxVerificationAttempts   = 5
+	attemptLockoutDuration    = 15 * time.Minute
+	resendCooldown            = 60 * time.Second
 )
 
 type verificationServiceImpl struct {
@@ -70,6 +73,14 @@ func (s *verificationServiceImpl) SendCode(ctx context.Context, userID uuid.UUID
 
 func (s *verificationServiceImpl) VerifyCode(ctx context.Context, userID uuid.UUID, code string) (bool, error) {
 	key := fmt.Sprintf("verification:%s", userID.String())
+	attemptsKey := fmt.Sprintf("verification:attempts:%s", userID.String())
+	lockoutKey := fmt.Sprintf("verification:lockout:%s", userID.String())
+
+	if _, err := s.cache.Get(ctx, lockoutKey); err == nil {
+		lang := s.getUserLanguage(ctx, userID)
+		msg := s.translationService.GetMessage("verification_locked", lang, "")
+		return false, fmt.Errorf("%s", msg.Body)
+	}
 
 	storedCode, err := s.cache.Get(ctx, key)
 	if err != nil {
@@ -77,11 +88,17 @@ func (s *verificationServiceImpl) VerifyCode(ctx context.Context, userID uuid.UU
 	}
 
 	if storedCode != code {
+		if err := s.incrementAttempts(ctx, attemptsKey, lockoutKey, userID); err != nil {
+			slog.Error("Failed to increment verification attempts", "user_id", userID, "error", err)
+		}
 		return false, nil
 	}
 
 	if err := s.cache.Delete(ctx, key); err != nil {
 		slog.Warn("Failed to delete verification code", "user_id", userID, "error", err)
+	}
+	if err := s.cache.Delete(ctx, attemptsKey); err != nil {
+		slog.Warn("Failed to delete attempts counter", "user_id", userID, "error", err)
 	}
 
 	return true, nil
@@ -89,11 +106,29 @@ func (s *verificationServiceImpl) VerifyCode(ctx context.Context, userID uuid.UU
 
 func (s *verificationServiceImpl) ResendCode(ctx context.Context, userID uuid.UUID, phone, email string) error {
 	key := fmt.Sprintf("verification:%s", userID.String())
+	cooldownKey := fmt.Sprintf("verification:resend:%s", userID.String())
+	lockoutKey := fmt.Sprintf("verification:lockout:%s", userID.String())
+
+	if _, err := s.cache.Get(ctx, lockoutKey); err == nil {
+		lang := s.getUserLanguage(ctx, userID)
+		msg := s.translationService.GetMessage("verification_locked", lang, "")
+		return fmt.Errorf("%s", msg.Body)
+	}
+
+	if _, err := s.cache.Get(ctx, cooldownKey); err == nil {
+		lang := s.getUserLanguage(ctx, userID)
+		msg := s.translationService.GetMessage("verification_resend_cooldown", lang, "")
+		return fmt.Errorf("%s", msg.Body)
+	}
 
 	if _, err := s.cache.Get(ctx, key); err == nil {
 		lang := s.getUserLanguage(ctx, userID)
 		msg := s.translationService.GetMessage("verification_code_wait", lang, "")
 		return fmt.Errorf("%s", msg.Body)
+	}
+
+	if err := s.cache.Set(ctx, cooldownKey, "1", resendCooldown); err != nil {
+		slog.Warn("Failed to set resend cooldown", "user_id", userID, "error", err)
 	}
 
 	return s.SendCode(ctx, userID, phone, email)
@@ -113,6 +148,26 @@ func (s *verificationServiceImpl) sendViaEmail(ctx context.Context, email, code 
 	`, msg.Title, msg.Body, code)
 
 	return s.emailService.SendHTMLEmail(ctx, email, msg.Title, htmlBody)
+}
+
+func (s *verificationServiceImpl) incrementAttempts(ctx context.Context, attemptsKey, lockoutKey string, userID uuid.UUID) error {
+	attemptsStr, err := s.cache.Get(ctx, attemptsKey)
+	attempts := 1
+	if err == nil {
+		if _, parseErr := fmt.Sscanf(attemptsStr, "%d", &attempts); parseErr == nil {
+			attempts++
+		}
+	}
+
+	if attempts >= maxVerificationAttempts {
+		if err := s.cache.Set(ctx, lockoutKey, "1", attemptLockoutDuration); err != nil {
+			return err
+		}
+		slog.Warn("Verification attempts exceeded, user locked out", "user_id", userID, "attempts", attempts)
+		return nil
+	}
+
+	return s.cache.Set(ctx, attemptsKey, fmt.Sprintf("%d", attempts), verificationCodeTTL)
 }
 
 func (s *verificationServiceImpl) getUserLanguage(ctx context.Context, userID uuid.UUID) Language {
