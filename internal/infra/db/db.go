@@ -15,9 +15,13 @@ import (
 )
 
 const (
-	maxOpenConns    = 25
-	maxIdleConns    = 25
+	// Database connection pool settings for high-load production
+	// Rule of thumb: maxOpenConns = ((core_count * 2) + effective_spindle_count)
+	// For cloud deployments: start with 100-200 for high concurrency
+	maxOpenConns    = 100 // Maximum number of open connections to the database
+	maxIdleConns    = 25  // Keep 25% idle for quick reuse
 	connMaxLifetime = 5 * time.Minute
+	connMaxIdleTime = 5 * time.Minute // Close idle connections after 5 minutes
 )
 
 func NewPostgresConnection(cfg config.Config) *sql.DB {
@@ -31,6 +35,14 @@ func NewPostgresConnection(cfg config.Config) *sql.DB {
 	db.SetMaxOpenConns(maxOpenConns)
 	db.SetMaxIdleConns(maxIdleConns)
 	db.SetConnMaxLifetime(connMaxLifetime)
+	db.SetConnMaxIdleTime(connMaxIdleTime)
+
+	slog.Info("Database connection pool configured",
+		"maxOpenConns", maxOpenConns,
+		"maxIdleConns", maxIdleConns,
+		"connMaxLifetime", connMaxLifetime,
+		"connMaxIdleTime", connMaxIdleTime,
+	)
 
 	err = db.Ping()
 	if err != nil {
