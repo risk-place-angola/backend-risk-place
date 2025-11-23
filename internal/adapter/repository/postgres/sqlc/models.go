@@ -266,6 +266,7 @@ type User struct {
 	Longitude                  sql.NullFloat64 `json:"longitude"`
 	AlertRadiusMeters          sql.NullInt32   `json:"alert_radius_meters"`
 	EmailVerified              sql.NullBool    `json:"email_verified"`
+	AccountVerified            sql.NullBool    `json:"account_verified"`
 	EmailVerificationCode      sql.NullString  `json:"email_verification_code"`
 	EmailVerificationExpiresAt sql.NullTime    `json:"email_verification_expires_at"`
 	Nif                        sql.NullString  `json:"nif"`

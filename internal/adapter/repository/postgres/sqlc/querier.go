@@ -131,10 +131,10 @@ type Querier interface {
 	ListRiskTypes(ctx context.Context) ([]RiskType, error)
 	ListRoles(ctx context.Context) ([]Role, error)
 	ListUserNotifications(ctx context.Context, arg ListUserNotificationsParams) ([]Notification, error)
+	MarkAccountVerified(ctx context.Context, id uuid.UUID) error
 	MarkAlertSeen(ctx context.Context, arg MarkAlertSeenParams) error
 	// Marca uma sessão anônima como migrada
 	MarkAnonymousSessionAsMigrated(ctx context.Context, arg MarkAnonymousSessionAsMigratedParams) error
-	MarkEmailVerified(ctx context.Context, id uuid.UUID) error
 	// Marca uma migração como concluída
 	MarkMigrationCompleted(ctx context.Context, id uuid.UUID) error
 	// Marca uma migração como falha
