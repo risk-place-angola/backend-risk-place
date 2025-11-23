@@ -54,7 +54,7 @@ func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	userOut, err := h.userUseCase.UserUseCase.Signup(r.Context(), req, deviceID)
 	if err != nil {
 		slog.Error("error during signup", slog.Any("error", err))
-		util.Error(w, err.Error(), http.StatusInternalServerError)
+		util.Error(w, "failed to create account", http.StatusBadRequest)
 		return
 	}
 
@@ -63,7 +63,7 @@ func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 
 // Login godoc
 // @Summary Login a user
-// @Description Login a user. If X-Device-ID header is provided, anonymous user data will be migrated to the authenticated account.
+// @Description Login a user with email or phone. If X-Device-ID header is provided, anonymous user data will be migrated to the authenticated account.
 // @Tags auth
 // @Accept json
 // @Produce json
@@ -71,13 +71,13 @@ func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 // @Param credentials body dto.LoginInput true "User login credentials"
 // @Success 200 {object} dto.UserSignInDTO
 // @Failure 400 {object} util.ErrorResponse
-// @Failure 401 {object} util.ErrorResponse
+// @Failure 403 {object} util.ErrorResponse
 // @Router /auth/login [post]
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginInput
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		util.Error(w, "invalid request", http.StatusBadRequest)
+		util.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -86,11 +86,11 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		deviceID = r.Header.Get("Device-Id")
 	}
 
-	token, err := h.userUseCase.UserUseCase.Login(r.Context(), req.Email, req.Password, deviceID, req.DeviceFCMToken, req.DeviceLanguage)
+	token, err := h.userUseCase.UserUseCase.Login(r.Context(), req.Identifier, req.Password, deviceID, req.DeviceFCMToken, req.DeviceLanguage)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrInvalidCredentials):
-			util.Error(w, "invalid credentials", http.StatusUnauthorized)
+			util.Error(w, "invalid credentials", http.StatusBadRequest)
 		case errors.Is(err, domainErrors.ErrAccountNotVerified):
 			util.Error(w, "account not verified", http.StatusForbidden)
 		default:
@@ -112,6 +112,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} dto.UserSignInDTO
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 401 {object} util.ErrorResponse
+// @Failure 403 {object} util.ErrorResponse
 // @Router /auth/refresh [post]
 func (h *UserHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var req struct {
@@ -192,7 +193,7 @@ func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrUserAccountNotExists):
-			util.Error(w, "user not found", http.StatusNotFound)
+			util.Error(w, "user not found", http.StatusBadRequest)
 		default:
 			util.Error(w, "internal error", http.StatusInternalServerError)
 		}
@@ -227,9 +228,9 @@ func (h *UserHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrUserAccountNotExists):
-			util.Error(w, "user not found", http.StatusNotFound)
+			util.Error(w, "user not found", http.StatusBadRequest)
 		case errors.Is(err, domainErrors.ErrInvalidCode):
-			util.Error(w, "invalid confirmation code", http.StatusBadRequest)
+			util.Error(w, "code not verified", http.StatusBadRequest)
 		default:
 			util.Error(w, "internal error", http.StatusInternalServerError)
 		}
@@ -269,7 +270,7 @@ func (h *UserHandler) ConfirmSignup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrUserNotFound):
-			util.Error(w, "user not found", http.StatusNotFound)
+			util.Error(w, "user not found", http.StatusBadRequest)
 		case errors.Is(err, domainErrors.ErrInvalidCode):
 			util.Error(w, "invalid verification code", http.StatusBadRequest)
 		case errors.Is(err, domainErrors.ErrExpiredCode):
