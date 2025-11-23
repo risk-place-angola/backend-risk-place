@@ -65,7 +65,11 @@
 
 ```json
 {
-  "error": "error message description"
+    "success": false,
+    "error": {
+        "message": "invalid credentials",
+        "code": 400
+    }
 }
 ```
 
