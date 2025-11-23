@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	verificationCodeTTL      = 2 * time.Minute
+	verificationCodeTTL      = 10 * time.Minute
 	verificationCodeMaxValue = 1000000
 	verificationCodeFormat   = "%06d"
 )
