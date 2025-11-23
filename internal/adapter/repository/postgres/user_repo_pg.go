@@ -142,6 +142,10 @@ func (u *userRepoPG) AddCodeToUser(ctx context.Context, userID uuid.UUID, code s
 	})
 }
 
+func (u *userRepoPG) MarkEmailVerified(ctx context.Context, userID uuid.UUID) error {
+	return u.q.MarkEmailVerified(ctx, userID)
+}
+
 func (u *userRepoPG) UpdateUserPassword(ctx context.Context, userID uuid.UUID, newPassword string) error {
 	return u.q.UpdateUserPassword(ctx, sqlc.UpdateUserPasswordParams{
 		ID:       userID,
