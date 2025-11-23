@@ -1,5 +1,15 @@
-#!/usr/bin/env sh
+#!/bin/sh
 set -e
+
+# Ensure Go and other tools are in PATH for VS Code
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
+# Load user environment if available (for terminal use)
+if [ -n "$ZSH_VERSION" ] && [ -f "$HOME/.zshrc" ]; then
+    . "$HOME/.zshrc" 2>/dev/null || true
+elif [ -n "$BASH_VERSION" ] && [ -f "$HOME/.bash_profile" ]; then
+    . "$HOME/.bash_profile" 2>/dev/null || true
+fi
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
