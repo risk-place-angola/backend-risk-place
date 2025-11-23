@@ -1,10 +1,9 @@
 name: ci-project
 
 on:
-  push:
-    branches: [ main, develop ]
   pull_request:
-    branches: [ develop ]
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
 
 jobs:
   go-ci:

@@ -1,0 +1,174 @@
+name: cd-deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+      image_sha: ${{ steps.prepare.outputs.sha_short }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare tags
+        id: prepare
+        run: |
+          SHA_SHORT=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "sha_short=$SHA_SHORT" >> $GITHUB_OUTPUT
+          echo "📦 Image will be tagged: main-$SHA_SHORT and latest"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: riskplaceangola/backend-core
+          tags: |
+            type=sha,prefix=main-,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.prod
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=riskplaceangola/backend-core:buildcache
+          cache-to: type=registry,ref=riskplaceangola/backend-core:buildcache,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+
+      - name: Image tags summary
+        run: |
+          echo "✅ Image built and pushed:"
+          echo "  - riskplaceangola/backend-core:main-${{ steps.prepare.outputs.sha_short }}"
+          echo "  - riskplaceangola/backend-core:latest"
+
+  deploy:
+    name: Deploy to Server
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file from base64 secret
+        run: |
+          echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 --decode > .env
+          echo "✅ .env file created successfully"
+
+      - name: Copy files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "docker-compose.prod.yml,.env,scripts/deploy.sh"
+          target: "~/backend-risk-place"
+          strip_components: 0
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_sha }}
+          REPLICAS: "3"
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: IMAGE_TAG,REPLICAS
+          script: |
+            cd ~/backend-risk-place
+            
+            echo "🚀 Deploying version: main-$IMAGE_TAG with $REPLICAS replicas"
+            
+            # Make deploy script executable
+            chmod +x scripts/deploy.sh
+            
+            # Run deployment with specific version and replicas (includes .env cleanup)
+            ./scripts/deploy.sh "main-$IMAGE_TAG" "$REPLICAS"
+            
+            # Double-check .env is removed
+            if [ -f .env ]; then
+              echo "⚠️  Warning: .env still exists, force removing..."
+              shred -vfz -n 3 .env 2>/dev/null || rm -f .env
+            fi
+
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # Wait a bit for containers to stabilize
+            sleep 15
+            
+            # Check all backend_core containers
+            TOTAL=$(docker ps --filter "name=backend_core" --format "{{.Names}}" | wc -l | tr -d ' ')
+            HEALTHY=$(docker ps --filter "name=backend_core" --filter "health=healthy" --format "{{.Names}}" | wc -l | tr -d ' ')
+            
+            echo "📊 Deployment status: $HEALTHY/$TOTAL containers healthy"
+            
+            if [ "$HEALTHY" -ge 3 ]; then
+              echo "✅ Deployment successful - $HEALTHY instances running"
+              
+              # Show status of all containers
+              echo ""
+              echo "Container status:"
+              docker ps --filter "name=backend_core" --format "table {{.Names}}\t{{.Status}}"
+              
+              # Show logs from first container
+              echo ""
+              echo "Recent logs (first instance):"
+              FIRST=$(docker ps --filter "name=backend_core" --format "{{.Names}}" | head -1)
+              docker logs --tail 30 "$FIRST"
+              
+              exit 0
+            else
+              echo "❌ Deployment verification failed"
+              echo "Expected: 3+ healthy containers"
+              echo "Got: $HEALTHY healthy, $TOTAL total"
+              
+              echo ""
+              echo "Container details:"
+              docker ps -a --filter "name=backend_core" --format "table {{.Names}}\t{{.Status}}"
+              
+              # Show logs from all containers
+              echo ""
+              echo "Logs from all containers:"
+              docker ps --filter "name=backend_core" --format "{{.Names}}" | while read container; do
+                echo "--- $container ---"
+                docker logs --tail 50 "$container" 2>&1
+              done
+              
+              exit 1
+            fi
+
+      - name: Notification
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Deployment successful with 3 replicas!"
+          else
+            echo "❌ Deployment failed!"
+          fi
