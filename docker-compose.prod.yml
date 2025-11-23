@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  backend_core:
+    image: riskplaceangola/backend-core:latest
+    container_name: backend_core
+    restart: unless-stopped
+    
+    networks:
+      - kilua_network
+    
+    # Internal port only - no external exposure
+    expose:
+      - "8090"
+    
+    environment:
+      # Application
+      APP_ENV: ${APP_ENV}
+      PORT: "8090"
+      BASE_PATH: ${BASE_PATH}
+      API_RATE_LIMIT: ${API_RATE_LIMIT}
+      TIMEOUT: ${TIMEOUT}
+      
+      # Database
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      SSL_MODE: ${SSL_MODE}
+      DB_CONN_STRING: ${DB_CONN_STRING}
+      
+      # Email
+      EMAIL_FROM: ${EMAIL_FROM}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      EMAIL_SSL: ${EMAIL_SSL}
+      EMAIL_TLS: ${EMAIL_TLS}
+      
+      # JWT
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      
+      # Redis
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DB: ${REDIS_DB}
+      REDIS_URL: ${REDIS_URL}
+      
+      # Firebase
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
+      FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}
+      
+      # Twilio
+      TWILIO_MESSAGE_SERVICE_SID: ${TWILIO_MESSAGE_SERVICE_SID}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+      
+      # AWS
+      AWS_REGION: ${AWS_REGION}
+      ACCESS_KEY_ID: ${ACCESS_KEY_ID}
+      SECRET_ACCESS_KEY: ${SECRET_ACCESS_KEY}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+    
+    volumes:
+      - backend-logs:/app/logs
+    
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Production configuration with 3 replicas for high availability
+    # Scale command: docker compose -f docker-compose.prod.yml up -d --scale backend_core=3
+    deploy:
+      replicas: 3  # Default: 3 instances for load balancing
+      resources:
+        limits:
+          cpus: '2.0'      # Per instance
+          memory: 2G       # Per instance
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  kilua_network:
+    external: true
+    name: kilua_network
+
+volumes:
+  backend-logs:
+    driver: local

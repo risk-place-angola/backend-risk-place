@@ -33,3 +33,19 @@ tmp
 firebase*.json
 
 scripts/upload-risks
+
+# Environment files (sensitive)
+.env.prod
+.env.*.base64
+.env.b64
+*.env.prod
+**/backend-config/
+
+# Private documentation (moved to private repo backend-config/)
+SECRETS-CHECKLIST.md
+BASE64-ENV-GUIDE.md
+SECURITY-ENV-FILES.md
+CI-CD-SUMMARY.md
+DEPLOY.md
+
+# NOTE: docker-compose.prod.yml is versioned (no secrets, only ${VAR} references)
