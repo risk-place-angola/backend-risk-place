@@ -189,6 +189,39 @@ func (ts *TranslationService) loadMessages() {
 			Body:  "The report in your area has been resolved",
 		},
 	}
+
+	ts.messages["verification_code_sms"] = map[Language]NotificationMessage{
+		LanguagePortuguese: {
+			Title: "Seu código de verificação Risk Place",
+			Body:  "Válido por 10 minutos",
+		},
+		LanguageEnglish: {
+			Title: "Your Risk Place verification code",
+			Body:  "Valid for 10 minutes",
+		},
+	}
+
+	ts.messages["verification_code_email"] = map[Language]NotificationMessage{
+		LanguagePortuguese: {
+			Title: "Verificação de Conta - Risk Place Angola",
+			Body:  "Seu código de verificação",
+		},
+		LanguageEnglish: {
+			Title: "Account Verification - Risk Place Angola",
+			Body:  "Your verification code",
+		},
+	}
+
+	ts.messages["verification_code_wait"] = map[Language]NotificationMessage{
+		LanguagePortuguese: {
+			Title: "Aguarde",
+			Body:  "Código já enviado, por favor aguarde",
+		},
+		LanguageEnglish: {
+			Title: "Please Wait",
+			Body:  "Code already sent, please wait",
+		},
+	}
 }
 
 func (ts *TranslationService) GetMessage(key string, lang Language, riskType string) NotificationMessage {
