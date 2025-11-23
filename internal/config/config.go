@@ -263,13 +263,18 @@ func validateConfig(cfg Config) {
 
 	// Validate Twilio Account SID format
 	if cfg.TwilioConfig.AccountSID != "" && !strings.HasPrefix(cfg.TwilioConfig.AccountSID, "AC") {
-		slog.Error("❌ Invalid TWILIO_ACCOUNT_SID format",
-			slog.String("current", cfg.TwilioConfig.AccountSID),
-			slog.String("expected", "Should start with 'AC' (e.g., ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)"))
 		if strings.HasPrefix(cfg.TwilioConfig.AccountSID, "SK") {
-			log.Fatalf("❌ TWILIO_ACCOUNT_SID must be your Account SID (starts with 'AC'), not an API Key (starts with 'SK'). Find it at: https://console.twilio.com/")
+			slog.Warn("⚠️  TWILIO_ACCOUNT_SID appears to be an API Key (SK*), not an Account SID (AC*)",
+				slog.String("current", cfg.TwilioConfig.AccountSID),
+				slog.String("help", "SMS sending will fail with authentication errors. Get your Account SID at: https://console.twilio.com/"))
+			if !cfg.IsDevelopment() {
+				log.Fatalf("❌ TWILIO_ACCOUNT_SID must be your Account SID (starts with 'AC'), not an API Key (starts with 'SK'). Find it at: https://console.twilio.com/")
+			}
 		} else {
-			log.Fatalf("❌ Invalid TWILIO_ACCOUNT_SID format. It should start with 'AC'. Find it at: https://console.twilio.com/")
+			slog.Warn("⚠️  Invalid TWILIO_ACCOUNT_SID format",
+				slog.String("current", cfg.TwilioConfig.AccountSID),
+				slog.String("expected", "Should start with 'AC'"),
+				slog.String("help", "Find it at: https://console.twilio.com/"))
 		}
 	}
 
