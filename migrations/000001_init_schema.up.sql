@@ -60,6 +60,7 @@ CREATE TABLE users (
     longitude DOUBLE PRECISION,
     alert_radius_meters INT DEFAULT 1000,
     email_verified BOOLEAN DEFAULT FALSE,
+    account_verified BOOLEAN DEFAULT FALSE,
     email_verification_code TEXT,
     email_verification_expires_at TIMESTAMP,
     nif TEXT UNIQUE,

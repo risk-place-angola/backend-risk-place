@@ -127,6 +127,9 @@ func (u *userRepoPG) FindByEmail(ctx context.Context, email string) (*model.User
 			Neighborhood: userRow.Neighborhood.String,
 			ZipCode:      userRow.ZipCode.String,
 		},
+		AccountVerification: model.AccountVerification{
+			Verified: userRow.AccountVerified.Bool,
+		},
 		CreatedAt: userRow.CreatedAt.Time,
 		UpdatedAt: userRow.UpdatedAt.Time,
 	}
@@ -142,8 +145,8 @@ func (u *userRepoPG) AddCodeToUser(ctx context.Context, userID uuid.UUID, code s
 	})
 }
 
-func (u *userRepoPG) MarkEmailVerified(ctx context.Context, userID uuid.UUID) error {
-	return u.q.MarkEmailVerified(ctx, userID)
+func (u *userRepoPG) MarkAccountVerified(ctx context.Context, userID uuid.UUID) error {
+	return u.q.MarkAccountVerified(ctx, userID)
 }
 
 func (u *userRepoPG) UpdateUserPassword(ctx context.Context, userID uuid.UUID, newPassword string) error {

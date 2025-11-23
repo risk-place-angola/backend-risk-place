@@ -22,8 +22,8 @@ WHERE id = $1;
 -- name: UpdateAlertRadius :exec
 UPDATE users SET alert_radius_meters = $2 WHERE id = $1;
 
--- name: MarkEmailVerified :exec
-UPDATE users SET email_verified = TRUE, email_verification_code = NULL WHERE id = $1;
+-- name: MarkAccountVerified :exec
+UPDATE users SET account_verified = TRUE, email_verification_code = NULL WHERE id = $1;
 
 -- name: UpdateEmailVerificationCode :exec
 UPDATE users
@@ -39,7 +39,7 @@ WHERE deleted_at IS NULL
 
 -- name: AddCodeToUser :exec
 UPDATE users
-SET email_verification_code = $2, email_verification_expires_at = $3, updated_at = $4, email_verified = false
+SET email_verification_code = $2, email_verification_expires_at = $3, updated_at = $4, account_verified = false
 WHERE id = $1;
 
 -- name: UpdateUserPassword :exec

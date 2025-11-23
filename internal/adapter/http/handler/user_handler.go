@@ -91,8 +91,8 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, domainErrors.ErrInvalidCredentials):
 			util.Error(w, "invalid credentials", http.StatusUnauthorized)
-		case errors.Is(err, domainErrors.ErrEmailNotVerified):
-			util.Error(w, "email not verified", http.StatusForbidden)
+		case errors.Is(err, domainErrors.ErrAccountNotVerified):
+			util.Error(w, "account not verified", http.StatusForbidden)
 		default:
 			util.Error(w, "internal error", http.StatusInternalServerError)
 		}
@@ -134,8 +134,8 @@ func (h *UserHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 			util.Error(w, "refresh token expired", http.StatusUnauthorized)
 		case errors.Is(err, domainErrors.ErrInvalidToken):
 			util.Error(w, "invalid refresh token", http.StatusUnauthorized)
-		case errors.Is(err, domainErrors.ErrEmailNotVerified):
-			util.Error(w, "email not verified", http.StatusForbidden)
+		case errors.Is(err, domainErrors.ErrAccountNotVerified):
+			util.Error(w, "account not verified", http.StatusForbidden)
 		default:
 			util.Error(w, "internal error", http.StatusInternalServerError)
 		}
