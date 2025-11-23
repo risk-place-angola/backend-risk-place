@@ -782,7 +782,7 @@
         },
         "/auth/login": {
             "post": {
-                "description": "Login a user. If X-Device-ID header is provided, anonymous user data will be migrated to the authenticated account.",
+                "description": "Login a user with email or phone. If X-Device-ID header is provided, anonymous user data will be migrated to the authenticated account.",
                 "consumes": [
                     "application/json"
                 ],
@@ -823,8 +823,8 @@
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -1009,6 +1009,12 @@
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -2929,7 +2935,7 @@
                 "device_language": {
                     "type": "string"
                 },
-                "email": {
+                "identifier": {
                     "type": "string"
                 },
                 "password": {

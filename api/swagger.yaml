@@ -187,7 +187,7 @@ definitions:
         type: string
       device_language:
         type: string
-      email:
+      identifier:
         type: string
       password:
         type: string
@@ -1487,8 +1487,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Login a user. If X-Device-ID header is provided, anonymous user
-        data will be migrated to the authenticated account.
+      description: Login a user with email or phone. If X-Device-ID header is provided,
+        anonymous user data will be migrated to the authenticated account.
       parameters:
       - description: Device ID for anonymous data migration
         in: header
@@ -1511,8 +1511,8 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/util.ErrorResponse'
-        "401":
-          description: Unauthorized
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/util.ErrorResponse'
       summary: Login a user
@@ -1631,6 +1631,10 @@ paths:
             $ref: '#/definitions/util.ErrorResponse'
         "401":
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/util.ErrorResponse'
       summary: Refresh access token
