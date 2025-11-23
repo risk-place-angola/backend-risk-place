@@ -195,11 +195,15 @@ func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.userUseCase.UserUseCase.ForgotPassword(r.Context(), req.Identifier)
+	email, err := h.userUseCase.UserUseCase.ForgotPassword(r.Context(), req.Identifier)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrUserAccountNotExists):
 			util.Error(w, "user not found", http.StatusBadRequest)
+		case errors.Is(err, domainErrors.ErrSentViaEmail):
+			util.ResponseWithMessage(w, "Password reset code sent via email", map[string]interface{}{
+				"email": email,
+			}, http.StatusOK)
 		default:
 			util.Error(w, "internal error", http.StatusInternalServerError)
 		}

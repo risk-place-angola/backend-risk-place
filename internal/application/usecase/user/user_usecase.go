@@ -254,27 +254,30 @@ func (uc *UserUseCase) Logout(ctx context.Context, userID uuid.UUID) error {
 	return nil
 }
 
-func (uc *UserUseCase) ForgotPassword(ctx context.Context, identifier string) error {
+func (uc *UserUseCase) ForgotPassword(ctx context.Context, identifier string) (string, error) {
 	getAccount, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
 		if errors.Is(err, domainErrors.ErrUserNotFound) {
 			slog.Error("User account not found", "identifier", identifier)
-			return domainErrors.ErrUserAccountNotExists
+			return "", domainErrors.ErrUserAccountNotExists
 		}
-		return err
+		return "", err
 	}
 
 	if getAccount.ID == uuid.Nil {
 		slog.Error("User account not found", "identifier", identifier, "user_id", "nil")
-		return domainErrors.ErrUserAccountNotExists
+		return "", domainErrors.ErrUserAccountNotExists
 	}
 
 	if err := uc.verificationService.SendCode(ctx, getAccount.ID, getAccount.Phone, getAccount.Email); err != nil {
+		if errors.Is(err, domainErrors.ErrSentViaEmail) {
+			return getAccount.Email, err
+		}
 		slog.Error("Failed to send password reset code", "user_id", getAccount.ID, "error", err)
-		return fmt.Errorf("failed to send password reset code: %w", err)
+		return "", fmt.Errorf("failed to send password reset code: %w", err)
 	}
 
-	return nil
+	return "", nil
 }
 
 func (uc *UserUseCase) ResetPassword(ctx context.Context, identifier, newPassword string) error {
