@@ -51,6 +51,7 @@ func NewHub(locationStore port.LocationStore, geoService port.GeolocationService
 }
 
 func (h *Hub) Run() {
+	slog.Info("[HUB] WebSocket Hub started successfully")
 	go h.startNearbyUsersBroadcast()
 
 	for {
@@ -58,6 +59,7 @@ func (h *Hub) Run() {
 		case client := <-h.register:
 			h.clientsMux.Lock()
 			h.clients[client] = true
+			slog.Info("[HUB] Client registered", slog.String("user_id", client.UserID), slog.Bool("is_authenticated", client.IsAuthenticated))
 			h.clientsMux.Unlock()
 
 		case client := <-h.unregister:
@@ -65,6 +67,7 @@ func (h *Hub) Run() {
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.Send)
+				slog.Info("[HUB] Client unregistered", slog.String("user_id", client.UserID))
 			}
 			h.clientsMux.Unlock()
 
@@ -92,11 +95,13 @@ func (h *Hub) Run() {
 }
 
 func (h *Hub) startNearbyUsersBroadcast() {
+	slog.Info("[BROADCAST] Starting nearby users broadcast timer", slog.Int("interval_seconds", nearbyUsersBroadcastIntervalSeconds))
 	for {
 		select {
 		case <-h.broadcastTicker.C:
 			h.broadcastNearbyUsersToAll()
 		case <-h.stopBroadcast:
+			slog.Info("[BROADCAST] Stopping broadcast timer")
 			return
 		}
 	}
@@ -117,12 +122,17 @@ func (h *Hub) broadcastNearbyUsersToAll() {
 		return
 	}
 
+	slog.Debug("[BROADCAST] Broadcasting nearby users", slog.Int("total_clients", len(clients)))
+
 	for _, client := range clients {
 		select {
 		case h.broadcastSemaphore <- struct{}{}:
 			go func(c *Client) {
 				defer func() { <-h.broadcastSemaphore }()
-				h.sendNearbyUsersToClient(ctx, c)
+				// Create independent context for each client to avoid cancellation issues
+				clientCtx, clientCancel := context.WithTimeout(context.Background(), broadcastTimeoutSeconds*time.Second)
+				defer clientCancel()
+				h.sendNearbyUsersToClient(clientCtx, c)
 			}(client)
 		case <-ctx.Done():
 			slog.Warn("broadcast timeout reached, skipping remaining clients",
@@ -148,20 +158,20 @@ func (h *Hub) sendNearbyUsersToClient(ctx context.Context, client *Client) {
 
 	const defaultRadius = 5000.0
 
-	slog.Debug("broadcasting nearby users to client",
-		slog.String("user_id", client.UserID),
-		slog.Float64("lat", client.lastLat),
-		slog.Float64("lon", client.lastLon))
-
 	users, err := h.nearbyUsersService.GetNearbyUsers(ctx, client.UserID, client.lastLat, client.lastLon, defaultRadius)
 	if err != nil {
-		slog.Error("failed to get nearby users for broadcast", "user_id", client.UserID, "error", err)
+		slog.Error("failed to get nearby users for broadcast",
+			slog.String("user_id", client.UserID),
+			slog.Bool("is_authenticated", client.IsAuthenticated),
+			slog.Any("error", err))
 		return
 	}
 
-	slog.Debug("got nearby users for broadcast",
-		slog.String("user_id", client.UserID),
-		slog.Int("count", len(users)))
+	if len(users) > 0 {
+		slog.Debug("[BROADCAST] Nearby users found",
+			slog.String("user_id", client.UserID),
+			slog.Int("count", len(users)))
+	}
 
 	responses := make([]NearbyUserResponse, len(users))
 	for i, u := range users {
@@ -207,23 +217,44 @@ func (h *Hub) handleIncomingMessage(ctx context.Context, c *Client, raw []byte) 
 		c.lastLat = payload.Latitude
 		c.lastLon = payload.Longitude
 
+		isAnonymous := !c.IsAuthenticated
+
 		slog.Info("updating location via websocket",
 			slog.String("user_id", c.UserID),
 			slog.Float64("lat", payload.Latitude),
 			slog.Float64("lon", payload.Longitude),
-			slog.Bool("is_authenticated", c.IsAuthenticated))
+			slog.Bool("is_authenticated", c.IsAuthenticated),
+			slog.Bool("is_anonymous", isAnonymous))
 
+		// Update Redis location store
 		err = h.locationStore.UpdateUserLocation(ctx, c.UserID, payload.Latitude, payload.Longitude)
 		if err != nil {
 			slog.Error("failed to update location store", slog.Any("error", err))
+			c.SendJSON("location_update_failed", map[string]interface{}{
+				"status":  "error",
+				"message": "Failed to update location in cache",
+			})
 			return
 		}
 
-		isAnonymous := !c.IsAuthenticated
+		// Update PostgreSQL user_locations table
 		err = h.nearbyUsersService.UpdateUserLocation(ctx, c.UserID, c.UserID, payload.Latitude, payload.Longitude, payload.Speed, payload.Heading, isAnonymous)
 		if err != nil {
-			slog.Error("failed to update user location in nearby service", slog.Any("error", err))
+			slog.Error("CRITICAL: failed to update user location in nearby service",
+				slog.String("user_id", c.UserID),
+				slog.Bool("is_anonymous", isAnonymous),
+				slog.Any("error", err))
+			c.SendJSON("location_update_failed", map[string]interface{}{
+				"status":  "error",
+				"message": "Failed to update location in database",
+				"error":   err.Error(),
+			})
+			return
 		}
+
+		slog.Debug("location updated successfully",
+			slog.String("user_id", c.UserID),
+			slog.Bool("is_anonymous", isAnonymous))
 
 		c.SendJSON("location_updated", map[string]interface{}{"status": "ok"})
 
