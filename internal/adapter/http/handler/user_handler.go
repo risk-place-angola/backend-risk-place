@@ -42,7 +42,7 @@ func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.RegisterUserInput
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		util.Error(w, "invalid request", http.StatusBadRequest)
+		util.ErrorWithCode(w, "invalid request", http.StatusBadRequest, "INVALID_REQUEST_SIGNUP")
 		return
 	}
 
@@ -61,7 +61,7 @@ func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("error during signup", slog.Any("error", err))
-		util.Error(w, "failed to create account", http.StatusBadRequest)
+		util.ErrorWithCode(w, "failed to create account", http.StatusBadRequest, "SIGNUP_FAILED")
 		return
 	}
 
@@ -84,7 +84,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginInput
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		util.Error(w, "invalid request body", http.StatusBadRequest)
+		util.ErrorWithCode(w, "invalid request body", http.StatusBadRequest, "INVALID_REQUEST_LOGIN")
 		return
 	}
 
@@ -97,11 +97,11 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrInvalidCredentials):
-			util.Error(w, "invalid credentials", http.StatusBadRequest)
+			util.ErrorWithCode(w, "invalid credentials", http.StatusBadRequest, "INVALID_CREDENTIALS_LOGIN")
 		case errors.Is(err, domainErrors.ErrAccountNotVerified):
-			util.Error(w, "account not verified", http.StatusForbidden)
+			util.ErrorWithCode(w, "account not verified", http.StatusForbidden, "ACCOUNT_NOT_VERIFIED_LOGIN")
 		default:
-			util.Error(w, "internal error", http.StatusInternalServerError)
+			util.ErrorWithCode(w, "internal error", http.StatusInternalServerError, "INTERNAL_ERROR_LOGIN")
 		}
 		return
 	}
@@ -191,7 +191,7 @@ func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		Identifier string `json:"identifier"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		util.Error(w, "invalid request", http.StatusBadRequest)
+		util.ErrorWithCode(w, "invalid request", http.StatusBadRequest, "INVALID_REQUEST_FORGOT")
 		return
 	}
 
@@ -199,13 +199,13 @@ func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrUserAccountNotExists):
-			util.Error(w, "user not found", http.StatusBadRequest)
+			util.ErrorWithCode(w, "user not found", http.StatusBadRequest, "USER_NOT_FOUND_FORGOT")
 		case errors.Is(err, domainErrors.ErrSentViaEmail):
 			util.ResponseWithMessage(w, "Password reset code sent via email", map[string]interface{}{
 				"email": email,
 			}, http.StatusOK)
 		default:
-			util.Error(w, "internal error", http.StatusInternalServerError)
+			util.ErrorWithCode(w, "internal error", http.StatusInternalServerError, "INTERNAL_ERROR_FORGOT")
 		}
 		return
 	}
@@ -219,29 +219,37 @@ func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param reset body object{identifier=string,password=string} true "Password reset data"
+// @Param reset body object{identifier=string,code=string,password=string} true "Password reset data"
 // @Success 200 {string} string "password reset successfully"
 // @Failure 400 {object} util.ErrorResponse
 // @Router /auth/password/reset [post]
 func (h *UserHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Identifier string `json:"identifier"`
+		Code       string `json:"code"`
 		Password   string `json:"password"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		util.Error(w, "invalid request", http.StatusBadRequest)
+		util.ErrorWithCode(w, "invalid request", http.StatusBadRequest, "INVALID_REQUEST_RESET")
 		return
 	}
 
-	err := h.userUseCase.UserUseCase.ResetPassword(r.Context(), req.Identifier, req.Password)
+	if req.Code == "" {
+		util.ErrorWithCode(w, "code is required", http.StatusBadRequest, "CODE_REQUIRED_RESET")
+		return
+	}
+
+	err := h.userUseCase.UserUseCase.ResetPassword(r.Context(), req.Identifier, req.Code, req.Password)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrUserAccountNotExists):
-			util.Error(w, "user not found", http.StatusBadRequest)
+			util.ErrorWithCode(w, "user not found", http.StatusBadRequest, "USER_NOT_FOUND_RESET")
 		case errors.Is(err, domainErrors.ErrInvalidCode):
-			util.Error(w, "code not verified", http.StatusBadRequest)
+			util.ErrorWithCode(w, "invalid code", http.StatusBadRequest, "INVALID_CODE_RESET")
+		case errors.Is(err, domainErrors.ErrExpiredCode):
+			util.ErrorWithCode(w, "code expired", http.StatusBadRequest, "CODE_EXPIRED_RESET")
 		default:
-			util.Error(w, "internal error", http.StatusInternalServerError)
+			util.ErrorWithCode(w, "internal error", http.StatusInternalServerError, "INTERNAL_ERROR_RESET")
 		}
 		return
 	}
@@ -261,7 +269,7 @@ func (h *UserHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 // @Router /auth/confirm [post]
 func (h *UserHandler) ConfirmSignup(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		util.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		util.ErrorWithCode(w, "method not allowed", http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED_CONFIRM")
 		return
 	}
 
@@ -270,7 +278,7 @@ func (h *UserHandler) ConfirmSignup(w http.ResponseWriter, r *http.Request) {
 		Code       string `json:"code"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		util.Error(w, "invalid request", http.StatusBadRequest)
+		util.ErrorWithCode(w, "invalid request", http.StatusBadRequest, "INVALID_REQUEST_CONFIRM")
 		return
 	}
 
@@ -278,15 +286,15 @@ func (h *UserHandler) ConfirmSignup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrUserNotFound):
-			util.Error(w, "user not found", http.StatusBadRequest)
+			util.ErrorWithCode(w, "user not found", http.StatusBadRequest, "USER_NOT_FOUND_CONFIRM")
 		case errors.Is(err, domainErrors.ErrInvalidCode):
-			util.Error(w, "invalid verification code", http.StatusBadRequest)
+			util.ErrorWithCode(w, "invalid verification code", http.StatusBadRequest, "INVALID_CODE_CONFIRM")
 		case errors.Is(err, domainErrors.ErrExpiredCode):
-			util.Error(w, "verification code expired", http.StatusBadRequest)
+			util.ErrorWithCode(w, "verification code expired", http.StatusBadRequest, "CODE_EXPIRED_CONFIRM")
 		case errors.Is(err, domainErrors.ErrVerificationLocked):
-			util.Error(w, "Too many incorrect attempts. Wait 15 minutes", http.StatusBadRequest)
+			util.ErrorWithCode(w, "Too many incorrect attempts. Wait 15 minutes", http.StatusBadRequest, "VERIFICATION_LOCKED_CONFIRM")
 		default:
-			util.Error(w, "internal error", http.StatusInternalServerError)
+			util.ErrorWithCode(w, "internal error", http.StatusInternalServerError, "INTERNAL_ERROR_CONFIRM")
 		}
 		return
 	}
@@ -310,7 +318,7 @@ func (h *UserHandler) ResendCode(w http.ResponseWriter, r *http.Request) {
 		Identifier string `json:"identifier"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		util.Error(w, "invalid request body", http.StatusBadRequest)
+		util.ErrorWithCode(w, "invalid request body", http.StatusBadRequest, "INVALID_REQUEST_RESEND")
 		return
 	}
 
@@ -318,16 +326,16 @@ func (h *UserHandler) ResendCode(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErrors.ErrVerificationLocked):
-			util.Error(w, "Too many incorrect attempts. Wait 15 minutes", http.StatusBadRequest)
+			util.ErrorWithCode(w, "Too many incorrect attempts. Wait 15 minutes", http.StatusBadRequest, "VERIFICATION_LOCKED_RESEND")
 		case errors.Is(err, domainErrors.ErrVerificationCooldown):
-			util.Error(w, "Wait 60 seconds before resending", http.StatusBadRequest)
+			util.ErrorWithCode(w, "Wait 60 seconds before resending", http.StatusBadRequest, "VERIFICATION_COOLDOWN_RESEND")
 		case errors.Is(err, domainErrors.ErrSentViaEmail):
 			util.ResponseWithMessage(w, "Verification code sent via email", map[string]interface{}{
 				"email": email,
 			}, http.StatusOK)
 		default:
 			slog.Error("Failed to resend verification code", "identifier", req.Identifier, "error", err)
-			util.Error(w, "failed to resend verification code", http.StatusInternalServerError)
+			util.ErrorWithCode(w, "failed to resend verification code", http.StatusInternalServerError, "INTERNAL_ERROR_RESEND")
 		}
 		return
 	}

@@ -9,20 +9,27 @@ import (
 type ErrorResponse struct {
 	Success bool `json:"success"`
 	Error   struct {
-		Message interface{} `json:"message"`
-		Code    int         `json:"code"`
+		Message   interface{} `json:"message"`
+		Code      int         `json:"code"`
+		ErrorCode string      `json:"error_code,omitempty"`
 	} `json:"error"`
 }
 
 func Error(w http.ResponseWriter, message interface{}, code int) {
+	ErrorWithCode(w, message, code, "")
+}
+
+func ErrorWithCode(w http.ResponseWriter, message interface{}, code int, errorCode string) {
 	var payload = ErrorResponse{
 		Success: false,
 		Error: struct {
-			Message interface{} `json:"message"`
-			Code    int         `json:"code"`
+			Message   interface{} `json:"message"`
+			Code      int         `json:"code"`
+			ErrorCode string      `json:"error_code,omitempty"`
 		}{
-			Message: message,
-			Code:    code,
+			Message:   message,
+			Code:      code,
+			ErrorCode: errorCode,
 		},
 	}
 
