@@ -70,13 +70,13 @@ func (s *anonymousMigrationService) MigrateAnonymousData(
 	}
 
 	anonymousSession, err := s.anonymousSessionRepo.FindByDeviceID(ctx, deviceID)
-	if err != nil {
+	if err != nil && !errors.Is(err, domainErrors.ErrNotFound) {
 		slog.Error("Failed to fetch anonymous session", "device_id", deviceID, "error", err)
 		return fmt.Errorf("failed to fetch anonymous session: %w", err)
 	}
 
 	if anonymousSession == nil {
-		slog.Info("No anonymous session found, creating device mapping only", "device_id", deviceID)
+		slog.Debug("No anonymous session found, creating device mapping only", "device_id", deviceID)
 
 		mapping, err := model.NewDeviceUserMapping(deviceID, uuid.Nil, userID)
 		if err != nil {
