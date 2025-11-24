@@ -269,7 +269,7 @@ func (uc *UserUseCase) ForgotPassword(ctx context.Context, identifier string) (s
 		return "", domainErrors.ErrUserAccountNotExists
 	}
 
-	if err := uc.verificationService.SendCode(ctx, getAccount.ID, getAccount.Phone, getAccount.Email); err != nil {
+	if err := uc.verificationService.SendPasswordResetCode(ctx, getAccount.ID, getAccount.Phone, getAccount.Email); err != nil {
 		if errors.Is(err, domainErrors.ErrSentViaEmail) {
 			return getAccount.Email, err
 		}
@@ -280,7 +280,7 @@ func (uc *UserUseCase) ForgotPassword(ctx context.Context, identifier string) (s
 	return "", nil
 }
 
-func (uc *UserUseCase) ResetPassword(ctx context.Context, identifier, newPassword string) error {
+func (uc *UserUseCase) ResetPassword(ctx context.Context, identifier, code, newPassword string) error {
 	user, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
 		if errors.Is(err, domainErrors.ErrUserNotFound) {
@@ -295,19 +295,25 @@ func (uc *UserUseCase) ResetPassword(ctx context.Context, identifier, newPasswor
 		return domainErrors.ErrUserAccountNotExists
 	}
 
-	if !user.AccountVerification.CodeVerified {
-		slog.Error("Code not verified for user", "user_id", user.ID)
+	valid, err := uc.verificationService.VerifyCode(ctx, user.ID, code)
+	if err != nil {
+		slog.Error("Failed to verify reset code", "user_id", user.ID, "error", err)
+		return domainErrors.ErrExpiredCode
+	}
+
+	if !valid {
+		slog.Error("Invalid reset code", "user_id", user.ID)
 		return domainErrors.ErrInvalidCode
 	}
 
 	hashedPassword, err := uc.hasher.Hash(newPassword)
 	if err != nil {
-		slog.Error("Error hashing new password for user", "user_id", user.ID, "error", err)
+		slog.Error("Error hashing new password", "user_id", user.ID, "error", err)
 		return err
 	}
 
 	if err := uc.userRepo.UpdateUserPassword(ctx, user.ID, hashedPassword); err != nil {
-		slog.Error("Error updating user password", "user_id", user.ID, "error", err)
+		slog.Error("Error updating password", "user_id", user.ID, "error", err)
 		return err
 	}
 
