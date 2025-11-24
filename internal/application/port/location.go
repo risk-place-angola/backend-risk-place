@@ -2,14 +2,16 @@ package port
 
 import (
 	"context"
-
-	"github.com/risk-place-angola/backend-risk-place/internal/domain/service"
 )
 
-// GeoResult represents a geospatial search result with distance
 type GeoResult struct {
-	Member   string  // ID do report ou user
-	Distance float64 // Distância em metros
+	Member   string
+	Distance float64
+}
+
+type Geolocation struct {
+	Latitude  float64
+	Longitude float64
 }
 
 type LocationStore interface {
@@ -18,14 +20,13 @@ type LocationStore interface {
 	RemoveReportLocation(ctx context.Context, reportID string) error
 	UpdateReportLocation(ctx context.Context, reportID string, lat, lon float64) error
 	FindReportsInRadius(ctx context.Context, lat, lon float64, radiusMeters float64) ([]string, error)
-	// Nova função otimizada que retorna IDs + distâncias já ordenadas
 	FindReportsInRadiusWithDistance(ctx context.Context, lat, lon float64, radiusMeters float64) ([]GeoResult, error)
 }
 
 type GeolocationService interface {
 	ValidateCoordinates(lat, lon float64) error
-	DistanceBetween(p1, p2 service.Geolocation) float64
-	IsWithinRadius(p1, p2 service.Geolocation, radiusMeters float64) bool
-	Parse(lat, lon float64) (service.Geolocation, error)
-	Midpoint(p1, p2 service.Geolocation) service.Geolocation
+	DistanceBetween(p1, p2 Geolocation) float64
+	IsWithinRadius(p1, p2 Geolocation, radiusMeters float64) bool
+	Parse(lat, lon float64) (Geolocation, error)
+	Midpoint(p1, p2 Geolocation) Geolocation
 }
