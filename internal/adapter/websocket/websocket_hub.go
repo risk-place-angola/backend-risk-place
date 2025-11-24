@@ -15,6 +15,8 @@ const (
 	nearbyUsersBroadcastIntervalSeconds = 3
 	defaultSearchRadiusMeters           = 5000.0
 	maxSearchRadiusMeters               = 10000.0
+	maxConcurrentBroadcasts             = 100
+	broadcastTimeoutSeconds             = 5
 )
 
 type Hub struct {
@@ -28,8 +30,9 @@ type Hub struct {
 	geoService         port.GeolocationService
 	nearbyUsersService port.NearbyUsersService
 
-	broadcastTicker *time.Ticker
-	stopBroadcast   chan bool
+	broadcastTicker    *time.Ticker
+	stopBroadcast      chan bool
+	broadcastSemaphore chan struct{}
 }
 
 func NewHub(locationStore port.LocationStore, geoService port.GeolocationService, nearbyUsersService port.NearbyUsersService) *Hub {
@@ -43,6 +46,7 @@ func NewHub(locationStore port.LocationStore, geoService port.GeolocationService
 		nearbyUsersService: nearbyUsersService,
 		broadcastTicker:    time.NewTicker(nearbyUsersBroadcastIntervalSeconds * time.Second),
 		stopBroadcast:      make(chan bool),
+		broadcastSemaphore: make(chan struct{}, maxConcurrentBroadcasts),
 	}
 }
 
@@ -99,7 +103,9 @@ func (h *Hub) startNearbyUsersBroadcast() {
 }
 
 func (h *Hub) broadcastNearbyUsersToAll() {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), broadcastTimeoutSeconds*time.Second)
+	defer cancel()
+
 	h.clientsMux.RLock()
 	clients := make([]*Client, 0, len(h.clients))
 	for client := range h.clients {
@@ -107,14 +113,37 @@ func (h *Hub) broadcastNearbyUsersToAll() {
 	}
 	h.clientsMux.RUnlock()
 
+	if len(clients) == 0 {
+		return
+	}
+
 	for _, client := range clients {
-		go h.sendNearbyUsersToClient(ctx, client)
+		select {
+		case h.broadcastSemaphore <- struct{}{}:
+			go func(c *Client) {
+				defer func() { <-h.broadcastSemaphore }()
+				h.sendNearbyUsersToClient(ctx, c)
+			}(client)
+		case <-ctx.Done():
+			slog.Warn("broadcast timeout reached, skipping remaining clients",
+				"remaining", len(clients))
+			return
+		default:
+			slog.Debug("semaphore full, skipping client broadcast",
+				"user_id", client.UserID)
+		}
 	}
 }
 
 func (h *Hub) sendNearbyUsersToClient(ctx context.Context, client *Client) {
 	if client.lastLat == 0 && client.lastLon == 0 {
 		return
+	}
+
+	select {
+	case <-ctx.Done():
+		return
+	default:
 	}
 
 	const defaultRadius = 5000.0
