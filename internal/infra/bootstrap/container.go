@@ -91,7 +91,8 @@ func NewContainer() (*Container, error) {
 	emailService := notifier.NewSmtpEmailService(cfg)
 	tokenService := service.NewJwtTokenService(cfg)
 	hashService := service.NewBcryptHasher()
-	geoService := domainService.NewGeolocationService()
+	geoDomainService := domainService.NewGeolocationService()
+	geoService := service.NewGeolocationAdapter(geoDomainService)
 	nearbyUsersDomainService := domainService.NewNearbyUsersService(userLocationRepoPG)
 	nearbyUsersService := service.NewNearbyUsersAdapter(nearbyUsersDomainService)
 
