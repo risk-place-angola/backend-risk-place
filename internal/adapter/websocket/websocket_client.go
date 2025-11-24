@@ -64,5 +64,16 @@ func (c *Client) SendJSON(event string, data interface{}) {
 		slog.Error("error marshaling message", slog.Any("error", err))
 		return
 	}
-	c.Send <- msg
+
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Warn("recovered from panic when sending message", "panic", r)
+		}
+	}()
+
+	select {
+	case c.Send <- msg:
+	default:
+		slog.Warn("client send channel is full or closed, dropping message")
+	}
 }

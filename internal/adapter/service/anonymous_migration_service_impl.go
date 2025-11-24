@@ -52,7 +52,7 @@ func (s *anonymousMigrationService) MigrateAnonymousData(
 		"migration_type", migrationType)
 
 	existingMapping, err := s.deviceMappingRepo.GetActiveMapping(ctx, deviceID)
-	if err != nil {
+	if err != nil && !errors.Is(err, domainErrors.ErrNotFound) {
 		slog.Error("Failed to check existing mapping", "device_id", deviceID, "error", err)
 		return fmt.Errorf("failed to check existing mapping: %w", err)
 	}
