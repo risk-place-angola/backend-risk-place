@@ -52,6 +52,14 @@ func NewVerificationService(
 }
 
 func (s *verificationServiceImpl) SendCode(ctx context.Context, userID uuid.UUID, phone, email string) error {
+	return s.sendCodeWithType(ctx, userID, phone, email, false)
+}
+
+func (s *verificationServiceImpl) SendPasswordResetCode(ctx context.Context, userID uuid.UUID, phone, email string) error {
+	return s.sendCodeWithType(ctx, userID, phone, email, true)
+}
+
+func (s *verificationServiceImpl) sendCodeWithType(ctx context.Context, userID uuid.UUID, phone, email string, isPasswordReset bool) error {
 	code := s.generateCode()
 	key := fmt.Sprintf("verification:%s", userID.String())
 
@@ -61,9 +69,9 @@ func (s *verificationServiceImpl) SendCode(ctx context.Context, userID uuid.UUID
 
 	lang := s.getUserLanguage(ctx, userID)
 
-	if err := s.sendViaSMS(ctx, phone, code, lang); err != nil {
+	if err := s.sendViaSMS(ctx, phone, code, lang, isPasswordReset); err != nil {
 		slog.Warn("SMS send failed, falling back to email", "user_id", userID, "error", err)
-		if emailErr := s.sendViaEmail(ctx, email, code, lang); emailErr != nil {
+		if emailErr := s.sendViaEmail(ctx, email, code, lang, isPasswordReset); emailErr != nil {
 			return fmt.Errorf("both SMS and email failed: SMS=%w, Email=%w", err, emailErr)
 		}
 		return domainErrors.ErrSentViaEmail
@@ -104,6 +112,14 @@ func (s *verificationServiceImpl) VerifyCode(ctx context.Context, userID uuid.UU
 }
 
 func (s *verificationServiceImpl) ResendCode(ctx context.Context, userID uuid.UUID, phone, email string) error {
+	return s.resendCodeWithType(ctx, userID, phone, email, false)
+}
+
+func (s *verificationServiceImpl) ResendPasswordResetCode(ctx context.Context, userID uuid.UUID, phone, email string) error {
+	return s.resendCodeWithType(ctx, userID, phone, email, true)
+}
+
+func (s *verificationServiceImpl) resendCodeWithType(ctx context.Context, userID uuid.UUID, phone, email string, isPasswordReset bool) error {
 	cooldownKey := fmt.Sprintf("verification:resend:%s", userID.String())
 	lockoutKey := fmt.Sprintf("verification:lockout:%s", userID.String())
 
@@ -119,17 +135,25 @@ func (s *verificationServiceImpl) ResendCode(ctx context.Context, userID uuid.UU
 		slog.Warn("Failed to set resend cooldown", "user_id", userID, "error", err)
 	}
 
-	return s.SendCode(ctx, userID, phone, email)
+	return s.sendCodeWithType(ctx, userID, phone, email, isPasswordReset)
 }
 
-func (s *verificationServiceImpl) sendViaSMS(ctx context.Context, phone, code string, lang Language) error {
-	msg := s.translationService.GetMessage("verification_code_sms", lang, "")
+func (s *verificationServiceImpl) sendViaSMS(ctx context.Context, phone, code string, lang Language, isPasswordReset bool) error {
+	msgKey := "verification_code_sms"
+	if isPasswordReset {
+		msgKey = "password_reset_sms"
+	}
+	msg := s.translationService.GetMessage(msgKey, lang, "")
 	message := fmt.Sprintf("%s: %s. %s", msg.Title, code, msg.Body)
 	return s.smsNotifier.NotifySMS(ctx, phone, message)
 }
 
-func (s *verificationServiceImpl) sendViaEmail(ctx context.Context, email, code string, lang Language) error {
-	msg := s.translationService.GetMessage("verification_code_email", lang, "")
+func (s *verificationServiceImpl) sendViaEmail(ctx context.Context, email, code string, lang Language, isPasswordReset bool) error {
+	msgKey := "verification_code_email"
+	if isPasswordReset {
+		msgKey = "password_reset_email"
+	}
+	msg := s.translationService.GetMessage(msgKey, lang, "")
 	htmlBody := fmt.Sprintf(`
 		<h2>%s</h2>
 		<p>%s: <strong>%s</strong></p>

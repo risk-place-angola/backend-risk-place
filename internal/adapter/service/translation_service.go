@@ -244,6 +244,50 @@ func (ts *TranslationService) loadMessages() {
 			Body:  "Wait 60 seconds before resending",
 		},
 	}
+
+	ts.messages["password_reset_sms"] = map[Language]NotificationMessage{
+		LanguagePortuguese: {
+			Title: "Seu código de redefinição de senha Risk Place",
+			Body:  "Válido por 10 minutos",
+		},
+		LanguageEnglish: {
+			Title: "Your Risk Place password reset code",
+			Body:  "Valid for 10 minutes",
+		},
+	}
+
+	ts.messages["password_reset_email"] = map[Language]NotificationMessage{
+		LanguagePortuguese: {
+			Title: "Redefinição de Senha - Risk Place Angola",
+			Body:  "Seu código de redefinição de senha",
+		},
+		LanguageEnglish: {
+			Title: "Password Reset - Risk Place Angola",
+			Body:  "Your password reset code",
+		},
+	}
+
+	ts.messages["code_expired"] = map[Language]NotificationMessage{
+		LanguagePortuguese: {
+			Title: "Código Expirado",
+			Body:  "O código expirou após 10 minutos. Solicite um novo código",
+		},
+		LanguageEnglish: {
+			Title: "Code Expired",
+			Body:  "The code expired after 10 minutes. Request a new code",
+		},
+	}
+
+	ts.messages["invalid_code"] = map[Language]NotificationMessage{
+		LanguagePortuguese: {
+			Title: "Código Inválido",
+			Body:  "O código informado está incorreto. Tente novamente",
+		},
+		LanguageEnglish: {
+			Title: "Invalid Code",
+			Body:  "The code entered is incorrect. Try again",
+		},
+	}
 }
 
 func (ts *TranslationService) GetMessage(key string, lang Language, riskType string) NotificationMessage {
