@@ -96,6 +96,8 @@ Authorization: Bearer {seu_token_aqui}
 **Endpoint:** `POST /auth/confirm`  
 **Autenticação:** Não requerida  
 
+> ⚠️ **Importante:** O código expira em **10 minutos** após o envio
+
 **Request Body:**
 ```json
 {
@@ -112,24 +114,36 @@ Authorization: Bearer {seu_token_aqui}
 
 ---
 
-### 4. Esqueci Minha Senha
+### 4. Esqueci Minha Senha (Solicitar Código)
 **Endpoint:** `POST /auth/password/forgot`  
 **Autenticação:** Não requerida  
 
 **Request Body:**
 ```json
 {
-  "email": "joao@example.com"
+  "identifier": "joao@example.com"
 }
 ```
+> Pode ser email ou telefone
 
 **Response (200 OK):**
 ```json
 "password reset code sent"
 ```
 
+**Response com Email Fallback:**
+```json
+{
+  "success": true,
+  "message": "password reset code sent via email",
+  "data": {
+    "email": "j***@example.com"
+  }
+}
+```
+
 **Possíveis Erros:**
-- `400 Bad Request` - Email inválido
+- `400 Bad Request` - Identificador inválido
 - `404 Not Found` - Usuário não encontrado
 
 ---
@@ -141,10 +155,16 @@ Authorization: Bearer {seu_token_aqui}
 **Request Body:**
 ```json
 {
-  "email": "joao@example.com",
+  "identifier": "joao@example.com",
+  "code": "123456",
   "password": "novaSenha123"
 }
 ```
+
+> ⚠️ **Importante:**
+> - O código expira em **10 minutos**
+> - O código é validado nesta mesma requisição (não chamar `/confirm` antes)
+> - Se o código expirar, o usuário deve solicitar um novo através do endpoint `/forgot`
 
 **Response (200 OK):**
 ```json
@@ -152,8 +172,13 @@ Authorization: Bearer {seu_token_aqui}
 ```
 
 **Possíveis Erros:**
-- `400 Bad Request` - Código inválido
+- `400 "invalid code"` - Código incorreto
+- `400 "code expired"` - Código expirou (após 10 minutos)
 - `404 Not Found` - Usuário não encontrado
+
+**Recomendação para Mobile:**
+- Adicionar timer visual mostrando tempo restante do código
+- Ao receber erro "code expired", redirecionar usuário para tela "Esqueci Senha"
 
 ---
 
