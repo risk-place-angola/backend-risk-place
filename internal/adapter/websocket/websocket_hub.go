@@ -66,7 +66,7 @@ func (h *Hub) Run() {
 			h.clientsMux.Lock()
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
-				close(client.Send)
+				client.closeChannel()
 				slog.Info("[HUB] Client unregistered", slog.String("user_id", client.UserID))
 			}
 			h.clientsMux.Unlock()
@@ -77,7 +77,7 @@ func (h *Hub) Run() {
 				select {
 				case client.Send <- message:
 				default:
-					close(client.Send)
+					client.closeChannel()
 					h.clientsMux.RUnlock()
 					h.clientsMux.Lock()
 					delete(h.clients, client)
@@ -167,11 +167,11 @@ func (h *Hub) sendNearbyUsersToClient(ctx context.Context, client *Client) {
 		return
 	}
 
-	if len(users) > 0 {
-		slog.Debug("[BROADCAST] Nearby users found",
-			slog.String("user_id", client.UserID),
-			slog.Int("count", len(users)))
-	}
+	slog.Debug("[BROADCAST] Preparing nearby users response",
+		slog.String("user_id", client.UserID),
+		slog.Int("count", len(users)),
+		slog.Float64("client_lat", client.lastLat),
+		slog.Float64("client_lon", client.lastLon))
 
 	responses := make([]NearbyUserResponse, len(users))
 	for i, u := range users {
@@ -184,7 +184,19 @@ func (h *Hub) sendNearbyUsersToClient(ctx context.Context, client *Client) {
 			Speed:     u.Speed,
 			Heading:   u.Heading,
 		}
+
+		slog.Debug("[BROADCAST] Adding nearby user to response",
+			slog.String("anonymous_id", u.AnonymousID),
+			slog.Float64("lat", u.Latitude),
+			slog.Float64("lon", u.Longitude),
+			slog.String("avatar", u.AvatarID),
+			slog.String("color", u.Color))
 	}
+
+	slog.Debug("[BROADCAST] Sending nearby_users message",
+		slog.String("to_user", client.UserID),
+		slog.Int("total_users", len(responses)),
+		slog.Float64("radius", defaultRadius))
 
 	client.SendJSON("nearby_users", NearbyUsersData{
 		Users:      responses,

@@ -46,13 +46,7 @@ func (c *Client) ReadPump(ctx context.Context) {
 
 func (c *Client) WritePump() {
 	defer func() {
-		c.closeMux.Do(func() {
-			c.closed.Store(true)
-			close(c.Send)
-		})
-		if err := c.Conn.Close(); err != nil {
-			slog.Error("error closing connection", slog.Any("error", err))
-		}
+		c.closeConnection()
 	}()
 
 	for message := range c.Send {
@@ -65,9 +59,28 @@ func (c *Client) WritePump() {
 		}
 	}
 
-	if err := c.Conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
-		slog.Error("error writing close message", slog.Any("error", err))
+	// Send close message only if connection is still open
+	if !c.closed.Load() {
+		if err := c.Conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+			slog.Debug("error writing close message", slog.Any("error", err))
+		}
 	}
+}
+
+func (c *Client) closeConnection() {
+	c.closeMux.Do(func() {
+		c.closed.Store(true)
+		if err := c.Conn.Close(); err != nil {
+			slog.Debug("error closing websocket connection", slog.Any("error", err))
+		}
+	})
+}
+
+func (c *Client) closeChannel() {
+	c.closeMux.Do(func() {
+		c.closed.Store(true)
+		close(c.Send)
+	})
 }
 
 func (c *Client) SendJSON(event string, data interface{}) {
