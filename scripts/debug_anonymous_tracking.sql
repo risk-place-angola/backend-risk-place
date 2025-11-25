@@ -139,23 +139,16 @@ WHERE is_anonymous = true
 ORDER BY last_update DESC;
 
 -- ============================================================================
--- 7. HISTÓRICO DE LOCALIZAÇÕES (ÚLTIMOS 10 REGISTROS)
+-- 7. HISTÓRICO DE LOCALIZAÇÕES (MIGRADO PARA REDIS)
 -- ============================================================================
-SELECT 
-    user_id,
-    device_id,
-    latitude,
-    longitude,
-    speed,
-    heading,
-    created_at
-FROM user_location_history
-WHERE user_id IN (
-    '8bc22b4a-ad8a-4365-950c-bfd5fc7ec744',
-    'c952b59e-dc44-4ec5-a944-2d8323b6ba5a'
-)
-ORDER BY created_at DESC
-LIMIT 20;
+-- Location history was migrated to Redis with automatic TTL.
+-- Use Redis CLI to query history:
+--   ZRANGEBYSCORE location:history:<user_id> <start_timestamp> <end_timestamp> WITHSCORES
+--
+-- Example: Get last 24 hours for user 8bc22b4a-ad8a-4365-950c-bfd5fc7ec744
+--   ZRANGEBYSCORE location:history:8bc22b4a-ad8a-4365-950c-bfd5fc7ec744 $(date -u -d '24 hours ago' +%s) $(date -u +%s) WITHSCORES
+--
+-- See docs/REDIS_LOCATION_HISTORY.md for more details.
 
 -- ============================================================================
 -- 8. VERIFICAR TODAS AS LOCALIZAÇÕES ATIVAS (MAPA GERAL)

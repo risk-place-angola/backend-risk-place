@@ -592,16 +592,5 @@ CREATE INDEX idx_user_locations_last_update ON user_locations (last_update);
 CREATE INDEX idx_user_locations_user_id ON user_locations (user_id);
 CREATE INDEX idx_user_locations_device_id ON user_locations (device_id) WHERE device_id IS NOT NULL;
 
-CREATE TABLE IF NOT EXISTS user_location_history (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL,
-    device_id VARCHAR(255),
-    latitude DOUBLE PRECISION NOT NULL,
-    longitude DOUBLE PRECISION NOT NULL,
-    speed DOUBLE PRECISION DEFAULT 0,
-    heading DOUBLE PRECISION DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX idx_user_location_history_user_id ON user_location_history (user_id);
-CREATE INDEX idx_user_location_history_created_at ON user_location_history (created_at);
+-- User Location History: Migrated to Redis (see docs/REDIS_LOCATION_HISTORY.md)
+-- Table removed in migration 000003_drop_location_history_table.up.sql
