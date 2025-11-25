@@ -242,12 +242,12 @@ func (uc *SafetySettingsUseCase) UpdateSettingsByDeviceID(ctx context.Context, d
 	}
 
 	settings, err := uc.repo.GetByDeviceID(ctx, deviceID)
-	if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		slog.Error("Error fetching settings for device", "device_id", deviceID, "error", err)
 		return nil, errors.New("failed to fetch settings")
 	}
 
-	if settings == nil {
+	if settings == nil || errors.Is(err, sql.ErrNoRows) {
 		settings, err = model.NewAnonymousSafetySettings(session.ID, deviceID)
 		if err != nil {
 			slog.Error("Error creating settings for device", "device_id", deviceID, "error", err)

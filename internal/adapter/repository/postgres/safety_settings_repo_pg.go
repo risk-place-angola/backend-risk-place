@@ -115,9 +115,7 @@ func (r *safetySettingsRepoPG) Upsert(ctx context.Context, settings *model.Safet
 }
 
 func (r *safetySettingsRepoPG) GetByDeviceID(ctx context.Context, deviceID string) (*model.SafetySettings, error) {
-	row, err := r.q.GetSafetySettingsByAnonymousSessionID(ctx, sqlc.GetSafetySettingsByAnonymousSessionIDParams{
-		DeviceID: sql.NullString{String: deviceID, Valid: true},
-	})
+	row, err := r.q.GetSafetySettingsByAnonymousSessionID(ctx, sql.NullString{String: deviceID, Valid: true})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows

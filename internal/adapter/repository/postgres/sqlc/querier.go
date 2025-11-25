@@ -97,10 +97,10 @@ type Querier interface {
 	// Retorna configurações de uma sessão anônima
 	GetSafetySettingsByAnonymousSession(ctx context.Context, anonymousSessionID uuid.UUID) (UserSafetySetting, error)
 	// Anonymous User Queries
-	GetSafetySettingsByAnonymousSessionID(ctx context.Context, arg GetSafetySettingsByAnonymousSessionIDParams) (UserSafetySetting, error)
+	GetSafetySettingsByAnonymousSessionID(ctx context.Context, deviceID sql.NullString) (UserSafetySetting, error)
 	GetSafetySettingsByUserID(ctx context.Context, userID uuid.NullUUID) (UserSafetySetting, error)
 	GetSubscribedAlerts(ctx context.Context, userID uuid.NullUUID) ([]GetSubscribedAlertsRow, error)
-	GetSubscribedAlertsAnonymous(ctx context.Context, arg GetSubscribedAlertsAnonymousParams) ([]GetSubscribedAlertsAnonymousRow, error)
+	GetSubscribedAlertsAnonymous(ctx context.Context, arg GetSubscribedAlertsAnonymousParams) ([]Alert, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByEmailOrPhone(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)

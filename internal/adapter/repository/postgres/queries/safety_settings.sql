@@ -40,7 +40,8 @@ DO UPDATE SET
 
 -- name: GetSafetySettingsByAnonymousSessionID :one
 SELECT * FROM user_safety_settings 
-WHERE anonymous_session_id = $1 AND device_id = $2 
+WHERE device_id = $1
+ORDER BY updated_at DESC
 LIMIT 1;
 
 -- name: UpsertAnonymousSafetySettings :exec
@@ -56,11 +57,9 @@ INSERT INTO user_safety_settings (
     created_at, updated_at
 )
 VALUES ($1, NULL, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
-ON CONFLICT (id)
+ON CONFLICT (device_id) WHERE device_id IS NOT NULL
 DO UPDATE SET
-    user_id = EXCLUDED.user_id,
     anonymous_session_id = EXCLUDED.anonymous_session_id,
-    device_id = EXCLUDED.device_id,
     notifications_enabled = EXCLUDED.notifications_enabled,
     notification_alert_types = EXCLUDED.notification_alert_types,
     notification_alert_radius_mins = EXCLUDED.notification_alert_radius_mins,
