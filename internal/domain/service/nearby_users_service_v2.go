@@ -102,6 +102,8 @@ func (s *NearbyUsersServiceV2) updateRedisLocation(ctx context.Context, loc *mod
 
 	metaKey := fmt.Sprintf("user_locations:meta:%s", userIDStr)
 	metadata := map[string]string{
+		"latitude":     fmt.Sprintf("%f", loc.Latitude),
+		"longitude":    fmt.Sprintf("%f", loc.Longitude),
 		"avatar_id":    fmt.Sprintf("%d", loc.AvatarID),
 		"color":        loc.Color,
 		"speed":        fmt.Sprintf("%f", loc.Speed),
@@ -251,7 +253,7 @@ func (s *NearbyUsersServiceV2) getNearbyUsersFromRedis(
 				wg.Done()
 			}()
 
-			user, err := s.fetchUserMetadata(ctx, member, lat, lon)
+			user, err := s.fetchUserMetadata(ctx, member)
 			if err != nil {
 				errChan <- err
 				return
@@ -285,7 +287,6 @@ func (s *NearbyUsersServiceV2) getNearbyUsersFromRedis(
 func (s *NearbyUsersServiceV2) fetchUserMetadata(
 	ctx context.Context,
 	userIDStr string,
-	centerLat, centerLon float64,
 ) (*model.NearbyUser, error) {
 	metaKey := fmt.Sprintf("user_locations:meta:%s", userIDStr)
 	meta, err := s.cache.HGetAll(ctx, metaKey)
@@ -298,13 +299,15 @@ func (s *NearbyUsersServiceV2) fetchUserMetadata(
 		return nil, fmt.Errorf("invalid user_id: %w", err)
 	}
 
+	userLat, _ := strconv.ParseFloat(meta["latitude"], 64)
+	userLon, _ := strconv.ParseFloat(meta["longitude"], 64)
 	avatarID, _ := strconv.Atoi(meta["avatar_id"])
 	speed, _ := strconv.ParseFloat(meta["speed"], 64)
 	heading, _ := strconv.ParseFloat(meta["heading"], 64)
 	isAnonymous := meta["is_anonymous"] == "true"
 	lastUpdate, _ := time.Parse(time.RFC3339, meta["last_update"])
 
-	privacyLat, privacyLon := model.ApplyPrivacyOffset(centerLat, centerLon)
+	privacyLat, privacyLon := model.ApplyPrivacyOffset(userLat, userLon)
 
 	return &model.NearbyUser{
 		UserID:      userID,
