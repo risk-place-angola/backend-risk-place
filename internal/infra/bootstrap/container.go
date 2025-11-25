@@ -9,6 +9,7 @@ import (
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/http/middleware"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/notifier"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/repository/postgres"
+	"github.com/risk-place-angola/backend-risk-place/internal/adapter/repository/postgres/sqlc"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/service"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/websocket"
 	"github.com/risk-place-angola/backend-risk-place/internal/application"
@@ -168,17 +169,19 @@ func NewContainer() (*Container, error) {
 
 	userApp.ReportVerificationService = reportVerificationService
 
+	queries := sqlc.New(database)
 	userHandler := handler.NewUserHandler(userApp)
-	alertHandler := handler.NewAlertHandler(userApp)
+	alertHandler := handler.NewAlertHandler(userApp, anonymousSessionRepoPG, queries)
 	wsHandler := websocket.NewWSHandler(hub, *authMW, optionalAuthMW)
 	reportHandler := handler.NewReportHandler(userApp, reportRepoPG, anonymousSessionRepoPG)
+
 	riskHandler := handler.NewRiskHandler(userApp)
 	deviceHandler := handler.NewDeviceHandler(registerDeviceUC, updateDeviceLocationUC)
 	locationSharingHandler := handler.NewLocationSharingHandler(userApp)
 	safeRouteHandler := handler.NewSafeRouteHandler(userApp)
 	emergencyContactHandler := handler.NewEmergencyContactHandler(userApp)
-	myAlertsHandler := handler.NewMyAlertsHandler(userApp)
-	safetySettingsHandler := handler.NewSafetySettingsHandler(userApp)
+	myAlertsHandler := handler.NewMyAlertsHandler(userApp, anonymousSessionRepoPG, queries)
+	safetySettingsHandler := handler.NewSafetySettingsHandler(userApp, anonymousSessionRepoPG)
 	notificationHandler := handler.NewNotificationHandler(userApp)
 	storageHandler := handler.NewStorageHandler(storageService, userApp)
 	nearbyUsersHandler := handler.NewNearbyUsersHandler(nearbyUsersService)

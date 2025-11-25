@@ -369,32 +369,30 @@ func (h *ReportHandler) VoteReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIDStr, hasUser := util.GetUserIDFromContext(r.Context())
-	deviceID := r.Header.Get("X-Device-Id")
+	identifier, ok := util.ExtractUserIdentifierOrError(w, r)
+	if !ok {
+		return
+	}
 
 	var userID *uuid.UUID
 	var anonymousSessionID *uuid.UUID
 
-	switch {
-	case hasUser:
-		uid, err := dto.ParseUUID(userIDStr)
+	if identifier.IsAuthenticated {
+		uid, err := dto.ParseUUID(identifier.UserID)
 		if err != nil {
 			util.Error(w, "invalid user ID", http.StatusBadRequest)
 			return
 		}
 		userID = &uid
-	case deviceID != "":
+	} else {
 		// Find the anonymous session by device_id to get the session UUID
-		session, err := h.anonymousSessionRepo.FindByDeviceID(r.Context(), deviceID)
+		session, err := h.anonymousSessionRepo.FindByDeviceID(r.Context(), identifier.DeviceID)
 		if err != nil {
-			slog.Error("failed to find anonymous session by device ID", "error", err, "deviceID", deviceID)
+			slog.Error("failed to find anonymous session by device ID", "error", err, "deviceID", identifier.DeviceID)
 			util.Error(w, "anonymous session not found", http.StatusNotFound)
 			return
 		}
 		anonymousSessionID = &session.ID
-	default:
-		util.Error(w, "authentication required", http.StatusUnauthorized)
-		return
 	}
 
 	voteType := model.VoteTypeUpvote

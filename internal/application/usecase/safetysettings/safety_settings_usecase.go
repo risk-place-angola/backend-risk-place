@@ -159,9 +159,14 @@ func applyUpdates(settings *model.SafetySettings, input dto.UpdateSafetySettings
 }
 
 func toResponse(settings *model.SafetySettings) *dto.SafetySettingsResponse {
+	userIDStr := ""
+	if settings.UserID != nil && *settings.UserID != uuid.Nil {
+		userIDStr = settings.UserID.String()
+	}
+
 	return &dto.SafetySettingsResponse{
 		ID:                           settings.ID.String(),
-		UserID:                       settings.UserID.String(),
+		UserID:                       userIDStr,
 		NotificationsEnabled:         settings.NotificationsEnabled,
 		NotificationAlertTypes:       settings.NotificationAlertTypes,
 		NotificationAlertRadiusMins:  settings.NotificationAlertRadiusMins,
@@ -183,4 +188,86 @@ func toResponse(settings *model.SafetySettings) *dto.SafetySettingsResponse {
 		CreatedAt:                    settings.CreatedAt,
 		UpdatedAt:                    settings.UpdatedAt,
 	}
+}
+
+// GetSettingsByDeviceID returns safety settings for anonymous users by device ID
+func (uc *SafetySettingsUseCase) GetSettingsByDeviceID(ctx context.Context, deviceID string, anonymousSessionRepo repository.AnonymousSessionRepository) (*dto.SafetySettingsResponse, error) {
+	session, err := anonymousSessionRepo.FindByDeviceID(ctx, deviceID)
+	if err != nil {
+		session, err = model.NewAnonymousSession(deviceID, "", "", "")
+		if err != nil {
+			slog.Error("failed to create anonymous session", "device_id", deviceID, "error", err)
+			return nil, errors.New("failed to create session")
+		}
+
+		if err := anonymousSessionRepo.Create(ctx, session); err != nil {
+			slog.Error("failed to save anonymous session", "device_id", deviceID, "error", err)
+			return nil, errors.New("failed to save session")
+		}
+	}
+
+	settings, err := uc.repo.GetByDeviceID(ctx, deviceID)
+	if err != nil {
+		slog.Error("Error fetching safety settings for device", "device_id", deviceID, "error", err)
+		return nil, errors.New("failed to fetch safety settings")
+	}
+
+	if settings == nil {
+		defaultSettings, err := model.NewAnonymousSafetySettings(session.ID, deviceID)
+		if err != nil {
+			slog.Error("Error creating default settings for device", "device_id", deviceID, "error", err)
+			return nil, errors.New("failed to create default settings")
+		}
+		return toResponse(defaultSettings), nil
+	}
+
+	return toResponse(settings), nil
+}
+
+// UpdateSettingsByDeviceID updates safety settings for anonymous users by device ID
+func (uc *SafetySettingsUseCase) UpdateSettingsByDeviceID(ctx context.Context, deviceID string, input dto.UpdateSafetySettingsInput, anonymousSessionRepo repository.AnonymousSessionRepository) (*dto.SafetySettingsResponse, error) {
+	session, err := anonymousSessionRepo.FindByDeviceID(ctx, deviceID)
+	if err != nil {
+		session, err = model.NewAnonymousSession(deviceID, "", "", "")
+		if err != nil {
+			slog.Error("failed to create anonymous session", "device_id", deviceID, "error", err)
+			return nil, errors.New("failed to create session")
+		}
+
+		if err := anonymousSessionRepo.Create(ctx, session); err != nil {
+			slog.Error("failed to save anonymous session", "device_id", deviceID, "error", err)
+			return nil, errors.New("failed to save session")
+		}
+	}
+
+	settings, err := uc.repo.GetByDeviceID(ctx, deviceID)
+	if err != nil {
+		slog.Error("Error fetching settings for device", "device_id", deviceID, "error", err)
+		return nil, errors.New("failed to fetch settings")
+	}
+
+	if settings == nil {
+		settings, err = model.NewAnonymousSafetySettings(session.ID, deviceID)
+		if err != nil {
+			slog.Error("Error creating settings for device", "device_id", deviceID, "error", err)
+			return nil, errors.New("failed to create settings")
+		}
+	}
+
+	if err := applyUpdates(settings, input); err != nil {
+		return nil, err
+	}
+
+	if err := settings.Validate(); err != nil {
+		return nil, err
+	}
+
+	settings.UpdatedAt = time.Now()
+
+	if err := uc.repo.UpsertAnonymous(ctx, settings); err != nil {
+		slog.Error("Error updating settings for device", "device_id", deviceID, "error", err)
+		return nil, errors.New("failed to update settings")
+	}
+
+	return toResponse(settings), nil
 }

@@ -50,8 +50,8 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	g.OptionalAuth.HandleFunc("POST /api/v1/alerts", container.AlertHandler.CreateAlert)
 	g.OptionalAuth.HandleFunc("POST /api/v1/alerts/{id}/subscribe", container.MyAlertsHandler.SubscribeToAlert)
 	g.OptionalAuth.HandleFunc("DELETE /api/v1/alerts/{id}/unsubscribe", container.MyAlertsHandler.UnsubscribeFromAlert)
-	g.OptionalAuth.HandleFunc("GET /api/v1/users/me/alerts/created", container.MyAlertsHandler.GetMyCreatedAlerts)
-	g.OptionalAuth.HandleFunc("GET /api/v1/users/me/alerts/subscribed", container.MyAlertsHandler.GetMySubscribedAlerts)
+	g.ProtectedJWT.HandleFunc("GET /api/v1/users/me/alerts/created", container.MyAlertsHandler.GetMyCreatedAlerts)
+	g.ProtectedJWT.HandleFunc("GET /api/v1/users/me/alerts/subscribed", container.MyAlertsHandler.GetMySubscribedAlerts)
 	g.ProtectedJWT.HandleFunc("PUT /api/v1/alerts/{id}", container.MyAlertsHandler.UpdateAlert)
 	g.ProtectedJWT.HandleFunc("DELETE /api/v1/alerts/{id}", container.MyAlertsHandler.DeleteAlert)
 

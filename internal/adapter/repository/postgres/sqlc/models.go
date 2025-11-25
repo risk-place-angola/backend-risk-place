@@ -316,17 +316,6 @@ type UserLocation struct {
 	CreatedAt   sql.NullTime    `json:"created_at"`
 }
 
-type UserLocationHistory struct {
-	ID        uuid.UUID       `json:"id"`
-	UserID    uuid.UUID       `json:"user_id"`
-	DeviceID  sql.NullString  `json:"device_id"`
-	Latitude  float64         `json:"latitude"`
-	Longitude float64         `json:"longitude"`
-	Speed     sql.NullFloat64 `json:"speed"`
-	Heading   sql.NullFloat64 `json:"heading"`
-	CreatedAt sql.NullTime    `json:"created_at"`
-}
-
 type UserRole struct {
 	ID         uuid.UUID    `json:"id"`
 	UserID     uuid.UUID    `json:"user_id"`

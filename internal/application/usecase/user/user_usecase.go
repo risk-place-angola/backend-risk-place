@@ -18,18 +18,20 @@ import (
 )
 
 type UserUseCase struct {
-	userRepo            domainrepository.UserRepository
-	roleRepo            domainrepository.RoleRepository
-	token               port.TokenGenerator
-	hasher              port.PasswordHasher
-	config              *config.Config
-	migrationService    domainService.AnonymousMigrationService
-	verificationService domainService.VerificationService
+	userRepo             domainrepository.UserRepository
+	roleRepo             domainrepository.RoleRepository
+	anonymousSessionRepo domainrepository.AnonymousSessionRepository
+	token                port.TokenGenerator
+	hasher               port.PasswordHasher
+	config               *config.Config
+	migrationService     domainService.AnonymousMigrationService
+	verificationService  domainService.VerificationService
 }
 
 func NewUserUseCase(
 	userRepo domainrepository.UserRepository,
 	roleRepo domainrepository.RoleRepository,
+	anonymousSessionRepo domainrepository.AnonymousSessionRepository,
 	token port.TokenGenerator,
 	hasher port.PasswordHasher,
 	config *config.Config,
@@ -37,13 +39,14 @@ func NewUserUseCase(
 	verificationService domainService.VerificationService,
 ) *UserUseCase {
 	return &UserUseCase{
-		userRepo:            userRepo,
-		roleRepo:            roleRepo,
-		token:               token,
-		hasher:              hasher,
-		config:              config,
-		migrationService:    migrationService,
-		verificationService: verificationService,
+		userRepo:             userRepo,
+		roleRepo:             roleRepo,
+		anonymousSessionRepo: anonymousSessionRepo,
+		token:                token,
+		hasher:               hasher,
+		config:               config,
+		migrationService:     migrationService,
+		verificationService:  verificationService,
 	}
 }
 
@@ -569,14 +572,25 @@ func (uc *UserUseCase) UpdateNotificationPreferences(ctx context.Context, userID
 			slog.Error("Failed to update notification preferences for user", "user_id", userID, "error", err)
 			return err
 		}
+		return nil
 	}
-	return nil
+	if deviceID != "" {
+		if err := uc.anonymousSessionRepo.UpdateNotificationPreferences(ctx, deviceID, pushEnabled, smsEnabled); err != nil {
+			slog.Error("Failed to update notification preferences for anonymous session", "device_id", deviceID, "error", err)
+			return err
+		}
+		return nil
+	}
+	return fmt.Errorf("user ID or device ID required")
 }
 
 //nolint:nonamedreturns // multiple bool returns need names for clarity
 func (uc *UserUseCase) GetNotificationPreferences(ctx context.Context, userID uuid.UUID, deviceID string) (pushEnabled, smsEnabled bool, err error) {
 	if userID != uuid.Nil {
 		return uc.userRepo.GetNotificationPreferences(ctx, userID)
+	}
+	if deviceID != "" {
+		return uc.anonymousSessionRepo.GetNotificationPreferences(ctx, deviceID)
 	}
 	return false, false, fmt.Errorf("user ID or device ID required")
 }

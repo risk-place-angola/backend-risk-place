@@ -59,6 +59,7 @@ func NewUserApplication(
 		UserUseCase: user.NewUserUseCase(
 			userRepo,
 			roleRepo,
+			anonymousSessionRepo,
 			token,
 			hasher,
 			config,

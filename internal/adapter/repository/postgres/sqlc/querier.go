@@ -100,7 +100,7 @@ type Querier interface {
 	GetSafetySettingsByAnonymousSessionID(ctx context.Context, arg GetSafetySettingsByAnonymousSessionIDParams) (UserSafetySetting, error)
 	GetSafetySettingsByUserID(ctx context.Context, userID uuid.NullUUID) (UserSafetySetting, error)
 	GetSubscribedAlerts(ctx context.Context, userID uuid.NullUUID) ([]GetSubscribedAlertsRow, error)
-	GetSubscribedAlertsAnonymous(ctx context.Context, arg GetSubscribedAlertsAnonymousParams) ([]Alert, error)
+	GetSubscribedAlertsAnonymous(ctx context.Context, arg GetSubscribedAlertsAnonymousParams) ([]GetSubscribedAlertsAnonymousRow, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByEmailOrPhone(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
@@ -114,7 +114,9 @@ type Querier interface {
 	IncrementUserReportsSubmitted(ctx context.Context, id uuid.UUID) error
 	IncrementUserReportsVerified(ctx context.Context, id uuid.UUID) error
 	IsAnonymousSubscribed(ctx context.Context, arg IsAnonymousSubscribedParams) (bool, error)
+	IsAnonymousSubscribedToAlert(ctx context.Context, arg IsAnonymousSubscribedToAlertParams) (bool, error)
 	IsUserSubscribed(ctx context.Context, arg IsUserSubscribedParams) (bool, error)
+	IsUserSubscribedToAlert(ctx context.Context, arg IsUserSubscribedToAlertParams) (bool, error)
 	ListActiveAlerts(ctx context.Context) ([]ListActiveAlertsRow, error)
 	ListActiveLocationSharingsByDeviceID(ctx context.Context, deviceID sql.NullString) ([]LocationSharing, error)
 	ListActiveLocationSharingsByUserID(ctx context.Context, userID uuid.NullUUID) ([]LocationSharing, error)

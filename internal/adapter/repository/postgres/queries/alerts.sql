@@ -79,8 +79,13 @@ WHERE id = $1;
 
 -- name: SubscribeToAlert :exec
 INSERT INTO alert_subscriptions (id, alert_id, user_id, subscribed_at)
-VALUES ($1, $2, $3, $4)
-ON CONFLICT (alert_id, user_id) DO NOTHING;
+VALUES ($1, $2, $3, $4);
+
+-- name: IsUserSubscribedToAlert :one
+SELECT EXISTS (
+    SELECT 1 FROM alert_subscriptions 
+    WHERE alert_id = $1 AND user_id = $2
+) AS subscribed;
 
 -- name: UnsubscribeFromAlert :exec
 DELETE FROM alert_subscriptions WHERE alert_id = $1 AND user_id = $2;
@@ -124,8 +129,13 @@ WHERE anonymous_session_id = $1;
 
 -- name: SubscribeAnonymousToAlert :exec
 INSERT INTO alert_subscriptions (id, alert_id, anonymous_session_id, device_id, subscribed_at)
-VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (alert_id, device_id) DO NOTHING;
+VALUES ($1, $2, $3, $4, $5);
+
+-- name: IsAnonymousSubscribedToAlert :one
+SELECT EXISTS (
+    SELECT 1 FROM alert_subscriptions 
+    WHERE alert_id = $1 AND device_id = $2
+) AS subscribed;
 
 -- name: UnsubscribeAnonymousFromAlert :exec
 DELETE FROM alert_subscriptions WHERE alert_id = $1 AND anonymous_session_id = $2 AND device_id = $3;

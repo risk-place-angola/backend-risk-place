@@ -82,15 +82,13 @@ func (h *NotificationHandler) UpdateNotificationPreferences(w http.ResponseWrite
 		return
 	}
 
-	userIDStr, hasUser := util.GetUserIDFromContext(r.Context())
-	deviceID := r.Header.Get("X-Device-Id")
-	if deviceID == "" {
-		deviceID = r.Header.Get("Device-Id")
+	identifier, ok := util.ExtractUserIdentifierOrError(w, r)
+	if !ok {
+		return
 	}
 
-	switch {
-	case hasUser:
-		uid, err := dto.ParseUUID(userIDStr)
+	if identifier.IsAuthenticated {
+		uid, err := dto.ParseUUID(identifier.UserID)
 		if err != nil {
 			util.Error(w, "invalid user ID", http.StatusBadRequest)
 			return
@@ -101,15 +99,12 @@ func (h *NotificationHandler) UpdateNotificationPreferences(w http.ResponseWrite
 			util.Error(w, "failed to update preferences", http.StatusInternalServerError)
 			return
 		}
-	case deviceID != "":
-		err := h.app.UserUseCase.UpdateNotificationPreferences(r.Context(), uuid.Nil, deviceID, req.PushEnabled, req.SMSEnabled)
+	} else {
+		err := h.app.UserUseCase.UpdateNotificationPreferences(r.Context(), uuid.Nil, identifier.DeviceID, req.PushEnabled, req.SMSEnabled)
 		if err != nil {
 			util.Error(w, "failed to update preferences", http.StatusInternalServerError)
 			return
 		}
-	default:
-		util.Error(w, "user ID or device ID required", http.StatusBadRequest)
-		return
 	}
 
 	util.Response(w, map[string]string{"message": "notification preferences updated successfully"}, http.StatusOK)
@@ -126,18 +121,16 @@ func (h *NotificationHandler) UpdateNotificationPreferences(w http.ResponseWrite
 // @Failure 500 {object} util.ErrorResponse
 // @Router /users/me/notifications/preferences [get]
 func (h *NotificationHandler) GetNotificationPreferences(w http.ResponseWriter, r *http.Request) {
-	userIDStr, hasUser := util.GetUserIDFromContext(r.Context())
-	deviceID := r.Header.Get("X-Device-Id")
-	if deviceID == "" {
-		deviceID = r.Header.Get("Device-Id")
+	identifier, ok := util.ExtractUserIdentifierOrError(w, r)
+	if !ok {
+		return
 	}
 
 	var pushEnabled, smsEnabled bool
 	var err error
 
-	switch {
-	case hasUser:
-		uid, parseErr := dto.ParseUUID(userIDStr)
+	if identifier.IsAuthenticated {
+		uid, parseErr := dto.ParseUUID(identifier.UserID)
 		if parseErr != nil {
 			util.Error(w, "invalid user ID", http.StatusBadRequest)
 			return
@@ -148,15 +141,12 @@ func (h *NotificationHandler) GetNotificationPreferences(w http.ResponseWriter, 
 			util.Error(w, "failed to get preferences", http.StatusInternalServerError)
 			return
 		}
-	case deviceID != "":
-		pushEnabled, smsEnabled, err = h.app.UserUseCase.GetNotificationPreferences(r.Context(), uuid.Nil, deviceID)
+	} else {
+		pushEnabled, smsEnabled, err = h.app.UserUseCase.GetNotificationPreferences(r.Context(), uuid.Nil, identifier.DeviceID)
 		if err != nil {
 			util.Error(w, "failed to get preferences", http.StatusInternalServerError)
 			return
 		}
-	default:
-		util.Error(w, "user ID or device ID required", http.StatusBadRequest)
-		return
 	}
 
 	util.Response(w, dto.NotificationPreferencesResponse{
