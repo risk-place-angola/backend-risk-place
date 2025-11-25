@@ -49,10 +49,6 @@ func (a *nearbyUsersAdapter) GetNearbyUsers(ctx context.Context, userID string, 
 		return nil, err
 	}
 
-	slog.Debug("[ADAPTER] Converting domain users to port users",
-		slog.String("requesting_user", uid.String()),
-		slog.Int("users_found", len(users)))
-
 	result := make([]port.NearbyUser, len(users))
 	for i, u := range users {
 		result[i] = port.NearbyUser{
@@ -65,11 +61,6 @@ func (a *nearbyUsersAdapter) GetNearbyUsers(ctx context.Context, userID string, 
 			Speed:       u.Speed,
 			Heading:     u.Heading,
 		}
-
-		slog.Debug("[ADAPTER] Converted user",
-			slog.String("anonymous_id", u.AnonymousID),
-			slog.Float64("lat", u.Latitude),
-			slog.Float64("lon", u.Longitude))
 	}
 
 	return result, nil

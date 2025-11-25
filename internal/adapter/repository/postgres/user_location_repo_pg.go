@@ -112,12 +112,6 @@ func (r *userLocationRepoPG) FindNearbyUsers(ctx context.Context, lat, lon, radi
 		LIMIT $4
 	`
 
-	slog.Debug("finding nearby users",
-		slog.Float64("lat", lat),
-		slog.Float64("lon", lon),
-		slog.Float64("radius", radiusMeters),
-		slog.Int("limit", limit))
-
 	rows, err := r.db.QueryContext(ctx, query, lon, lat, radiusMeters, limit)
 	if err != nil {
 		slog.Error("failed to query nearby users", slog.Any("error", err))
@@ -162,8 +156,6 @@ func (r *userLocationRepoPG) FindNearbyUsers(ctx context.Context, lat, lon, radi
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-
-	slog.Debug("found nearby users", slog.Int("count", len(locations)))
 
 	return locations, nil
 }
