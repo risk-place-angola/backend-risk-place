@@ -195,12 +195,3 @@ func (r *userLocationRepoPG) Delete(ctx context.Context, userID uuid.UUID) error
 
 	return nil
 }
-
-func (r *userLocationRepoPG) SaveHistory(ctx context.Context, userID uuid.UUID, lat, lon, speed, heading float64, deviceID string) error {
-	query := `
-		INSERT INTO user_location_history (user_id, device_id, latitude, longitude, speed, heading)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`
-	_, err := r.db.ExecContext(ctx, query, userID, deviceID, lat, lon, speed, heading)
-	return err
-}

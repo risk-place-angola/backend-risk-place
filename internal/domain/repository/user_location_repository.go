@@ -13,5 +13,4 @@ type UserLocationRepository interface {
 	FindNearbyUsers(ctx context.Context, lat, lon, radiusMeters float64, limit int) ([]*model.UserLocation, error)
 	DeleteStale(ctx context.Context, thresholdSeconds int) error
 	Delete(ctx context.Context, userID uuid.UUID) error
-	SaveHistory(ctx context.Context, userID uuid.UUID, lat, lon, speed, heading float64, deviceID string) error
 }

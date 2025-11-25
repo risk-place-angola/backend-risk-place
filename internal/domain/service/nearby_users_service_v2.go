@@ -84,11 +84,8 @@ func (s *NearbyUsersServiceV2) UpdateUserLocation(
 		go s.invalidateNearbyCache(context.WithoutCancel(ctx), userID)
 	}
 
-	go func(bgCtx context.Context, uid uuid.UUID, latitude, longitude, spd, hdg float64, devID string) {
-		if err := s.repo.SaveHistory(bgCtx, uid, latitude, longitude, spd, hdg, devID); err != nil {
-			slog.Error("failed to save location history", slog.Any("error", err), slog.String("user_id", uid.String()))
-		}
-	}(context.WithoutCancel(ctx), userID, lat, lon, speed, heading, deviceID)
+	// Note: Location history now handled by Redis-based LocationHistoryService
+	// See: internal/adapter/service/location_history_service.go
 
 	return nil
 }

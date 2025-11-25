@@ -194,3 +194,29 @@ func (r *Redis) GeoSearchWithDistance(ctx context.Context, key string, longitude
 func (r *Redis) GeoRemove(ctx context.Context, key string, member string) error {
 	return r.client.ZRem(ctx, key, member).Err()
 }
+
+// ZAdd adds a member with score to a sorted set stored at key.
+func (r *Redis) ZAdd(ctx context.Context, key string, score float64, member string) error {
+	return r.client.ZAdd(ctx, key, redis.Z{
+		Score:  score,
+		Member: member,
+	}).Err()
+}
+
+// ZRangeByScore returns members from a sorted set with scores between minScore and maxScore.
+func (r *Redis) ZRangeByScore(ctx context.Context, key string, minScore, maxScore float64) ([]string, error) {
+	return r.client.ZRangeByScore(ctx, key, &redis.ZRangeBy{
+		Min: fmt.Sprintf("%f", minScore),
+		Max: fmt.Sprintf("%f", maxScore),
+	}).Result()
+}
+
+// ZRemRangeByScore removes members from a sorted set with scores between minScore and maxScore.
+func (r *Redis) ZRemRangeByScore(ctx context.Context, key string, minScore, maxScore float64) error {
+	return r.client.ZRemRangeByScore(ctx, key, fmt.Sprintf("%f", minScore), fmt.Sprintf("%f", maxScore)).Err()
+}
+
+// Expire sets a timeout on a key. After the timeout, the key will automatically be deleted.
+func (r *Redis) Expire(ctx context.Context, key string, ttl time.Duration) error {
+	return r.client.Expire(ctx, key, ttl).Err()
+}
