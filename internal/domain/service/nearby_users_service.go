@@ -54,7 +54,7 @@ func (s *nearbyUsersService) GetNearbyUsers(ctx context.Context, requestingUserI
 			continue
 		}
 
-		privacyLat, privacyLon := model.ApplyPrivacyOffset(loc.Latitude, loc.Longitude)
+		privacyLat, privacyLon := model.ApplyPrivacyOffset(loc.UserID, loc.Latitude, loc.Longitude)
 
 		avatarID := fmt.Sprintf("avatar_%d", loc.AvatarID)
 

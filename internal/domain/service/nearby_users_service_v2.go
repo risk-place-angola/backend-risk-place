@@ -307,7 +307,7 @@ func (s *NearbyUsersServiceV2) fetchUserMetadata(
 	isAnonymous := meta["is_anonymous"] == "true"
 	lastUpdate, _ := time.Parse(time.RFC3339, meta["last_update"])
 
-	privacyLat, privacyLon := model.ApplyPrivacyOffset(userLat, userLon)
+	privacyLat, privacyLon := model.ApplyPrivacyOffset(userID, userLat, userLon)
 
 	return &model.NearbyUser{
 		UserID:      userID,
@@ -341,7 +341,7 @@ func (s *NearbyUsersServiceV2) getNearbyUsersFromPostgres(
 			continue
 		}
 
-		privacyLat, privacyLon := model.ApplyPrivacyOffset(loc.Latitude, loc.Longitude)
+		privacyLat, privacyLon := model.ApplyPrivacyOffset(loc.UserID, loc.Latitude, loc.Longitude)
 
 		nearbyUser := &model.NearbyUser{
 			UserID:      loc.UserID,

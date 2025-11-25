@@ -16,6 +16,9 @@ const (
 	metersPerDegree     = 111320.0
 	twoPi               = 2 * math.Pi
 	degreesToRadians    = math.Pi / 180
+	anglePrecision      = 360000
+	distancePrecision   = 75000
+	metersScale         = 1000.0
 )
 
 type NearbyUser struct {
@@ -59,7 +62,6 @@ func GenerateAnonymousID(userID uuid.UUID) string {
 	for _, b := range userID.String() {
 		hash = hash*hashMultiplier + int(b)
 	}
-	// Ensure hash is positive for consistent seed
 	if hash < 0 {
 		hash = -hash
 	}
@@ -71,12 +73,10 @@ func AssignAvatar(userID uuid.UUID) (int, string) {
 	for _, b := range userID.String() {
 		hash = hash*hashMultiplier + int(b)
 	}
-	
-	// Ensure hash is positive for array indexing
 	if hash < 0 {
 		hash = -hash
 	}
-	
+
 	avatarID := (hash % totalAvatars) + 1
 	colors := getAvatarColors()
 	colorIndex := hash % len(colors)
@@ -114,10 +114,27 @@ func NewUserLocation(userID uuid.UUID, deviceID string, lat, lon, speed, heading
 	}
 }
 
-func ApplyPrivacyOffset(lat, lon float64) (float64, float64) {
-	r := mathrand.New(mathrand.NewSource(time.Now().UnixNano())) // #nosec G404 - privacy offset doesn't require cryptographic randomness
-	angle := r.Float64() * twoPi
-	distance := r.Float64() * privacyOffsetMeters
+// ApplyPrivacyOffset adds a deterministic offset to coordinates based on userID.
+func ApplyPrivacyOffset(userID uuid.UUID, lat, lon float64) (float64, float64) {
+	hash1 := int64(0)
+	hash2 := int64(0)
+
+	for i, b := range userID[:] {
+		if i%2 == 0 {
+			hash1 = hash1*hashMultiplier + int64(b)
+		} else {
+			hash2 = hash2*hashMultiplier + int64(b)
+		}
+	}
+	if hash1 < 0 {
+		hash1 = -hash1
+	}
+	if hash2 < 0 {
+		hash2 = -hash2
+	}
+
+	angle := float64(hash1%anglePrecision) / float64(anglePrecision) * twoPi
+	distance := float64(hash2%distancePrecision) / metersScale
 
 	latOffset := (distance * math.Cos(angle)) / metersPerDegree
 	lonOffset := (distance * math.Sin(angle)) / (metersPerDegree * math.Cos(lat*degreesToRadians))

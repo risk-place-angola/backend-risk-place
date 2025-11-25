@@ -112,3 +112,72 @@ func TestNewUserLocation(t *testing.T) {
 	anonymousLocation := NewUserLocation(userID, deviceID, lat, lon, speed, heading, true)
 	assert.True(t, anonymousLocation.IsAnonymous)
 }
+
+// BUGFIX: Privacy offset should be deterministic based on userID
+func TestApplyPrivacyOffset_Deterministic(t *testing.T) {
+	userID := uuid.MustParse("8bc22b4a-ad8a-4365-950c-bfd5fc7ec744")
+	lat, lon := 38.787000, -9.181000
+
+	// Call multiple times with same inputs
+	lat1, lon1 := ApplyPrivacyOffset(userID, lat, lon)
+	lat2, lon2 := ApplyPrivacyOffset(userID, lat, lon)
+	lat3, lon3 := ApplyPrivacyOffset(userID, lat, lon)
+
+	// Assert: same userID + same coordinates = same offset
+	assert.Equal(t, lat1, lat2, "First and second latitude should be identical")
+	assert.Equal(t, lat1, lat3, "First and third latitude should be identical")
+	assert.Equal(t, lon1, lon2, "First and second longitude should be identical")
+	assert.Equal(t, lon1, lon3, "First and third longitude should be identical")
+}
+
+func TestApplyPrivacyOffset_DifferentUsers(t *testing.T) {
+	userID1 := uuid.MustParse("8bc22b4a-ad8a-4365-950c-bfd5fc7ec744")
+	userID2 := uuid.MustParse("c952b59e-dc44-4ec5-a944-2d8323b6ba5a")
+	lat, lon := 38.787000, -9.181000
+
+	lat1, lon1 := ApplyPrivacyOffset(userID1, lat, lon)
+	lat2, lon2 := ApplyPrivacyOffset(userID2, lat, lon)
+
+	// Assert: different userIDs = different offsets
+	assert.NotEqual(t, lat1, lat2, "Different users should have different latitude offsets")
+	assert.NotEqual(t, lon1, lon2, "Different users should have different longitude offsets")
+}
+
+func TestApplyPrivacyOffset_OffsetApplied(t *testing.T) {
+	userID := uuid.MustParse("8bc22b4a-ad8a-4365-950c-bfd5fc7ec744")
+	originalLat, originalLon := 38.787000, -9.181000
+
+	offsetLat, offsetLon := ApplyPrivacyOffset(userID, originalLat, originalLon)
+
+	// Assert: offset was actually applied (coordinates changed)
+	assert.NotEqual(t, originalLat, offsetLat, "Latitude should be different from original")
+	assert.NotEqual(t, originalLon, offsetLon, "Longitude should be different from original")
+}
+
+func TestApplyPrivacyOffset_WithinRange(t *testing.T) {
+	userID := uuid.MustParse("8bc22b4a-ad8a-4365-950c-bfd5fc7ec744")
+	originalLat, originalLon := 38.787000, -9.181000
+
+	offsetLat, offsetLon := ApplyPrivacyOffset(userID, originalLat, originalLon)
+
+	// Calculate distance (approximate)
+	latDiff := (offsetLat - originalLat) * metersPerDegree
+	lonDiff := (offsetLon - originalLon) * metersPerDegree
+
+	distance := latDiff*latDiff + lonDiff*lonDiff // simplified distance squared
+
+	// Assert: offset is within expected range (0-75 meters)
+	// Using squared distance to avoid sqrt calculation
+	maxDistanceSquared := privacyOffsetMeters * privacyOffsetMeters
+	assert.LessOrEqual(t, distance, maxDistanceSquared*1.5, "Offset should be within ~75 meters") // 1.5x tolerance for coordinate conversion
+}
+
+func BenchmarkApplyPrivacyOffset(b *testing.B) {
+	userID := uuid.MustParse("8bc22b4a-ad8a-4365-950c-bfd5fc7ec744")
+	lat, lon := 38.787000, -9.181000
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		ApplyPrivacyOffset(userID, lat, lon)
+	}
+}
