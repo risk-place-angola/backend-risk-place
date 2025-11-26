@@ -36,28 +36,35 @@ type SavedLocation struct {
 	Longitude float64
 }
 
+type DeviceToken struct {
+	FCMToken string
+	Language string
+	UserID   uuid.UUID
+	DeviceID string
+}
+
 type User struct {
-	ID                uuid.UUID
-	Name              string
-	Email             string
-	Phone             string
-	Password          string
-	Latitude          float64
-	Longitude         float64
-	AlertRadiusMeters int
-	Nif               string
-	Address           Address
-	HomeAddress       *SavedLocation
-	WorkAddress       *SavedLocation
-	DeviceToken       string
-	DeviceLanguage    string
-	TrustScore        int
-	ReportsSubmitted  int
-	ReportsVerified      int
-	CreatedAt            time.Time
-	UpdatedAt            time.Time
-	DeletedAt            *time.Time
-	AccountVerification  AccountVerification
+	ID                  uuid.UUID
+	Name                string
+	Email               string
+	Phone               string
+	Password            string
+	Latitude            float64
+	Longitude           float64
+	AlertRadiusMeters   int
+	Nif                 string
+	Address             Address
+	HomeAddress         *SavedLocation
+	WorkAddress         *SavedLocation
+	DeviceToken         string
+	DeviceLanguage      string
+	TrustScore          int
+	ReportsSubmitted    int
+	ReportsVerified     int
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	DeletedAt           *time.Time
+	AccountVerification AccountVerification
 }
 
 const (

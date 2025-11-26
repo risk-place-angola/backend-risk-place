@@ -10,6 +10,7 @@ type AlertCreatedEvent struct {
 	Longitude float64
 	Radius    float64
 	RiskType  string
+	Severity  string
 }
 
 func (e AlertCreatedEvent) Name() string { return "AlertCreated" }

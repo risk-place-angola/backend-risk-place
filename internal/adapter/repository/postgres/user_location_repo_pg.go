@@ -99,16 +99,19 @@ func (r *userLocationRepoPG) FindByUserID(ctx context.Context, userID uuid.UUID)
 
 func (r *userLocationRepoPG) FindNearbyUsers(ctx context.Context, lat, lon, radiusMeters float64, limit int) ([]*model.UserLocation, error) {
 	query := `
-		SELECT id, user_id, device_id, latitude, longitude, speed, heading,
-		       avatar_id, color, is_anonymous, last_update, created_at
-		FROM user_locations
+		SELECT DISTINCT ul.id, ul.user_id, ul.device_id, ul.latitude, ul.longitude, ul.speed, ul.heading,
+		       ul.avatar_id, ul.color, ul.is_anonymous, ul.last_update, ul.created_at
+		FROM user_locations ul
+		LEFT JOIN user_safety_settings s ON (s.user_id = ul.user_id OR s.device_id = ul.device_id)
 		WHERE ST_DWithin(
-			location,
+			ul.location,
 			ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
 			$3
 		)
-		AND last_update > NOW() - INTERVAL '30 seconds'
-		ORDER BY location <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+		AND ul.last_update > NOW() - INTERVAL '30 seconds'
+		AND (s.id IS NULL OR s.location_sharing_enabled = true)
+		AND (s.id IS NULL OR s.show_online_status = true)
+		ORDER BY ul.location <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
 		LIMIT $4
 	`
 

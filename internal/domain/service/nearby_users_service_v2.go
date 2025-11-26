@@ -43,6 +43,7 @@ const (
 
 type NearbyUsersServiceV2 struct {
 	repo         repository.UserLocationRepository
+	settingsRepo repository.SafetySettingsRepository
 	cache        CacheService
 	useRedis     bool
 	fallbackToPG bool
@@ -53,11 +54,13 @@ type NearbyUsersServiceV2 struct {
 
 func NewNearbyUsersServiceV2(
 	repo repository.UserLocationRepository,
+	settingsRepo repository.SafetySettingsRepository,
 	cache CacheService,
 	useRedis bool,
 ) NearbyUsersService {
 	return &NearbyUsersServiceV2{
 		repo:         repo,
+		settingsRepo: settingsRepo,
 		cache:        cache,
 		useRedis:     useRedis,
 		fallbackToPG: true,
@@ -83,9 +86,6 @@ func (s *NearbyUsersServiceV2) UpdateUserLocation(
 		go s.updateRedisLocation(context.WithoutCancel(ctx), location)
 		go s.invalidateNearbyCache(context.WithoutCancel(ctx), userID)
 	}
-
-	// Note: Location history now handled by Redis-based LocationHistoryService
-	// See: internal/adapter/service/location_history_service.go
 
 	return nil
 }

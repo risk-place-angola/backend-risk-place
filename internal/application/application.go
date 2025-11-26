@@ -79,6 +79,7 @@ func NewUserApplication(
 			geoService,
 			riskTypeRepo,
 			riskTopicRepo,
+			safetySettingsRepo,
 			locationStore,
 		),
 		RiskUseCase: risk.NewRiskUseCase(

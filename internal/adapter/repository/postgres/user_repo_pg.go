@@ -250,6 +250,66 @@ func (u *userRepoPG) GetUserLanguageAndPhone(ctx context.Context, userID uuid.UU
 	return
 }
 
+func (u *userRepoPG) ListDeviceTokensForAlertNotification(ctx context.Context, userIDs []uuid.UUID, severityLevel string, distanceMeters int) ([]model.DeviceToken, error) {
+	//nolint:gosec // Safe conversion: distance capped at int32 max value
+	distanceInt32 := int32(distanceMeters)
+	if distanceMeters > 2147483647 { //nolint:mnd // int32 max value constant
+		distanceInt32 = 2147483647
+	}
+
+	rows, err := u.q.ListDeviceTokensForAlertNotification(ctx, sqlc.ListDeviceTokensForAlertNotificationParams{
+		UserIds:        userIDs,
+		SeverityLevel:  severityLevel,
+		DistanceMeters: distanceInt32,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	tokens := make([]model.DeviceToken, 0, len(rows))
+	for _, row := range rows {
+		if row.DeviceFcmToken.Valid {
+			tokens = append(tokens, model.DeviceToken{
+				FCMToken: row.DeviceFcmToken.String,
+				Language: row.DeviceLanguage.String,
+				UserID:   row.UserID,
+			})
+		}
+	}
+
+	return tokens, nil
+}
+
+func (u *userRepoPG) ListDeviceTokensForReportNotification(ctx context.Context, userIDs []uuid.UUID, isVerified bool, distanceMeters int) ([]model.DeviceToken, error) {
+	//nolint:gosec // Safe conversion: distance capped at int32 max value
+	distanceInt32 := int32(distanceMeters)
+	if distanceMeters > 2147483647 { //nolint:mnd // int32 max value constant
+		distanceInt32 = 2147483647
+	}
+
+	rows, err := u.q.ListDeviceTokensForReportNotification(ctx, sqlc.ListDeviceTokensForReportNotificationParams{
+		UserIds:        userIDs,
+		IsVerified:     isVerified,
+		DistanceMeters: distanceInt32,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	tokens := make([]model.DeviceToken, 0, len(rows))
+	for _, row := range rows {
+		if row.DeviceFcmToken.Valid {
+			tokens = append(tokens, model.DeviceToken{
+				FCMToken: row.DeviceFcmToken.String,
+				Language: row.DeviceLanguage.String,
+				UserID:   row.UserID,
+			})
+		}
+	}
+
+	return tokens, nil
+}
+
 func NewUserRepoPG(db *sql.DB) repository.UserRepository {
 	return &userRepoPG{
 		q:  sqlc.New(db),

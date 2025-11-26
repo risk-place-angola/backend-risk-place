@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/risk-place-angola/backend-risk-place/internal/adapter/cache"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/eventlistener"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/http/handler"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/http/middleware"
@@ -94,7 +95,8 @@ func NewContainer() (*Container, error) {
 	hashService := service.NewBcryptHasher()
 	geoDomainService := domainService.NewGeolocationService()
 	geoService := service.NewGeolocationAdapter(geoDomainService)
-	nearbyUsersDomainService := domainService.NewNearbyUsersService(userLocationRepoPG)
+	cacheAdapter := cache.NewRedisCacheAdapter(rdb)
+	nearbyUsersDomainService := domainService.NewNearbyUsersServiceV2(userLocationRepoPG, safetySettingsRepoPG, cacheAdapter, true)
 	nearbyUsersService := service.NewNearbyUsersAdapter(nearbyUsersDomainService)
 
 	migrationService := service.NewAnonymousMigrationService(
@@ -131,6 +133,7 @@ func NewContainer() (*Container, error) {
 		hub,
 		userRepoPG,
 		anonymousSessionRepoPG,
+		safetySettingsRepoPG,
 		notifierFCM,
 		notifierSMS,
 		translationService,

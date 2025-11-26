@@ -20,6 +20,8 @@ type UserRepository interface {
 	ListAllDeviceTokensExceptUser(ctx context.Context, excludeUserID uuid.UUID) ([]string, error)
 	UpdateUserDeviceInfo(ctx context.Context, userID uuid.UUID, fcmToken string, language string) error
 	ListDeviceTokensByUserIDs(ctx context.Context, userIDs []uuid.UUID) ([]string, error)
+	ListDeviceTokensForAlertNotification(ctx context.Context, userIDs []uuid.UUID, severityLevel string, distanceMeters int) ([]model.DeviceToken, error)
+	ListDeviceTokensForReportNotification(ctx context.Context, userIDs []uuid.UUID, isVerified bool, distanceMeters int) ([]model.DeviceToken, error)
 	UpdateSavedLocations(ctx context.Context, userID uuid.UUID, homeAddress, workAddress *model.SavedLocation) error
 	UpdateNotificationPreferences(ctx context.Context, userID uuid.UUID, pushEnabled, smsEnabled bool) error
 	GetNotificationPreferences(ctx context.Context, userID uuid.UUID) (pushEnabled, smsEnabled bool, err error)
