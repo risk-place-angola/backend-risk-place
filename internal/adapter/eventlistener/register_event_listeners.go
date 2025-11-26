@@ -36,7 +36,7 @@ func RegisterEventListeners(
 		translationService,
 		"AlertCreated",
 		func(ctx context.Context, h *websocket.Hub, ev event.AlertCreatedEvent) {
-			h.BroadcastAlert(ctx, ev.AlertID.String(), ev.Message, ev.Latitude, ev.Longitude, ev.Radius)
+			h.BroadcastAlert(ctx, ev.AlertID.String(), ev.Message, ev.Latitude, ev.Longitude, ev.Radius, ev.Severity)
 		},
 		"alert_id",
 	)
@@ -52,7 +52,7 @@ func RegisterEventListeners(
 		translationService,
 		"ReportCreated",
 		func(ctx context.Context, h *websocket.Hub, ev event.ReportCreatedEvent) {
-			h.BroadcastReport(ctx, ev.ReportID.String(), ev.Message, ev.Latitude, ev.Longitude, ev.Radius)
+			h.BroadcastReport(ctx, ev.ReportID.String(), ev.Message, ev.Latitude, ev.Longitude, ev.Radius, ev.IsVerified)
 		},
 		"report_id",
 	)

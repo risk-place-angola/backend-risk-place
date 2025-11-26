@@ -20,6 +20,10 @@ type GeoResult struct {
 	Distance float64
 }
 
+type LocationHistoryService interface {
+	SaveHistory(ctx context.Context, userID uuid.UUID, lat, lon, speed, heading float64, deviceID string) error
+}
+
 type CacheService interface {
 	Get(ctx context.Context, key string) (string, error)
 	Set(ctx context.Context, key, value string, ttl time.Duration) error
@@ -42,28 +46,37 @@ const (
 )
 
 type NearbyUsersServiceV2 struct {
-	repo         repository.UserLocationRepository
-	settingsRepo repository.SafetySettingsRepository
-	cache        CacheService
-	useRedis     bool
-	fallbackToPG bool
-	cacheHits    int64
-	cacheMisses  int64
-	redisErrors  int64
+	repo            repository.UserLocationRepository
+	settingsRepo    repository.SafetySettingsRepository
+	cache           CacheService
+	locationHistory LocationHistoryService
+	settingsChecker SettingsChecker
+	dangerZone      DangerZoneService
+	useRedis        bool
+	fallbackToPG    bool
+	cacheHits       int64
+	cacheMisses     int64
+	redisErrors     int64
 }
 
 func NewNearbyUsersServiceV2(
 	repo repository.UserLocationRepository,
 	settingsRepo repository.SafetySettingsRepository,
 	cache CacheService,
+	locationHistory LocationHistoryService,
+	settingsChecker SettingsChecker,
+	dangerZone DangerZoneService,
 	useRedis bool,
 ) NearbyUsersService {
 	return &NearbyUsersServiceV2{
-		repo:         repo,
-		settingsRepo: settingsRepo,
-		cache:        cache,
-		useRedis:     useRedis,
-		fallbackToPG: true,
+		repo:            repo,
+		settingsRepo:    settingsRepo,
+		cache:           cache,
+		locationHistory: locationHistory,
+		settingsChecker: settingsChecker,
+		dangerZone:      dangerZone,
+		useRedis:        useRedis,
+		fallbackToPG:    true,
 	}
 }
 
@@ -87,7 +100,21 @@ func (s *NearbyUsersServiceV2) UpdateUserLocation(
 		go s.invalidateNearbyCache(context.WithoutCancel(ctx), userID)
 	}
 
+	if s.settingsChecker.CanSaveLocationHistory(ctx, userID, deviceID) {
+		go s.saveLocationHistory(context.WithoutCancel(ctx), userID, lat, lon, speed, heading, deviceID)
+	}
+
+	if s.settingsChecker.HasDangerZonesEnabled(ctx, userID, deviceID) {
+		go s.checkDangerZone(context.WithoutCancel(ctx), userID, lat, lon)
+	}
+
 	return nil
+}
+
+func (s *NearbyUsersServiceV2) saveLocationHistory(ctx context.Context, userID uuid.UUID, lat, lon, speed, heading float64, deviceID string) {
+	if err := s.locationHistory.SaveHistory(ctx, userID, lat, lon, speed, heading, deviceID); err != nil {
+		slog.Debug("failed to save location history", "error", err, "user_id", userID.String())
+	}
 }
 
 func (s *NearbyUsersServiceV2) updateRedisLocation(ctx context.Context, loc *model.UserLocation) {
@@ -370,7 +397,22 @@ func (s *NearbyUsersServiceV2) CleanupStaleLocations(ctx context.Context) error 
 	return s.repo.DeleteStale(ctx, staleLocationThresholdSeconds)
 }
 
-// GetMetrics returns service metrics
+func (s *NearbyUsersServiceV2) checkDangerZone(ctx context.Context, userID uuid.UUID, lat, lon float64) {
+	zone, err := s.dangerZone.IsInDangerZone(ctx, lat, lon)
+	if err != nil {
+		slog.Debug("failed to check danger zone", "error", err, "user_id", userID.String())
+		return
+	}
+
+	if zone != nil {
+		slog.Info("user entered danger zone", 
+			"user_id", userID.String(), 
+			"zone_id", zone.ID.String(),
+			"risk_level", zone.RiskLevel,
+			"incident_count", zone.IncidentCount)
+	}
+}
+
 func (s *NearbyUsersServiceV2) GetMetrics() map[string]interface{} {
 	total := s.cacheHits + s.cacheMisses
 	hitRate := float64(0)

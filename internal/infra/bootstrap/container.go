@@ -46,6 +46,7 @@ type Container struct {
 	NotificationHandler     *handler.NotificationHandler
 	StorageHandler          *handler.StorageHandler
 	NearbyUsersHandler      *handler.NearbyUsersHandler
+	DangerZoneHandler       *handler.DangerZoneHandler
 
 	UserApp *application.Application
 
@@ -89,6 +90,7 @@ func NewContainer() (*Container, error) {
 	deviceMappingRepoPG := postgres.NewDeviceUserMappingRepository(database)
 	migrationRepoPG := postgres.NewAnonymousMigrationRepository(database)
 	userLocationRepoPG := postgres.NewUserLocationRepository(database)
+	dangerZoneRepoPG := postgres.NewDangerZoneRepoPG(database)
 
 	emailService := notifier.NewSmtpEmailService(cfg)
 	tokenService := service.NewJwtTokenService(cfg)
@@ -96,7 +98,22 @@ func NewContainer() (*Container, error) {
 	geoDomainService := domainService.NewGeolocationService()
 	geoService := service.NewGeolocationAdapter(geoDomainService)
 	cacheAdapter := cache.NewRedisCacheAdapter(rdb)
-	nearbyUsersDomainService := domainService.NewNearbyUsersServiceV2(userLocationRepoPG, safetySettingsRepoPG, cacheAdapter, true)
+	locationHistoryCacheAdapter := cache.NewLocationHistoryCacheAdapter(rdb)
+
+	const locationHistoryRetentionDays = 7
+	locationHistoryService := service.NewLocationHistoryService(locationHistoryCacheAdapter, true, locationHistoryRetentionDays)
+	settingsCheckerService := domainService.NewSettingsChecker(safetySettingsRepoPG, anonymousSessionRepoPG)
+	dangerZoneService := service.NewDangerZoneService(dangerZoneRepoPG, cacheAdapter)
+
+	nearbyUsersDomainService := domainService.NewNearbyUsersServiceV2(
+		userLocationRepoPG,
+		safetySettingsRepoPG,
+		cacheAdapter,
+		locationHistoryService,
+		settingsCheckerService,
+		dangerZoneService,
+		true,
+	)
 	nearbyUsersService := service.NewNearbyUsersAdapter(nearbyUsersDomainService)
 
 	migrationService := service.NewAnonymousMigrationService(
@@ -110,7 +127,7 @@ func NewContainer() (*Container, error) {
 
 	dispatcher := event.NewEventDispatcher()
 
-	hub := websocket.NewHub(locationStore, geoService, nearbyUsersService)
+	hub := websocket.NewHub(locationStore, geoService, nearbyUsersService, settingsCheckerService)
 	go hub.Run()
 
 	notifierFCM := notifier.NewFCMNotifier(firebaseApp)
@@ -162,6 +179,7 @@ func NewContainer() (*Container, error) {
 		migrationService,
 		verificationService,
 		storageService,
+		dangerZoneService,
 	)
 
 	authMW := middleware.NewAuthMiddleware(cfg)
@@ -188,8 +206,10 @@ func NewContainer() (*Container, error) {
 	notificationHandler := handler.NewNotificationHandler(userApp)
 	storageHandler := handler.NewStorageHandler(storageService, userApp)
 	nearbyUsersHandler := handler.NewNearbyUsersHandler(nearbyUsersService)
+	dangerZoneHandler := handler.NewDangerZoneHandler(userApp)
 
 	handler.StartCleanupJob(context.Background(), nearbyUsersService)
+	handler.StartDangerZoneCalculationJob(context.Background(), dangerZoneService)
 
 	return &Container{
 		UserApp:                 userApp,
@@ -211,5 +231,6 @@ func NewContainer() (*Container, error) {
 		NotificationHandler:     notificationHandler,
 		StorageHandler:          storageHandler,
 		NearbyUsersHandler:      nearbyUsersHandler,
+		DangerZoneHandler:       dangerZoneHandler,
 	}, nil
 }

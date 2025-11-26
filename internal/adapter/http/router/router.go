@@ -80,6 +80,8 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	g.OptionalAuth.HandleFunc("POST /api/v1/users/location", container.NearbyUsersHandler.UpdateLocation)
 	g.OptionalAuth.HandleFunc("POST /api/v1/users/nearby", container.NearbyUsersHandler.GetNearbyUsers)
 
+	g.OptionalAuth.HandleFunc("POST /api/v1/danger-zones/nearby", container.DangerZoneHandler.GetDangerZonesNearby)
+
 	mux.HandleFunc("/ws/alerts", container.WSHandler.HandleWebSocket)
 	mux.HandleFunc("/docs/", httpSwagger.WrapHandler)
 

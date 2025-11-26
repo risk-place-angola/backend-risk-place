@@ -16,8 +16,10 @@ type SettingsChecker interface {
 	CanReceiveAlerts(ctx context.Context, userID uuid.UUID, deviceID string, severity string, distance int) bool
 	CanReceiveReports(ctx context.Context, userID uuid.UUID, deviceID string, isVerified bool, distance int) bool
 	CanShareLocation(ctx context.Context, userID uuid.UUID, deviceID string) bool
+	CanSaveLocationHistory(ctx context.Context, userID uuid.UUID, deviceID string) bool
 	ShouldShowOnline(ctx context.Context, userID uuid.UUID) bool
 	IsInHighRiskTime(ctx context.Context, userID uuid.UUID, deviceID string) bool
+	HasDangerZonesEnabled(ctx context.Context, userID uuid.UUID, deviceID string) bool
 }
 
 type settingsChecker struct {
@@ -97,6 +99,14 @@ func (s *settingsChecker) CanShareLocation(ctx context.Context, userID uuid.UUID
 	return settings.LocationSharingEnabled
 }
 
+func (s *settingsChecker) CanSaveLocationHistory(ctx context.Context, userID uuid.UUID, deviceID string) bool {
+	settings, err := s.getSettings(ctx, userID, deviceID)
+	if err != nil || settings == nil {
+		return true
+	}
+	return settings.LocationHistoryEnabled
+}
+
 func (s *settingsChecker) ShouldShowOnline(ctx context.Context, userID uuid.UUID) bool {
 	if userID == uuid.Nil {
 		return false
@@ -119,17 +129,25 @@ func (s *settingsChecker) IsInHighRiskTime(ctx context.Context, userID uuid.UUID
 		return false
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 	currentTime := now.Format("15:04")
 
-	startTime := settings.HighRiskStartTime.Format("15:04")
-	endTime := settings.HighRiskEndTime.Format("15:04")
+	startTime := settings.HighRiskStartTime.UTC().Format("15:04")
+	endTime := settings.HighRiskEndTime.UTC().Format("15:04")
 
 	if startTime > endTime {
 		return currentTime >= startTime || currentTime <= endTime
 	}
 
 	return currentTime >= startTime && currentTime <= endTime
+}
+
+func (s *settingsChecker) HasDangerZonesEnabled(ctx context.Context, userID uuid.UUID, deviceID string) bool {
+	settings, err := s.getSettings(ctx, userID, deviceID)
+	if err != nil || settings == nil {
+		return true
+	}
+	return settings.DangerZonesEnabled
 }
 
 var ErrNoIdentifier = errors.New("no user ID or device ID provided")

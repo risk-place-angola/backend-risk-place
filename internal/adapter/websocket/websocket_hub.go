@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"log"
 	"log/slog"
+	"math"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/port"
+	"github.com/risk-place-angola/backend-risk-place/internal/domain/service"
 )
 
 const (
@@ -29,13 +32,14 @@ type Hub struct {
 	locationStore      port.LocationStore
 	geoService         port.GeolocationService
 	nearbyUsersService port.NearbyUsersService
+	settingsChecker    service.SettingsChecker
 
 	broadcastTicker    *time.Ticker
 	stopBroadcast      chan bool
 	broadcastSemaphore chan struct{}
 }
 
-func NewHub(locationStore port.LocationStore, geoService port.GeolocationService, nearbyUsersService port.NearbyUsersService) *Hub {
+func NewHub(locationStore port.LocationStore, geoService port.GeolocationService, nearbyUsersService port.NearbyUsersService, settingsChecker service.SettingsChecker) *Hub {
 	return &Hub{
 		clients:            make(map[*Client]bool),
 		register:           make(chan *Client),
@@ -44,6 +48,7 @@ func NewHub(locationStore port.LocationStore, geoService port.GeolocationService
 		locationStore:      locationStore,
 		geoService:         geoService,
 		nearbyUsersService: nearbyUsersService,
+		settingsChecker:    settingsChecker,
 		broadcastTicker:    time.NewTicker(nearbyUsersBroadcastIntervalSeconds * time.Second),
 		stopBroadcast:      make(chan bool),
 		broadcastSemaphore: make(chan struct{}, maxConcurrentBroadcasts),
@@ -301,44 +306,123 @@ func (h *Hub) handleIncomingMessage(ctx context.Context, c *Client, raw []byte) 
 	}
 }
 
-func (h *Hub) BroadcastAlert(ctx context.Context, alertID string, message string, lat, lon, radius float64) {
+func (h *Hub) BroadcastAlert(ctx context.Context, alertID string, message string, lat, lon, radius float64, severity string) {
 	userIDs, err := h.locationStore.FindUsersInRadius(ctx, lat, lon, radius)
 	if err != nil {
 		slog.Error("error finding nearby users", "error", err)
 		return
 	}
 
-	slog.Info("broadcasting alert", "alert_id", alertID, "user_count", len(userIDs))
+	slog.Debug("found users in radius for alert broadcast", "alert_id", alertID, "potential_users", len(userIDs))
+
+	notifiedCount := 0
+	h.clientsMux.RLock()
+	defer h.clientsMux.RUnlock()
 
 	for client := range h.clients {
-		for _, id := range userIDs {
-			if client.UserID == id {
-				client.SendJSON("new_alert", AlertNotification{
-					AlertID:   alertID,
-					Message:   message,
-					Latitude:  lat,
-					Longitude: lon,
-					Radius:    radius,
-				})
+		for _, userIDStr := range userIDs {
+			if client.UserID != userIDStr {
+				continue
 			}
+
+			userUUID, err := uuid.Parse(userIDStr)
+			if err != nil {
+				slog.Debug("invalid user UUID format, skipping", "user_id", userIDStr)
+				continue
+			}
+
+			deviceID := ""
+			if !client.IsAuthenticated {
+				deviceID = userIDStr
+				userUUID = uuid.Nil
+			}
+
+			if !h.settingsChecker.CanReceiveNotifications(ctx, userUUID, deviceID) {
+				continue
+			}
+
+			distanceMeters := h.calculateDistance(lat, lon, client.lastLat, client.lastLon)
+
+			isHighRiskTime := h.settingsChecker.IsInHighRiskTime(ctx, userUUID, deviceID)
+			if !isHighRiskTime {
+				if !h.settingsChecker.CanReceiveAlerts(ctx, userUUID, deviceID, severity, int(distanceMeters)) {
+					continue
+				}
+			} else {
+				if distanceMeters > maxSearchRadiusMeters {
+					continue
+				}
+				slog.Debug("time-based boost applied", "user_id", userIDStr, "severity", severity, "is_high_risk_time", true)
+			}
+
+			client.SendJSON("new_alert", AlertNotification{
+				AlertID:   alertID,
+				Message:   message,
+				Latitude:  lat,
+				Longitude: lon,
+				Radius:    radius,
+			})
+			notifiedCount++
+			break
 		}
 	}
+
+	slog.Info("alert broadcast completed", "alert_id", alertID, "notified_users", notifiedCount, "potential_users", len(userIDs))
 }
 
-func (h *Hub) BroadcastReport(ctx context.Context, reportID, message string, lat, lon, radius float64) {
-	userIDs, _ := h.locationStore.FindUsersInRadius(ctx, lat, lon, radius)
+func (h *Hub) BroadcastReport(ctx context.Context, reportID, message string, lat, lon, radius float64, isVerified bool) {
+	userIDs, err := h.locationStore.FindUsersInRadius(ctx, lat, lon, radius)
+	if err != nil {
+		slog.Error("error finding nearby users for report", "error", err)
+		return
+	}
+
+	slog.Debug("found users in radius for report broadcast", "report_id", reportID, "potential_users", len(userIDs))
+
+	notifiedCount := 0
+	h.clientsMux.RLock()
+	defer h.clientsMux.RUnlock()
+
 	for client := range h.clients {
-		for _, id := range userIDs {
-			if client.UserID == id {
-				client.SendJSON("report_created", ReportNotification{
-					ReportID:  reportID,
-					Message:   message,
-					Latitude:  lat,
-					Longitude: lon,
-				})
+		for _, userIDStr := range userIDs {
+			if client.UserID != userIDStr {
+				continue
 			}
+
+			userUUID, err := uuid.Parse(userIDStr)
+			if err != nil {
+				slog.Debug("invalid user UUID format for report, skipping", "user_id", userIDStr)
+				continue
+			}
+
+			deviceID := ""
+			if !client.IsAuthenticated {
+				deviceID = userIDStr
+				userUUID = uuid.Nil
+			}
+
+			if !h.settingsChecker.CanReceiveNotifications(ctx, userUUID, deviceID) {
+				continue
+			}
+
+			distanceMeters := h.calculateDistance(lat, lon, client.lastLat, client.lastLon)
+
+			if !h.settingsChecker.CanReceiveReports(ctx, userUUID, deviceID, isVerified, int(distanceMeters)) {
+				continue
+			}
+
+			client.SendJSON("report_created", ReportNotification{
+				ReportID:  reportID,
+				Message:   message,
+				Latitude:  lat,
+				Longitude: lon,
+			})
+			notifiedCount++
+			break
 		}
 	}
+
+	slog.Info("report broadcast completed", "report_id", reportID, "notified_users", notifiedCount, "potential_users", len(userIDs))
 }
 
 func (h *Hub) NotifyUser(userID string, event string, data interface{}) {
@@ -351,4 +435,30 @@ func (h *Hub) NotifyUser(userID string, event string, data interface{}) {
 
 func (h *Hub) Clients() map[*Client]bool {
 	return h.clients
+}
+
+func (h *Hub) calculateDistance(lat1, lon1, lat2, lon2 float64) float64 {
+	if lat2 == 0 && lon2 == 0 {
+		return 0
+	}
+
+	const (
+		earthRadiusMeters = 6371000.0
+		degreesToRadians  = math.Pi / 180.0
+		halfDivisor       = 2.0
+	)
+
+	dLat := (lat2 - lat1) * degreesToRadians
+	dLon := (lon2 - lon1) * degreesToRadians
+
+	halfDLat := dLat / halfDivisor
+	halfDLon := dLon / halfDivisor
+
+	a := math.Sin(halfDLat)*math.Sin(halfDLat) +
+		math.Cos(lat1*degreesToRadians)*math.Cos(lat2*degreesToRadians)*
+			math.Sin(halfDLon)*math.Sin(halfDLon)
+
+	c := halfDivisor * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	return earthRadiusMeters * c
 }

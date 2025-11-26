@@ -35,7 +35,7 @@ func NewDeviceHandler(
 // @Success 200 {object} dto.DeviceResponse
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 500 {object} util.ErrorResponse
-// @Router /api/v1/devices/register [post]
+// @Router /devices/register [post]
 func (h *DeviceHandler) RegisterDevice(w http.ResponseWriter, r *http.Request) {
 	var req dto.RegisterDeviceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -64,7 +64,7 @@ func (h *DeviceHandler) RegisterDevice(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 500 {object} util.ErrorResponse
-// @Router /api/v1/devices/location [put]
+// @Router /devices/location [put]
 func (h *DeviceHandler) UpdateDeviceLocation(w http.ResponseWriter, r *http.Request) {
 	var req dto.UpdateDeviceLocationRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

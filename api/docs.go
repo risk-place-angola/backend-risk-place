@@ -24,10 +24,10 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "OptionalAuth": []
                     }
                 ],
-                "description": "Create a new alert.",
+                "description": "Create a new alert (supports both authenticated and anonymous users).",
                 "consumes": [
                     "application/json"
                 ],
@@ -39,6 +39,12 @@ const docTemplate = `{
                 ],
                 "summary": "Create a new alert.",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-Id",
+                        "in": "header"
+                    },
                     {
                         "description": "Alert",
                         "name": "alert",
@@ -53,7 +59,10 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.Alert"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
@@ -759,7 +768,7 @@ const docTemplate = `{
                                 "code": {
                                     "type": "string"
                                 },
-                                "email": {
+                                "identifier": {
                                     "type": "string"
                                 }
                             }
@@ -775,12 +784,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -870,7 +873,7 @@ const docTemplate = `{
         },
         "/auth/password/forgot": {
             "post": {
-                "description": "Send a password reset code to the user's email",
+                "description": "Send a password reset code to the user's email or phone",
                 "consumes": [
                     "application/json"
                 ],
@@ -883,14 +886,14 @@ const docTemplate = `{
                 "summary": "Initiate password reset",
                 "parameters": [
                     {
-                        "description": "User email",
-                        "name": "email",
+                        "description": "User email or phone",
+                        "name": "identifier",
                         "in": "body",
                         "required": true,
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "email": {
+                                "identifier": {
                                     "type": "string"
                                 }
                             }
@@ -906,12 +909,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -941,7 +938,10 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "email": {
+                                "code": {
+                                    "type": "string"
+                                },
+                                "identifier": {
                                     "type": "string"
                                 },
                                 "password": {
@@ -960,12 +960,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -1045,14 +1039,14 @@ const docTemplate = `{
                 "summary": "Resend verification code",
                 "parameters": [
                     {
-                        "description": "Email",
+                        "description": "Email or phone",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "email": {
+                                "identifier": {
                                     "type": "string"
                                 }
                             }
@@ -1117,6 +1111,63 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/danger-zones/nearby": {
+            "post": {
+                "security": [
+                    {
+                        "OptionalAuth": []
+                    }
+                ],
+                "description": "Retrieves danger zones near a specific location based on incident density and risk score.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "danger-zones"
+                ],
+                "summary": "Get nearby danger zones.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-Id",
+                        "in": "header"
+                    },
+                    {
+                        "description": "Location and radius",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetDangerZonesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetDangerZonesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -2473,7 +2524,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieve safety settings for the authenticated user. Creates default settings if none exist.",
+                "description": "Retrieve safety settings for the authenticated user or anonymous user. Creates default settings if none exist.",
                 "produces": [
                     "application/json"
                 ],
@@ -2508,7 +2559,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update safety settings for the authenticated user. All fields are optional.",
+                "description": "Update safety settings for the authenticated user or anonymous user. All fields are optional.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2778,6 +2829,35 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.DangerZoneDTO": {
+            "type": "object",
+            "properties": {
+                "calculated_at": {
+                    "type": "string"
+                },
+                "grid_cell_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "incident_count": {
+                    "type": "integer"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "risk_level": {
+                    "type": "string"
+                },
+                "risk_score": {
+                    "type": "number"
+                }
+            }
+        },
         "dto.DeviceResponse": {
             "type": "object",
             "properties": {
@@ -2868,6 +2948,41 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.GetDangerZonesRequest": {
+            "type": "object",
+            "required": [
+                "latitude",
+                "longitude",
+                "radius_meters"
+            ],
+            "properties": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "radius_meters": {
+                    "type": "number",
+                    "maximum": 10000,
+                    "minimum": 100
+                }
+            }
+        },
+        "dto.GetDangerZonesResponse": {
+            "type": "object",
+            "properties": {
+                "total_count": {
+                    "type": "integer"
+                },
+                "zones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.DangerZoneDTO"
+                    }
                 }
             }
         },
@@ -4096,6 +4211,9 @@ const docTemplate = `{
                     "properties": {
                         "code": {
                             "type": "integer"
+                        },
+                        "error_code": {
+                            "type": "string"
                         },
                         "message": {}
                     }

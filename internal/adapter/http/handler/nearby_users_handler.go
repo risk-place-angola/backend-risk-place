@@ -82,7 +82,7 @@ func (h *NearbyUsersHandler) checkRateLimit(userID string) bool {
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 500 {object} util.ErrorResponse
-// @Router /api/v1/users/location [post]
+// @Router /users/location [post]
 func (h *NearbyUsersHandler) UpdateLocation(w http.ResponseWriter, r *http.Request) {
 	identifier, ok := httputil.ExtractUserIdentifierOrError(w, r)
 	if !ok {
@@ -118,7 +118,7 @@ func (h *NearbyUsersHandler) UpdateLocation(w http.ResponseWriter, r *http.Reque
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 429 {object} util.ErrorResponse "Rate limit exceeded (max 1 request per 3 seconds)"
 // @Failure 500 {object} util.ErrorResponse
-// @Router /api/v1/users/nearby [post]
+// @Router /users/nearby [post]
 func (h *NearbyUsersHandler) GetNearbyUsers(w http.ResponseWriter, r *http.Request) {
 	identifier, ok := httputil.ExtractUserIdentifierOrError(w, r)
 	if !ok {

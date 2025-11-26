@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	adapterservice "github.com/risk-place-angola/backend-risk-place/internal/adapter/service"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/service"
 	"github.com/risk-place-angola/backend-risk-place/internal/infra/redis"
 )
@@ -13,6 +14,10 @@ type redisCacheAdapter struct {
 }
 
 func NewRedisCacheAdapter(rdb *redis.Redis) service.CacheService {
+	return &redisCacheAdapter{redis: rdb}
+}
+
+func NewLocationHistoryCacheAdapter(rdb *redis.Redis) adapterservice.CacheService {
 	return &redisCacheAdapter{redis: rdb}
 }
 
@@ -63,4 +68,20 @@ func (a *redisCacheAdapter) GeoSearchWithDistance(ctx context.Context, key strin
 	}
 
 	return results, nil
+}
+
+func (a *redisCacheAdapter) ZAdd(ctx context.Context, key string, score float64, member string) error {
+	return a.redis.ZAdd(ctx, key, score, member)
+}
+
+func (a *redisCacheAdapter) ZRangeByScore(ctx context.Context, key string, minScore, maxScore float64) ([]string, error) {
+	return a.redis.ZRangeByScore(ctx, key, minScore, maxScore)
+}
+
+func (a *redisCacheAdapter) ZRemRangeByScore(ctx context.Context, key string, minScore, maxScore float64) error {
+	return a.redis.ZRemRangeByScore(ctx, key, minScore, maxScore)
+}
+
+func (a *redisCacheAdapter) Expire(ctx context.Context, key string, ttl time.Duration) error {
+	return a.redis.Expire(ctx, key, ttl)
 }
