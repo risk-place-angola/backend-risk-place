@@ -51,6 +51,7 @@ func (r *RiskTypePG) ListRiskTypes(ctx context.Context) ([]model.RiskType, error
 			Description:         rt.Description.String,
 			IconPath:            iconPath,
 			DefaultRadiusMeters: int(rt.DefaultRadiusMeters.Int32),
+			IsEnabled:           rt.IsEnabled,
 			CreatedAt:           rt.CreatedAt.Time,
 			UpdatedAt:           rt.UpdatedAt.Time,
 		})
@@ -76,6 +77,7 @@ func (r *RiskTypePG) GetRiskTypeByID(ctx context.Context, id string) (model.Risk
 		Description:         rt.Description.String,
 		IconPath:            iconPath,
 		DefaultRadiusMeters: int(rt.DefaultRadiusMeters.Int32),
+		IsEnabled:           rt.IsEnabled,
 		CreatedAt:           rt.CreatedAt.Time,
 		UpdatedAt:           rt.UpdatedAt.Time,
 	}, nil
@@ -99,6 +101,13 @@ func (r *RiskTypePG) UpdateRiskTypeIcon(ctx context.Context, id string, iconPath
 	return r.q.UpdateRiskTypeIcon(ctx, sqlc.UpdateRiskTypeIconParams{
 		ID:       uuid.MustParse(id),
 		IconPath: sql.NullString{String: iconPath, Valid: true},
+	})
+}
+
+func (r *RiskTypePG) UpdateRiskTypeIsEnabled(ctx context.Context, id string, isEnabled bool) error {
+	return r.q.UpdateRiskTypeIsEnabled(ctx, sqlc.UpdateRiskTypeIsEnabledParams{
+		ID:        uuid.MustParse(id),
+		IsEnabled: isEnabled,
 	})
 }
 

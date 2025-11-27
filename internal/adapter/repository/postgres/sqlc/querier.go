@@ -16,6 +16,7 @@ type Querier interface {
 	AddAnonymousReportVote(ctx context.Context, arg AddAnonymousReportVoteParams) error
 	AddCodeToUser(ctx context.Context, arg AddCodeToUserParams) error
 	AddUserReportVote(ctx context.Context, arg AddUserReportVoteParams) error
+	AssignPermissionToRole(ctx context.Context, arg AssignPermissionToRoleParams) error
 	AssignRoleToUser(ctx context.Context, arg AssignRoleToUserParams) error
 	AssignUserRole(ctx context.Context, arg AssignUserRoleParams) error
 	CountAlertSubscribers(ctx context.Context, alertID uuid.UUID) (int64, error)
@@ -33,6 +34,7 @@ type Querier interface {
 	CreateEmergencyContact(ctx context.Context, arg CreateEmergencyContactParams) error
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (Entity, error)
 	CreateLocationSharing(ctx context.Context, arg CreateLocationSharingParams) error
+	CreatePermission(ctx context.Context, arg CreatePermissionParams) (Permission, error)
 	CreateReport(ctx context.Context, arg CreateReportParams) (uuid.UUID, error)
 	CreateReportNotification(ctx context.Context, arg CreateReportNotificationParams) error
 	CreateRiskTopic(ctx context.Context, arg CreateRiskTopicParams) (RiskTopic, error)
@@ -84,6 +86,7 @@ type Querier interface {
 	GetMigrationsByDeviceID(ctx context.Context, deviceID string) ([]AnonymousUserMigration, error)
 	// Retorna todas as migrações de um usuário
 	GetMigrationsByUserID(ctx context.Context, userID uuid.UUID) ([]AnonymousUserMigration, error)
+	GetPermissionByCode(ctx context.Context, code sql.NullString) (Permission, error)
 	GetPriorityEmergencyContactsByUserID(ctx context.Context, userID uuid.UUID) ([]EmergencyContact, error)
 	// Retorna migrações falhadas recentes para debug
 	GetRecentFailedMigrations(ctx context.Context, limit int32) ([]AnonymousUserMigration, error)
@@ -91,6 +94,7 @@ type Querier interface {
 	GetRiskTopicByID(ctx context.Context, id uuid.UUID) (RiskTopic, error)
 	GetRiskTypeByID(ctx context.Context, id uuid.UUID) (RiskType, error)
 	GetRoleByName(ctx context.Context, name string) (Role, error)
+	GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]Permission, error)
 	// ============================================================================
 	// QUERIES FOR MERGE STRATEGY (Settings Conflict Resolution)
 	// ============================================================================
@@ -106,11 +110,13 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	// Retorna histórico completo de migrações de um usuário
 	GetUserMigrationHistory(ctx context.Context, userID uuid.UUID) ([]GetUserMigrationHistoryRow, error)
+	GetUserPermissions(ctx context.Context, userID uuid.UUID) ([]Permission, error)
 	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]Role, error)
 	// Retorna configurações de um usuário autenticado
 	GetUserSafetySettings(ctx context.Context, userID uuid.UUID) (UserSafetySetting, error)
 	GetUserVote(ctx context.Context, arg GetUserVoteParams) (ReportVote, error)
 	GetUsersByRole(ctx context.Context, roleID uuid.UUID) ([]GetUsersByRoleRow, error)
+	HasPermission(ctx context.Context, arg HasPermissionParams) (bool, error)
 	IncrementUserReportsSubmitted(ctx context.Context, id uuid.UUID) error
 	IncrementUserReportsVerified(ctx context.Context, id uuid.UUID) error
 	IsAnonymousSubscribed(ctx context.Context, arg IsAnonymousSubscribedParams) (bool, error)
@@ -129,6 +135,7 @@ type Querier interface {
 	ListDeviceTokensForReportNotification(ctx context.Context, arg ListDeviceTokensForReportNotificationParams) ([]ListDeviceTokensForReportNotificationRow, error)
 	ListEntities(ctx context.Context) ([]Entity, error)
 	ListNearbyUsers(ctx context.Context) ([]User, error)
+	ListPermissions(ctx context.Context) ([]Permission, error)
 	ListReportsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]ListReportsByIDsRow, error)
 	ListReportsByStatus(ctx context.Context, status interface{}) ([]ListReportsByStatusRow, error)
 	ListReportsByUser(ctx context.Context, userID uuid.UUID) ([]ListReportsByUserRow, error)
@@ -165,6 +172,7 @@ type Querier interface {
 	MigrateSubscriptionsToUser(ctx context.Context, arg MigrateSubscriptionsToUserParams) (int64, error)
 	RejectReport(ctx context.Context, id uuid.UUID) error
 	RemoveAnonymousVote(ctx context.Context, arg RemoveAnonymousVoteParams) error
+	RemovePermissionFromRole(ctx context.Context, arg RemovePermissionFromRoleParams) error
 	RemoveUserVote(ctx context.Context, arg RemoveUserVoteParams) error
 	ResolveAlert(ctx context.Context, id uuid.UUID) error
 	ResolveReport(ctx context.Context, id uuid.UUID) error
@@ -195,6 +203,7 @@ type Querier interface {
 	UpdateRiskTopicIcon(ctx context.Context, arg UpdateRiskTopicIconParams) error
 	UpdateRiskType(ctx context.Context, arg UpdateRiskTypeParams) error
 	UpdateRiskTypeIcon(ctx context.Context, arg UpdateRiskTypeIconParams) error
+	UpdateRiskTypeIsEnabled(ctx context.Context, arg UpdateRiskTypeIsEnabledParams) error
 	UpdateUserDeviceInfo(ctx context.Context, arg UpdateUserDeviceInfoParams) error
 	UpdateUserLocation(ctx context.Context, arg UpdateUserLocationParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error

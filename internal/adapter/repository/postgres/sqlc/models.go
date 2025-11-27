@@ -234,13 +234,15 @@ type RiskTopic struct {
 }
 
 type RiskType struct {
-	ID                  uuid.UUID      `json:"id"`
-	Name                string         `json:"name"`
-	Description         sql.NullString `json:"description"`
-	IconPath            sql.NullString `json:"icon_path"`
-	DefaultRadiusMeters sql.NullInt32  `json:"default_radius_meters"`
-	CreatedAt           sql.NullTime   `json:"created_at"`
-	UpdatedAt           sql.NullTime   `json:"updated_at"`
+	ID          uuid.UUID      `json:"id"`
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
+	IconPath    sql.NullString `json:"icon_path"`
+	// Controls visibility of risk types in mobile app. When false, all associated reports are also hidden.
+	IsEnabled           bool          `json:"is_enabled"`
+	DefaultRadiusMeters sql.NullInt32 `json:"default_radius_meters"`
+	CreatedAt           sql.NullTime  `json:"created_at"`
+	UpdatedAt           sql.NullTime  `json:"updated_at"`
 }
 
 type Role struct {
