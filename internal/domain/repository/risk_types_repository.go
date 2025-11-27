@@ -12,5 +12,6 @@ type RiskTypesRepository interface {
 	GetRiskTypeByID(ctx context.Context, id string) (model.RiskType, error)
 	UpdateRiskType(ctx context.Context, id string, name string, description string, defaultRadiusMeters int) error
 	UpdateRiskTypeIcon(ctx context.Context, id string, iconPath string) error
+	UpdateRiskTypeIsEnabled(ctx context.Context, id string, isEnabled bool) error
 	DeleteRiskType(ctx context.Context, id string) error
 }
