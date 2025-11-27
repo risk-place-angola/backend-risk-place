@@ -16,7 +16,7 @@ SELECT
 FROM alerts a
 LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
-WHERE a.id = $1 
+WHERE a.id = $1 AND rt.is_enabled = TRUE
 LIMIT 1;
 
 -- name: GetAlertsByUserID :many
@@ -29,7 +29,7 @@ SELECT
 FROM alerts a
 LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
-WHERE a.created_by = $1
+WHERE a.created_by = $1 AND rt.is_enabled = TRUE
 ORDER BY a.created_at DESC;
 
 -- name: GetSubscribedAlerts :many
@@ -43,7 +43,7 @@ FROM alerts a
 INNER JOIN alert_subscriptions s ON a.id = s.alert_id
 LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
-WHERE s.user_id = $1
+WHERE s.user_id = $1 AND rt.is_enabled = TRUE
 ORDER BY s.subscribed_at DESC;
 
 -- name: ListActiveAlerts :many
@@ -56,7 +56,7 @@ SELECT
 FROM alerts a
 LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
-WHERE a.status = 'active' AND (a.expires_at IS NULL OR a.expires_at > NOW())
+WHERE a.status = 'active' AND (a.expires_at IS NULL OR a.expires_at > NOW()) AND rt.is_enabled = TRUE
 ORDER BY a.created_at DESC;
 
 -- name: UpdateAlert :exec
@@ -119,7 +119,7 @@ SELECT
 FROM alerts a
 LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
-WHERE a.anonymous_session_id = $1 AND a.device_id = $2
+WHERE a.anonymous_session_id = $1 AND a.device_id = $2 AND rt.is_enabled = TRUE
 ORDER BY a.created_at DESC;
 
 -- name: UpdateAlertAnonymousToUser :exec
@@ -143,7 +143,8 @@ DELETE FROM alert_subscriptions WHERE alert_id = $1 AND anonymous_session_id = $
 -- name: GetSubscribedAlertsAnonymous :many
 SELECT a.* FROM alerts a
 INNER JOIN alert_subscriptions s ON a.id = s.alert_id
-WHERE s.anonymous_session_id = $1 AND s.device_id = $2
+LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
+WHERE s.anonymous_session_id = $1 AND s.device_id = $2 AND rt.is_enabled = TRUE
 ORDER BY s.subscribed_at DESC;
 
 -- name: IsAnonymousSubscribed :one
