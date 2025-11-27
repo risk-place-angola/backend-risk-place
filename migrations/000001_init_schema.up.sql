@@ -185,6 +185,7 @@ CREATE TABLE risk_types (
     name TEXT NOT NULL UNIQUE,
     description TEXT,
     icon_path TEXT,
+    is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
     default_radius_meters INT DEFAULT 500,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
@@ -473,6 +474,10 @@ CREATE INDEX idx_anonymous_sessions_is_active ON anonymous_sessions(is_active) W
 -- Add linked device to users table
 ALTER TABLE users ADD COLUMN IF NOT EXISTS linked_device_id TEXT;
 CREATE INDEX idx_users_linked_device_id ON users(linked_device_id) WHERE linked_device_id IS NOT NULL;
+
+ CREATE INDEX idx_risk_types_is_enabled ON risk_types(is_enabled) WHERE is_enabled = TRUE;
+COMMENT ON COLUMN risk_types.is_enabled IS 'Controls visibility of risk types in mobile app. When false, all associated reports are also hidden.';
+
 
 -- Device-User Mapping Table (Audit Trail and Re-linking)
 CREATE TABLE device_user_mappings (
