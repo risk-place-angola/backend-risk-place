@@ -50,9 +50,10 @@ type Container struct {
 
 	UserApp *application.Application
 
-	Hub                    *websocket.Hub
-	AuthMiddleware         *middleware.AuthMiddleware
-	OptionalAuthMiddleware *middleware.OptionalAuthMiddleware
+	Hub                     *websocket.Hub
+	AuthMiddleware          *middleware.AuthMiddleware
+	OptionalAuthMiddleware  *middleware.OptionalAuthMiddleware
+	AuthorizationMiddleware *middleware.AuthorizationMiddleware
 }
 
 func NewContainer() (*Container, error) {
@@ -78,6 +79,7 @@ func NewContainer() (*Container, error) {
 
 	userRepoPG := postgres.NewUserRepoPG(database)
 	roleRepoPG := postgres.NewRoleRepoPG(database)
+	permissionRepoPG := postgres.NewPermissionRepoPG(database)
 	alertRepoPG := postgres.NewAlertRepoPG(database)
 	riskTypeRepoPG := postgres.NewRiskTypeRepoPG(database)
 	riskTopicRepoPG := postgres.NewRiskTopicRepoPG(database)
@@ -182,8 +184,10 @@ func NewContainer() (*Container, error) {
 		dangerZoneService,
 	)
 
+	authzService := domainService.NewAuthorizationService(permissionRepoPG)
 	authMW := middleware.NewAuthMiddleware(cfg)
 	optionalAuthMW := middleware.NewOptionalAuthMiddleware(authMW)
+	authzMW := middleware.NewAuthorizationMiddleware(authzService)
 
 	registerDeviceUC := device.NewRegisterDeviceUseCase(anonymousSessionRepoPG)
 	updateDeviceLocationUC := device.NewUpdateDeviceLocationUseCase(anonymousSessionRepoPG, locationStore)
@@ -216,6 +220,7 @@ func NewContainer() (*Container, error) {
 		UserHandler:             userHandler,
 		AuthMiddleware:          authMW,
 		OptionalAuthMiddleware:  optionalAuthMW,
+		AuthorizationMiddleware: authzMW,
 		WSHandler:               wsHandler,
 		Hub:                     hub,
 		Cfg:                     &cfg,

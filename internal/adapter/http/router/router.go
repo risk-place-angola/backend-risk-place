@@ -32,6 +32,9 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	g.OptionalAuth.HandleFunc("GET /api/v1/risks/topics", container.RiskHandler.ListRiskTopics)
 	g.OptionalAuth.HandleFunc("GET /api/v1/risks/topics/{id}", container.RiskHandler.GetRiskTopic)
 
+	adminRiskTypeGroup := NewRouteGroup(mux, mw.Logging, mw.JWT, mw.RequirePermission("risk_type", "manage"))
+	adminRiskTypeGroup.HandleFunc("PUT /api/v1/risks/types/{id}/enabled", container.RiskHandler.UpdateRiskTypeIsEnabled)
+
 	g.ProtectedJWT.HandleFunc("GET /api/v1/users/me", container.UserHandler.Me)
 	g.ProtectedJWT.HandleFunc("PUT /api/v1/users/profile", container.UserHandler.UpdateProfile)
 	g.ProtectedJWT.HandleFunc("PUT /api/v1/users/me/device", container.NotificationHandler.UpdateDeviceInfo)
