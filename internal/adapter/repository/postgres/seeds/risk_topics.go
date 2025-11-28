@@ -182,6 +182,54 @@ func SeedRiskTopics(ctx context.Context, db *sql.DB) error {
 	INSERT INTO risk_topics (risk_type_id, name, description, is_sensitive)
 	SELECT id, 'obra_sinalizacao', 'Obra sem sinalização adequada', FALSE FROM risk_types WHERE name = 'urban_issue'
 	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description, is_sensitive)
+	SELECT id, 'acidente_transito', 'Acidente de trânsito envolvendo veículos ou pedestres', FALSE FROM risk_types WHERE name = 'accident'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description, is_sensitive)
+	SELECT id, 'assalto', 'Assalto com violência, sequestro ou agressão', TRUE FROM risk_types WHERE name = 'crime'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description, is_sensitive)
+	SELECT id, 'deslizamento', 'Deslizamentos de terra ou barrancos', FALSE FROM risk_types WHERE name = 'natural_disaster'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description, is_sensitive)
+	SELECT id, 'doenca_infecciosa', 'Surtos de doenças transmissíveis', FALSE FROM risk_types WHERE name = 'health'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description, is_sensitive)
+	SELECT id, 'enchente', 'Inundações e enchentes urbanas ou rurais', FALSE FROM risk_types WHERE name = 'natural_disaster'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description, is_sensitive)
+	SELECT id, 'furtos', 'Furtos sem violência, como bolsas ou celulares', FALSE FROM risk_types WHERE name = 'crime'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description, is_sensitive)
+	SELECT id, 'incendio_florestal', 'Incêndios em áreas florestais ou savanas', FALSE FROM risk_types WHERE name = 'fire'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description, is_sensitive)
+	SELECT id, 'poluicao', 'Poluição do ar, água ou solo', FALSE FROM risk_types WHERE name = 'environment'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description, is_sensitive)
+	SELECT id, 'queda', 'Quedas de pessoas em locais públicos ou privados', FALSE FROM risk_types WHERE name = 'accident'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description, is_sensitive)
+	SELECT id, 'queda_ponte', 'Desabamento ou problemas em pontes e viadutos', FALSE FROM risk_types WHERE name = 'infrastructure'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description, is_sensitive)
+	SELECT id, 'roubo', 'Roubo em residências, comércio ou público', TRUE FROM risk_types WHERE name = 'crime'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
+	
+	INSERT INTO risk_topics (risk_type_id, name, description, is_sensitive)
+	SELECT id, 'vazamento_quimico', 'Vazamento de produtos químicos ou tóxicos', FALSE FROM risk_types WHERE name = 'environment'
+	ON CONFLICT (risk_type_id, name) DO NOTHING;
 	`)
 	return err
 }
