@@ -174,11 +174,8 @@ WHERE r.risk_type_id = $1
   AND r.is_private = FALSE
   AND rt.is_enabled = TRUE
   AND r.created_at > $2
-  AND ST_DWithin(
-    ST_MakePoint(r.longitude, r.latitude)::geography,
-    ST_MakePoint($4, $3)::geography,
-    $5
-  )
+  AND ll_to_earth(r.latitude, r.longitude) <@
+      earth_box(ll_to_earth($3, $4), $5)
 ORDER BY r.created_at DESC;
 
 -- name: ExpireOldReports :exec
