@@ -2,7 +2,7 @@ package user
 
 import (
 	"context"
-	stdErrors "errors"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -18,18 +18,20 @@ import (
 )
 
 type UserUseCase struct {
-	userRepo            domainrepository.UserRepository
-	roleRepo            domainrepository.RoleRepository
-	token               port.TokenGenerator
-	hasher              port.PasswordHasher
-	config              *config.Config
-	migrationService    domainService.AnonymousMigrationService
-	verificationService domainService.VerificationService
+	userRepo             domainrepository.UserRepository
+	roleRepo             domainrepository.RoleRepository
+	anonymousSessionRepo domainrepository.AnonymousSessionRepository
+	token                port.TokenGenerator
+	hasher               port.PasswordHasher
+	config               *config.Config
+	migrationService     domainService.AnonymousMigrationService
+	verificationService  domainService.VerificationService
 }
 
 func NewUserUseCase(
 	userRepo domainrepository.UserRepository,
 	roleRepo domainrepository.RoleRepository,
+	anonymousSessionRepo domainrepository.AnonymousSessionRepository,
 	token port.TokenGenerator,
 	hasher port.PasswordHasher,
 	config *config.Config,
@@ -37,13 +39,14 @@ func NewUserUseCase(
 	verificationService domainService.VerificationService,
 ) *UserUseCase {
 	return &UserUseCase{
-		userRepo:            userRepo,
-		roleRepo:            roleRepo,
-		token:               token,
-		hasher:              hasher,
-		config:              config,
-		migrationService:    migrationService,
-		verificationService: verificationService,
+		userRepo:             userRepo,
+		roleRepo:             roleRepo,
+		anonymousSessionRepo: anonymousSessionRepo,
+		token:                token,
+		hasher:               hasher,
+		config:               config,
+		migrationService:     migrationService,
+		verificationService:  verificationService,
 	}
 }
 
@@ -76,6 +79,9 @@ func (uc *UserUseCase) Signup(ctx context.Context, input dto.RegisterUserInput, 
 	}
 
 	if err := uc.verificationService.SendCode(ctx, user.ID, user.Phone, user.Email); err != nil {
+		if errors.Is(err, domainErrors.ErrSentViaEmail) {
+			return &dto.RegisterUserOutput{ID: user.ID}, err
+		}
 		slog.Error("Failed to send verification code", "user_id", user.ID, "error", err)
 		return nil, fmt.Errorf("failed to send verification code: %w", err)
 	}
@@ -103,23 +109,24 @@ func (uc *UserUseCase) Signup(ctx context.Context, input dto.RegisterUserInput, 
 	return &dto.RegisterUserOutput{ID: user.ID}, nil
 }
 
-func (uc *UserUseCase) Login(ctx context.Context, email, rawPassword, deviceID, fcmToken, deviceLanguage string) (*dto.UserSignInDTO, error) {
-	u, err := uc.userRepo.FindByEmail(ctx, email)
+func (uc *UserUseCase) Login(ctx context.Context, identifier, rawPassword, deviceID, fcmToken, deviceLanguage string) (*dto.UserSignInDTO, error) {
+	u, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil || u == nil {
-		slog.Error("User not found", "email", email, "error", err)
+		slog.Error("User not found", "identifier", identifier, "error", err)
 		return nil, domainErrors.ErrInvalidCredentials
 	}
 
-	/*
-		if !u.EmailVerification.Verified {
-			slog.Error("Email not verified for user", "email", email)
-			return nil, domainErrors.ErrEmailNotVerified
-		}
-	*/
-
 	if !uc.hasher.Compare(u.Password, rawPassword) {
-		slog.Error("Password mismatch for user", "email", email)
+		slog.Error("Password mismatch for user", "identifier", identifier)
 		return nil, domainErrors.ErrInvalidCredentials
+	}
+
+	if !u.AccountVerification.Verified {
+		slog.Warn("Login attempt with unverified account, resending code", "identifier", identifier, "user_id", u.ID)
+		if err := uc.verificationService.ResendCode(ctx, u.ID, u.Phone, u.Email); err != nil {
+			slog.Error("Failed to resend verification code", "user_id", u.ID, "error", err)
+		}
+		return nil, domainErrors.ErrAccountNotVerified
 	}
 
 	if fcmToken != "" || deviceLanguage != "" {
@@ -192,7 +199,7 @@ func (uc *UserUseCase) Login(ctx context.Context, email, rawPassword, deviceID, 
 func (uc *UserUseCase) Refresh(ctx context.Context, refreshToken string) (*dto.UserSignInDTO, error) {
 	_, claims, err := uc.token.ParseRefresh(refreshToken)
 	if err != nil {
-		if stdErrors.Is(err, domainErrors.ErrExpiredToken) {
+		if errors.Is(err, domainErrors.ErrExpiredToken) {
 			return nil, domainErrors.ErrExpiredToken
 		}
 		return nil, domainErrors.ErrInvalidToken
@@ -206,8 +213,8 @@ func (uc *UserUseCase) Refresh(ctx context.Context, refreshToken string) (*dto.U
 	if err != nil || user == nil || user.ID == uuid.Nil {
 		return nil, domainErrors.ErrInvalidToken
 	}
-	if !user.EmailVerification.Verified {
-		return nil, domainErrors.ErrEmailNotVerified
+	if !user.AccountVerification.Verified {
+		return nil, domainErrors.ErrAccountNotVerified
 	}
 
 	roles, err := uc.roleRepo.GetUserRoles(ctx, user.ID)
@@ -250,75 +257,84 @@ func (uc *UserUseCase) Logout(ctx context.Context, userID uuid.UUID) error {
 	return nil
 }
 
-func (uc *UserUseCase) ForgotPassword(ctx context.Context, email string) error {
-	getAccount, err := uc.userRepo.FindByEmail(ctx, email)
+func (uc *UserUseCase) ForgotPassword(ctx context.Context, identifier string) (string, error) {
+	getAccount, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
-		if stdErrors.Is(err, domainErrors.ErrUserNotFound) {
-			slog.Error("User account not found", "email", email)
-			return domainErrors.ErrUserAccountNotExists
+		if errors.Is(err, domainErrors.ErrUserNotFound) {
+			slog.Error("User account not found", "identifier", identifier)
+			return "", domainErrors.ErrUserAccountNotExists
 		}
-		return err
+		return "", err
 	}
 
 	if getAccount.ID == uuid.Nil {
-		slog.Error("User account not found", "email", email, "user_id", "nil")
-		return domainErrors.ErrUserAccountNotExists
+		slog.Error("User account not found", "identifier", identifier, "user_id", "nil")
+		return "", domainErrors.ErrUserAccountNotExists
 	}
 
-	if err := uc.verificationService.SendCode(ctx, getAccount.ID, getAccount.Phone, getAccount.Email); err != nil {
+	if err := uc.verificationService.SendPasswordResetCode(ctx, getAccount.ID, getAccount.Phone, getAccount.Email); err != nil {
+		if errors.Is(err, domainErrors.ErrSentViaEmail) {
+			return getAccount.Email, err
+		}
 		slog.Error("Failed to send password reset code", "user_id", getAccount.ID, "error", err)
-		return fmt.Errorf("failed to send password reset code: %w", err)
+		return "", fmt.Errorf("failed to send password reset code: %w", err)
 	}
 
-	return nil
+	return "", nil
 }
 
-func (uc *UserUseCase) ResetPassword(ctx context.Context, email, newPassword string) error {
-	user, err := uc.userRepo.FindByEmail(ctx, email)
+func (uc *UserUseCase) ResetPassword(ctx context.Context, identifier, code, newPassword string) error {
+	user, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
-		if stdErrors.Is(err, domainErrors.ErrUserNotFound) {
-			slog.Error("User account not found", "email", email)
+		if errors.Is(err, domainErrors.ErrUserNotFound) {
+			slog.Error("User account not found", "identifier", identifier)
 			return domainErrors.ErrUserAccountNotExists
 		}
 		return err
 	}
 
 	if user.ID == uuid.Nil {
-		slog.Error("User account not found", "email", email, "user_id", "nil")
+		slog.Error("User account not found", "identifier", identifier, "user_id", "nil")
 		return domainErrors.ErrUserAccountNotExists
 	}
 
-	if !user.EmailVerification.CodeVerified {
-		slog.Error("Code not verified for user", "user_id", user.ID)
+	valid, err := uc.verificationService.VerifyCode(ctx, user.ID, code)
+	if err != nil {
+		slog.Error("Failed to verify reset code", "user_id", user.ID, "error", err)
+		return domainErrors.ErrExpiredCode
+	}
+
+	if !valid {
+		slog.Error("Invalid reset code", "user_id", user.ID)
 		return domainErrors.ErrInvalidCode
 	}
 
 	hashedPassword, err := uc.hasher.Hash(newPassword)
 	if err != nil {
-		slog.Error("Error hashing new password for user", "user_id", user.ID, "error", err)
+		slog.Error("Error hashing new password", "user_id", user.ID, "error", err)
 		return err
 	}
 
 	if err := uc.userRepo.UpdateUserPassword(ctx, user.ID, hashedPassword); err != nil {
-		slog.Error("Error updating user password", "user_id", user.ID, "error", err)
+		slog.Error("Error updating password", "user_id", user.ID, "error", err)
 		return err
 	}
 
 	return nil
 }
 
-func (uc *UserUseCase) VerifyCode(ctx context.Context, email, code string) error {
-	user, err := uc.userRepo.FindByEmail(ctx, email)
+func (uc *UserUseCase) VerifyCode(ctx context.Context, identifier, code string) error {
+	user, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
-		if stdErrors.Is(err, domainErrors.ErrUserNotFound) {
-			slog.Error("User account not found", "email", email)
+		if errors.Is(err, domainErrors.ErrUserNotFound) {
+			slog.Error("User account not found", "identifier", identifier)
 			return domainErrors.ErrUserAccountNotExists
 		}
 		return err
 	}
 
 	if user.ID == uuid.Nil {
-		slog.Error("User account not found", "email", email, "user_id", "nil")
+		slog.Error("User account not found", "identifier", identifier, "user_id", "nil")
 		return domainErrors.ErrUserAccountNotExists
 	}
 
@@ -333,29 +349,27 @@ func (uc *UserUseCase) VerifyCode(ctx context.Context, email, code string) error
 		return domainErrors.ErrInvalidCode
 	}
 
-	user.EmailVerification.CodeVerified = true
-	user.EmailVerification.Verified = true
-
-	err = uc.userRepo.Save(ctx, user)
+	err = uc.userRepo.MarkAccountVerified(ctx, user.ID)
 	if err != nil {
-		slog.Error("Error saving user after code verification", "user_id", user.ID, "error", err)
+		slog.Error("Error marking account as verified", "user_id", user.ID, "error", err)
 		return err
 	}
 
 	return nil
 }
 
-func (uc *UserUseCase) ResendVerificationCode(ctx context.Context, email string) error {
-	user, err := uc.userRepo.FindByEmail(ctx, email)
+func (uc *UserUseCase) ResendVerificationCode(ctx context.Context, identifier string) (string, error) {
+	user, err := uc.userRepo.FindByEmailOrPhone(ctx, identifier)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	if user.EmailVerification.Verified {
-		return fmt.Errorf("user already verified")
+	if user.AccountVerification.Verified {
+		return "", fmt.Errorf("account already verified")
 	}
 
-	return uc.verificationService.ResendCode(ctx, user.ID, user.Phone, user.Email)
+	err = uc.verificationService.ResendCode(ctx, user.ID, user.Phone, user.Email)
+	return user.Email, err
 }
 
 // FindUserByID retrieves a user's profile by their ID.
@@ -558,14 +572,25 @@ func (uc *UserUseCase) UpdateNotificationPreferences(ctx context.Context, userID
 			slog.Error("Failed to update notification preferences for user", "user_id", userID, "error", err)
 			return err
 		}
+		return nil
 	}
-	return nil
+	if deviceID != "" {
+		if err := uc.anonymousSessionRepo.UpdateNotificationPreferences(ctx, deviceID, pushEnabled, smsEnabled); err != nil {
+			slog.Error("Failed to update notification preferences for anonymous session", "device_id", deviceID, "error", err)
+			return err
+		}
+		return nil
+	}
+	return fmt.Errorf("user ID or device ID required")
 }
 
 //nolint:nonamedreturns // multiple bool returns need names for clarity
 func (uc *UserUseCase) GetNotificationPreferences(ctx context.Context, userID uuid.UUID, deviceID string) (pushEnabled, smsEnabled bool, err error) {
 	if userID != uuid.Nil {
 		return uc.userRepo.GetNotificationPreferences(ctx, userID)
+	}
+	if deviceID != "" {
+		return uc.anonymousSessionRepo.GetNotificationPreferences(ctx, deviceID)
 	}
 	return false, false, fmt.Errorf("user ID or device ID required")
 }

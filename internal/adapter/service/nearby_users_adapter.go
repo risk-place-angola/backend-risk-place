@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/port"
@@ -17,21 +19,41 @@ func NewNearbyUsersAdapter(domainService service.NearbyUsersService) port.Nearby
 }
 
 func (a *nearbyUsersAdapter) UpdateUserLocation(ctx context.Context, userID string, deviceID string, lat, lon, speed, heading float64, isAnonymous bool) error {
-	uid, err := uuid.Parse(userID)
-	if err != nil {
-		return err
+	// For anonymous users, use device_id as the identifier
+	identifier := userID
+	if isAnonymous {
+		identifier = deviceID
 	}
+
+	uid, err := uuid.Parse(identifier)
+	if err != nil {
+		slog.Error("[ADAPTER] ❌ FAILED TO PARSE IDENTIFIER AS UUID",
+			slog.String("user_id", userID),
+			slog.String("device_id", deviceID),
+			slog.Bool("is_anonymous", isAnonymous),
+			slog.String("identifier", identifier),
+			slog.Any("error", err))
+		return fmt.Errorf("invalid identifier format: %w", err)
+	}
+
 	return a.domainService.UpdateUserLocation(ctx, uid, deviceID, lat, lon, speed, heading, isAnonymous)
 }
 
 func (a *nearbyUsersAdapter) GetNearbyUsers(ctx context.Context, userID string, lat, lon, radiusMeters float64) ([]port.NearbyUser, error) {
+	// userID can be either a user UUID or device_id (which should be UUID format)
 	uid, err := uuid.Parse(userID)
 	if err != nil {
-		return nil, err
+		slog.Error("[ADAPTER] ❌ FAILED TO PARSE USER_ID AS UUID in GetNearbyUsers",
+			slog.String("user_id", userID),
+			slog.Any("error", err))
+		return nil, fmt.Errorf("invalid user_id format: %w", err)
 	}
 
 	users, err := a.domainService.GetNearbyUsers(ctx, uid, lat, lon, radiusMeters)
 	if err != nil {
+		slog.Error("[ADAPTER] failed to get nearby users from domain service",
+			slog.String("user_id", uid.String()),
+			slog.Any("error", err))
 		return nil, err
 	}
 

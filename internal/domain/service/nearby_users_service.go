@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/model"
@@ -35,13 +34,8 @@ func (s *nearbyUsersService) UpdateUserLocation(ctx context.Context, userID uuid
 		return err
 	}
 
-	// Save history asynchronously without blocking the main request
-	// Create a detached context to prevent cancellation from propagating to background task
-	go func(bgCtx context.Context, uid uuid.UUID, latitude, longitude, spd, hdg float64, devID string) {
-		if err := s.repo.SaveHistory(bgCtx, uid, latitude, longitude, spd, hdg, devID); err != nil {
-			slog.Error("failed to save location history", slog.Any("error", err), slog.String("user_id", uid.String()))
-		}
-	}(context.WithoutCancel(ctx), userID, lat, lon, speed, heading, deviceID)
+	// Note: Location history now handled by Redis-based LocationHistoryService
+	// See: internal/adapter/service/location_history_service.go
 
 	return nil
 }
@@ -60,7 +54,7 @@ func (s *nearbyUsersService) GetNearbyUsers(ctx context.Context, requestingUserI
 			continue
 		}
 
-		privacyLat, privacyLon := model.ApplyPrivacyOffset(loc.Latitude, loc.Longitude)
+		privacyLat, privacyLon := model.ApplyPrivacyOffset(loc.UserID, loc.Latitude, loc.Longitude)
 
 		avatarID := fmt.Sprintf("avatar_%d", loc.AvatarID)
 

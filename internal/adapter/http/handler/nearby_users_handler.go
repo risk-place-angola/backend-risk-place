@@ -82,18 +82,11 @@ func (h *NearbyUsersHandler) checkRateLimit(userID string) bool {
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 500 {object} util.ErrorResponse
-// @Router /api/v1/users/location [post]
+// @Router /users/location [post]
 func (h *NearbyUsersHandler) UpdateLocation(w http.ResponseWriter, r *http.Request) {
-	userID, ok := httputil.GetUserIDFromContext(r.Context())
+	identifier, ok := httputil.ExtractUserIdentifierOrError(w, r)
 	if !ok {
-		slog.Error("failed to get user ID from context")
-		httputil.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
-	}
-
-	deviceID := r.Header.Get("X-Device-Id")
-	if deviceID == "" {
-		deviceID = userID
 	}
 
 	var req UpdateLocationRequest
@@ -103,19 +96,7 @@ func (h *NearbyUsersHandler) UpdateLocation(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	isAnonymous := r.Context().Value(httputil.IsAuthenticatedKey)
-	anonymous := false
-	if isAnonymous != nil {
-		isAuth, ok := isAnonymous.(bool)
-		if !ok {
-			slog.Error("failed to convert isAuthenticated to bool")
-			httputil.Error(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-		anonymous = !isAuth
-	}
-
-	if err := h.nearbyUsersService.UpdateUserLocation(r.Context(), userID, deviceID, req.Latitude, req.Longitude, req.Speed, req.Heading, anonymous); err != nil {
+	if err := h.nearbyUsersService.UpdateUserLocation(r.Context(), identifier.UserID, identifier.DeviceID, req.Latitude, req.Longitude, req.Speed, req.Heading, !identifier.IsAuthenticated); err != nil {
 		slog.Error("failed to update user location", slog.Any("error", err))
 		httputil.Error(w, "failed to update location", http.StatusInternalServerError)
 		return
@@ -137,16 +118,14 @@ func (h *NearbyUsersHandler) UpdateLocation(w http.ResponseWriter, r *http.Reque
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 429 {object} util.ErrorResponse "Rate limit exceeded (max 1 request per 3 seconds)"
 // @Failure 500 {object} util.ErrorResponse
-// @Router /api/v1/users/nearby [post]
+// @Router /users/nearby [post]
 func (h *NearbyUsersHandler) GetNearbyUsers(w http.ResponseWriter, r *http.Request) {
-	userID, ok := httputil.GetUserIDFromContext(r.Context())
+	identifier, ok := httputil.ExtractUserIdentifierOrError(w, r)
 	if !ok {
-		slog.Error("failed to get user ID from context")
-		httputil.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	if !h.checkRateLimit(userID) {
+	if !h.checkRateLimit(identifier.UserID) {
 		httputil.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
 		return
 	}
@@ -166,7 +145,7 @@ func (h *NearbyUsersHandler) GetNearbyUsers(w http.ResponseWriter, r *http.Reque
 		req.Radius = maxRadiusMeters
 	}
 
-	users, err := h.nearbyUsersService.GetNearbyUsers(r.Context(), userID, req.Latitude, req.Longitude, req.Radius)
+	users, err := h.nearbyUsersService.GetNearbyUsers(r.Context(), identifier.UserID, req.Latitude, req.Longitude, req.Radius)
 	if err != nil {
 		slog.Error("failed to get nearby users", slog.Any("error", err))
 		httputil.Error(w, "failed to get nearby users", http.StatusInternalServerError)

@@ -24,10 +24,10 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "OptionalAuth": []
                     }
                 ],
-                "description": "Create a new alert.",
+                "description": "Create a new alert (supports both authenticated and anonymous users).",
                 "consumes": [
                     "application/json"
                 ],
@@ -39,6 +39,12 @@ const docTemplate = `{
                 ],
                 "summary": "Create a new alert.",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-Id",
+                        "in": "header"
+                    },
                     {
                         "description": "Alert",
                         "name": "alert",
@@ -53,7 +59,10 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.Alert"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
@@ -322,418 +331,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/devices/location": {
-            "put": {
-                "description": "Update the location of an anonymous device for proximity-based notifications",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "devices"
-                ],
-                "summary": "Update device location",
-                "parameters": [
-                    {
-                        "description": "Location update data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateDeviceLocationRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/devices/register": {
-            "post": {
-                "description": "Register or update an anonymous device for receiving notifications without authentication",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "devices"
-                ],
-                "summary": "Register anonymous device",
-                "parameters": [
-                    {
-                        "description": "Device registration data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.RegisterDeviceRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.DeviceResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/location-sharing": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Create a new location sharing session with expiration time (supports both authenticated and anonymous users)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "location-sharing"
-                ],
-                "summary": "Create location sharing session",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Device ID for anonymous users",
-                        "name": "X-Device-ID",
-                        "in": "header"
-                    },
-                    {
-                        "description": "Location Sharing Request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateLocationSharingRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/dto.LocationSharingResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/location-sharing/{id}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Deactivate an active location sharing session (supports both authenticated and anonymous users)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "location-sharing"
-                ],
-                "summary": "Stop location sharing",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Device ID for anonymous users",
-                        "name": "X-Device-ID",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Location Sharing ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/location-sharing/{id}/location": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Update the current coordinates of an active location sharing session (supports both authenticated and anonymous users)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "location-sharing"
-                ],
-                "summary": "Update shared location coordinates",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Device ID for anonymous users",
-                        "name": "X-Device-ID",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Location Sharing ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Location Update Request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateLocationRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/users/location": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Update current user location to be visible on the map for nearby users",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "nearby-users"
-                ],
-                "summary": "Update user location for nearby users feature",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Device ID for anonymous users",
-                        "name": "X-Device-ID",
-                        "in": "header"
-                    },
-                    {
-                        "description": "Location data with optional speed and heading",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.UpdateLocationRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/users/nearby": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Retrieve list of nearby users with their anonymous avatars within specified radius",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "nearby-users"
-                ],
-                "summary": "Get nearby users on the map",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Device ID for anonymous users",
-                        "name": "X-Device-ID",
-                        "in": "header"
-                    },
-                    {
-                        "description": "Location and radius for searching nearby users",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.GetNearbyUsersRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handler.NearbyUsersResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "429": {
-                        "description": "Rate limit exceeded (max 1 request per 3 seconds)",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/auth/confirm": {
             "post": {
                 "description": "Confirm user signup using the verification code",
@@ -759,7 +356,7 @@ const docTemplate = `{
                                 "code": {
                                     "type": "string"
                                 },
-                                "email": {
+                                "identifier": {
                                     "type": "string"
                                 }
                             }
@@ -778,19 +375,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
                     }
                 }
             }
         },
         "/auth/login": {
             "post": {
-                "description": "Login a user. If X-Device-ID header is provided, anonymous user data will be migrated to the authenticated account.",
+                "description": "Login a user with email or phone. If X-Device-ID header is provided, anonymous user data will be migrated to the authenticated account.",
                 "consumes": [
                     "application/json"
                 ],
@@ -831,8 +422,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -870,7 +461,7 @@ const docTemplate = `{
         },
         "/auth/password/forgot": {
             "post": {
-                "description": "Send a password reset code to the user's email",
+                "description": "Send a password reset code to the user's email or phone",
                 "consumes": [
                     "application/json"
                 ],
@@ -883,14 +474,14 @@ const docTemplate = `{
                 "summary": "Initiate password reset",
                 "parameters": [
                     {
-                        "description": "User email",
-                        "name": "email",
+                        "description": "User email or phone",
+                        "name": "identifier",
                         "in": "body",
                         "required": true,
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "email": {
+                                "identifier": {
                                     "type": "string"
                                 }
                             }
@@ -906,12 +497,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -941,7 +526,10 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "email": {
+                                "code": {
+                                    "type": "string"
+                                },
+                                "identifier": {
                                     "type": "string"
                                 },
                                 "password": {
@@ -960,12 +548,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/util.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -1020,6 +602,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
                     }
                 }
             }
@@ -1039,14 +627,14 @@ const docTemplate = `{
                 "summary": "Resend verification code",
                 "parameters": [
                     {
-                        "description": "Email",
+                        "description": "Email or phone",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "email": {
+                                "identifier": {
                                     "type": "string"
                                 }
                             }
@@ -1118,6 +706,158 @@ const docTemplate = `{
                 }
             }
         },
+        "/danger-zones/nearby": {
+            "post": {
+                "security": [
+                    {
+                        "OptionalAuth": []
+                    }
+                ],
+                "description": "Retrieves danger zones near a specific location based on incident density and risk score.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "danger-zones"
+                ],
+                "summary": "Get nearby danger zones.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-Id",
+                        "in": "header"
+                    },
+                    {
+                        "description": "Location and radius",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetDangerZonesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetDangerZonesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/devices/location": {
+            "put": {
+                "description": "Update the location of an anonymous device for proximity-based notifications",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "devices"
+                ],
+                "summary": "Update device location",
+                "parameters": [
+                    {
+                        "description": "Location update data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateDeviceLocationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/devices/register": {
+            "post": {
+                "description": "Register or update an anonymous device for receiving notifications without authentication",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "devices"
+                ],
+                "summary": "Register anonymous device",
+                "parameters": [
+                    {
+                        "description": "Device registration data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.RegisterDeviceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DeviceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/emergency/alert": {
             "post": {
                 "security": [
@@ -1168,6 +908,200 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/location-sharing": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new location sharing session with expiration time (supports both authenticated and anonymous users)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "location-sharing"
+                ],
+                "summary": "Create location sharing session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-ID",
+                        "in": "header"
+                    },
+                    {
+                        "description": "Location Sharing Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateLocationSharingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.LocationSharingResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/location-sharing/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deactivate an active location sharing session (supports both authenticated and anonymous users)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "location-sharing"
+                ],
+                "summary": "Stop location sharing",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-ID",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Location Sharing ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/location-sharing/{id}/location": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update the current coordinates of an active location sharing session (supports both authenticated and anonymous users)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "location-sharing"
+                ],
+                "summary": "Update shared location coordinates",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-ID",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Location Sharing ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Location Update Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateLocationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -1969,6 +1903,66 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/location": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update current user location to be visible on the map for nearby users",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "nearby-users"
+                ],
+                "summary": "Update user location for nearby users feature",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-ID",
+                        "in": "header"
+                    },
+                    {
+                        "description": "Location data with optional speed and heading",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateLocationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/me": {
             "get": {
                 "security": [
@@ -2467,7 +2461,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieve safety settings for the authenticated user. Creates default settings if none exist.",
+                "description": "Retrieve safety settings for the authenticated user or anonymous user. Creates default settings if none exist.",
                 "produces": [
                     "application/json"
                 ],
@@ -2502,7 +2496,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update safety settings for the authenticated user. All fields are optional.",
+                "description": "Update safety settings for the authenticated user or anonymous user. All fields are optional.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2539,6 +2533,69 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/nearby": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve list of nearby users with their anonymous avatars within specified radius",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "nearby-users"
+                ],
+                "summary": "Get nearby users on the map",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID for anonymous users",
+                        "name": "X-Device-ID",
+                        "in": "header"
+                    },
+                    {
+                        "description": "Location and radius for searching nearby users",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.GetNearbyUsersRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.NearbyUsersResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/util.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded (max 1 request per 3 seconds)",
                         "schema": {
                             "$ref": "#/definitions/util.ErrorResponse"
                         }
@@ -2772,6 +2829,35 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.DangerZoneDTO": {
+            "type": "object",
+            "properties": {
+                "calculated_at": {
+                    "type": "string"
+                },
+                "grid_cell_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "incident_count": {
+                    "type": "integer"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "risk_level": {
+                    "type": "string"
+                },
+                "risk_score": {
+                    "type": "number"
+                }
+            }
+        },
         "dto.DeviceResponse": {
             "type": "object",
             "properties": {
@@ -2865,6 +2951,41 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.GetDangerZonesRequest": {
+            "type": "object",
+            "required": [
+                "latitude",
+                "longitude",
+                "radius_meters"
+            ],
+            "properties": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "radius_meters": {
+                    "type": "number",
+                    "maximum": 10000,
+                    "minimum": 100
+                }
+            }
+        },
+        "dto.GetDangerZonesResponse": {
+            "type": "object",
+            "properties": {
+                "total_count": {
+                    "type": "integer"
+                },
+                "zones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.DangerZoneDTO"
+                    }
+                }
+            }
+        },
         "dto.IncidentDTO": {
             "type": "object",
             "properties": {
@@ -2937,7 +3058,7 @@ const docTemplate = `{
                 "device_language": {
                     "type": "string"
                 },
-                "email": {
+                "identifier": {
                     "type": "string"
                 },
                 "password": {
@@ -3434,6 +3555,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
+                },
+                "is_enabled": {
+                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"
@@ -4090,6 +4214,9 @@ const docTemplate = `{
                     "properties": {
                         "code": {
                             "type": "integer"
+                        },
+                        "error_code": {
+                            "type": "string"
                         },
                         "message": {}
                     }

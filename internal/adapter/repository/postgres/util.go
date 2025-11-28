@@ -29,3 +29,13 @@ func nullUUIDToPtr(nu uuid.NullUUID) *uuid.UUID {
 	}
 	return &nu.UUID
 }
+
+func nullStringToPtr(ns struct {
+	String string
+	Valid  bool
+}) *string {
+	if !ns.Valid {
+		return nil
+	}
+	return &ns.String
+}

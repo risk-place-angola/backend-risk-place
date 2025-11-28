@@ -14,6 +14,8 @@ type AnonymousSessionRepository interface {
 	UpdateLocation(ctx context.Context, deviceID string, lat, lon float64) error
 	UpdateFCMToken(ctx context.Context, deviceID string, fcmToken string) error
 	GetFCMTokensInRadius(ctx context.Context, lat, lon, radiusMeters float64) ([]string, error)
+	GetFCMTokensForAlertNotification(ctx context.Context, lat, lon, radiusMeters float64, severityLevel string) ([]model.DeviceToken, error)
+	GetFCMTokensForReportNotification(ctx context.Context, lat, lon, radiusMeters float64, isVerified bool) ([]model.DeviceToken, error)
 	Delete(ctx context.Context, deviceID string) error
 	CleanupOldSessions(ctx context.Context, daysOld int) error
 	TouchLastSeen(ctx context.Context, deviceID string) error

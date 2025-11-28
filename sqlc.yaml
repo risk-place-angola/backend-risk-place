@@ -4,7 +4,10 @@ sql:
 
   - engine: postgresql
     schema: 
-      - migrations/000001_init_schema.up.sql
+      - migrations/000001_init_schema_main.up.sql
+      - migrations/000002_make_user_id_nullable.up.sql
+      - migrations/000003_make_alert_subscriptions_user_id_nullable.up.sql
+      - migrations/000004_add_is_enabled_to_risk_types.up.sql
     queries: [internal/adapter/repository/postgres/queries]
     gen:
       go:

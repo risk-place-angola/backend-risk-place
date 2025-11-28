@@ -108,13 +108,8 @@ func (u *userRepoPG) FindAll(ctx context.Context) ([]*model.User, error) {
 	panic("implement me")
 }
 
-func (u *userRepoPG) FindByEmail(ctx context.Context, email string) (*model.User, error) {
-	userRow, err := u.q.GetUserByEmail(ctx, email)
-	if err != nil {
-		return nil, err
-	}
-
-	user := &model.User{
+func (u *userRepoPG) mapUserRow(userRow sqlc.User) *model.User {
+	return &model.User{
 		ID:       userRow.ID,
 		Name:     userRow.Name,
 		Email:    userRow.Email,
@@ -127,11 +122,28 @@ func (u *userRepoPG) FindByEmail(ctx context.Context, email string) (*model.User
 			Neighborhood: userRow.Neighborhood.String,
 			ZipCode:      userRow.ZipCode.String,
 		},
+		AccountVerification: model.AccountVerification{
+			Verified: userRow.AccountVerified.Bool,
+		},
 		CreatedAt: userRow.CreatedAt.Time,
 		UpdatedAt: userRow.UpdatedAt.Time,
 	}
+}
 
-	return user, nil
+func (u *userRepoPG) FindByEmail(ctx context.Context, email string) (*model.User, error) {
+	userRow, err := u.q.GetUserByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	return u.mapUserRow(userRow), nil
+}
+
+func (u *userRepoPG) FindByEmailOrPhone(ctx context.Context, identifier string) (*model.User, error) {
+	userRow, err := u.q.GetUserByEmailOrPhone(ctx, identifier)
+	if err != nil {
+		return nil, err
+	}
+	return u.mapUserRow(userRow), nil
 }
 
 func (u *userRepoPG) AddCodeToUser(ctx context.Context, userID uuid.UUID, code string, expiration time.Time) error {
@@ -140,6 +152,10 @@ func (u *userRepoPG) AddCodeToUser(ctx context.Context, userID uuid.UUID, code s
 		EmailVerificationCode:      sql.NullString{String: code, Valid: code != ""},
 		EmailVerificationExpiresAt: sql.NullTime{Time: expiration, Valid: !expiration.IsZero()},
 	})
+}
+
+func (u *userRepoPG) MarkAccountVerified(ctx context.Context, userID uuid.UUID) error {
+	return u.q.MarkAccountVerified(ctx, userID)
 }
 
 func (u *userRepoPG) UpdateUserPassword(ctx context.Context, userID uuid.UUID, newPassword string) error {
@@ -232,6 +248,66 @@ func (u *userRepoPG) GetUserLanguageAndPhone(ctx context.Context, userID uuid.UU
 	`
 	err = u.db.QueryRowContext(ctx, query, userID).Scan(&language, &phone)
 	return
+}
+
+func (u *userRepoPG) ListDeviceTokensForAlertNotification(ctx context.Context, userIDs []uuid.UUID, severityLevel string, distanceMeters int) ([]model.DeviceToken, error) {
+	//nolint:gosec // Safe conversion: distance capped at int32 max value
+	distanceInt32 := int32(distanceMeters)
+	if distanceMeters > 2147483647 { //nolint:mnd // int32 max value constant
+		distanceInt32 = 2147483647
+	}
+
+	rows, err := u.q.ListDeviceTokensForAlertNotification(ctx, sqlc.ListDeviceTokensForAlertNotificationParams{
+		UserIds:        userIDs,
+		SeverityLevel:  severityLevel,
+		DistanceMeters: distanceInt32,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	tokens := make([]model.DeviceToken, 0, len(rows))
+	for _, row := range rows {
+		if row.DeviceFcmToken.Valid {
+			tokens = append(tokens, model.DeviceToken{
+				FCMToken: row.DeviceFcmToken.String,
+				Language: row.DeviceLanguage.String,
+				UserID:   row.UserID,
+			})
+		}
+	}
+
+	return tokens, nil
+}
+
+func (u *userRepoPG) ListDeviceTokensForReportNotification(ctx context.Context, userIDs []uuid.UUID, isVerified bool, distanceMeters int) ([]model.DeviceToken, error) {
+	//nolint:gosec // Safe conversion: distance capped at int32 max value
+	distanceInt32 := int32(distanceMeters)
+	if distanceMeters > 2147483647 { //nolint:mnd // int32 max value constant
+		distanceInt32 = 2147483647
+	}
+
+	rows, err := u.q.ListDeviceTokensForReportNotification(ctx, sqlc.ListDeviceTokensForReportNotificationParams{
+		UserIds:        userIDs,
+		IsVerified:     isVerified,
+		DistanceMeters: distanceInt32,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	tokens := make([]model.DeviceToken, 0, len(rows))
+	for _, row := range rows {
+		if row.DeviceFcmToken.Valid {
+			tokens = append(tokens, model.DeviceToken{
+				FCMToken: row.DeviceFcmToken.String,
+				Language: row.DeviceLanguage.String,
+				UserID:   row.UserID,
+			})
+		}
+	}
+
+	return tokens, nil
 }
 
 func NewUserRepoPG(db *sql.DB) repository.UserRepository {

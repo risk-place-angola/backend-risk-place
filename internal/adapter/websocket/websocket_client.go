@@ -5,8 +5,14 @@ import (
 	"encoding/json"
 	"log"
 	"log/slog"
+	"sync"
+	"sync/atomic"
 
 	"github.com/gorilla/websocket"
+)
+
+const (
+	clientSendBufferSize = 256
 )
 
 type Client struct {
@@ -17,6 +23,8 @@ type Client struct {
 	Hub             *Hub
 	lastLat         float64
 	lastLon         float64
+	closed          atomic.Bool
+	closeMux        sync.Once
 }
 
 func (c *Client) ReadPump(ctx context.Context) {
@@ -37,32 +45,66 @@ func (c *Client) ReadPump(ctx context.Context) {
 }
 
 func (c *Client) WritePump() {
-	defer func(Conn *websocket.Conn) {
-		err := Conn.Close()
-		if err != nil {
-			slog.Error("error closing connection", slog.Any("error", err))
-		}
-	}(c.Conn)
+	defer func() {
+		c.closeConnection()
+	}()
+
 	for message := range c.Send {
-		err := c.Conn.WriteMessage(websocket.TextMessage, message)
-		if err != nil {
+		if c.closed.Load() {
+			return
+		}
+		if err := c.Conn.WriteMessage(websocket.TextMessage, message); err != nil {
 			slog.Error("error writing message", slog.Any("error", err))
 			return
 		}
 	}
 
-	// Channel was closed, send close message
-	err := c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
-	if err != nil {
-		slog.Error("error writing close message", slog.Any("error", err))
+	// Send close message only if connection is still open
+	if !c.closed.Load() {
+		if err := c.Conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+			slog.Debug("error writing close message", slog.Any("error", err))
+		}
 	}
 }
 
+func (c *Client) closeConnection() {
+	c.closeMux.Do(func() {
+		c.closed.Store(true)
+		if err := c.Conn.Close(); err != nil {
+			slog.Debug("error closing websocket connection", slog.Any("error", err))
+		}
+	})
+}
+
+func (c *Client) closeChannel() {
+	c.closeMux.Do(func() {
+		c.closed.Store(true)
+		close(c.Send)
+	})
+}
+
 func (c *Client) SendJSON(event string, data interface{}) {
+	if c.closed.Load() {
+		return
+	}
+
 	msg, err := json.Marshal(Message{Event: event, Data: data})
 	if err != nil {
 		slog.Error("error marshaling message", slog.Any("error", err))
 		return
 	}
-	c.Send <- msg
+
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Warn("recovered from panic when sending message", "panic", r, "user_id", c.UserID)
+		}
+	}()
+
+	select {
+	case c.Send <- msg:
+	default:
+		slog.Warn("client send channel is full or closed, dropping message",
+			"user_id", c.UserID,
+			"event", event)
+	}
 }

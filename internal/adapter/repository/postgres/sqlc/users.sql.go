@@ -15,7 +15,7 @@ import (
 
 const addCodeToUser = `-- name: AddCodeToUser :exec
 UPDATE users
-SET email_verification_code = $2, email_verification_expires_at = $3, updated_at = $4, email_verified = false
+SET email_verification_code = $2, email_verification_expires_at = $3, updated_at = $4, account_verified = false
 WHERE id = $1
 `
 
@@ -61,7 +61,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, push_notification_enabled, sms_notification_enabled, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, trust_score, reports_submitted, reports_verified, created_at, updated_at, deleted_at, linked_device_id FROM users WHERE email = $1 AND deleted_at IS NULL LIMIT 1
+SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, account_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, push_notification_enabled, sms_notification_enabled, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, trust_score, reports_submitted, reports_verified, created_at, updated_at, deleted_at, linked_device_id FROM users WHERE email = $1 AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -77,6 +77,60 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Longitude,
 		&i.AlertRadiusMeters,
 		&i.EmailVerified,
+		&i.AccountVerified,
+		&i.EmailVerificationCode,
+		&i.EmailVerificationExpiresAt,
+		&i.Nif,
+		&i.Province,
+		&i.Municipality,
+		&i.Neighborhood,
+		&i.Address,
+		&i.ZipCode,
+		&i.Country,
+		&i.PushNotificationEnabled,
+		&i.SmsNotificationEnabled,
+		&i.LastLogin,
+		&i.HomeAddressName,
+		&i.HomeAddressAddress,
+		&i.HomeAddressLat,
+		&i.HomeAddressLon,
+		&i.WorkAddressName,
+		&i.WorkAddressAddress,
+		&i.WorkAddressLat,
+		&i.WorkAddressLon,
+		&i.FailedAttempts,
+		&i.LockedUntil,
+		&i.DeviceFcmToken,
+		&i.DeviceLanguage,
+		&i.TrustScore,
+		&i.ReportsSubmitted,
+		&i.ReportsVerified,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.LinkedDeviceID,
+	)
+	return i, err
+}
+
+const getUserByEmailOrPhone = `-- name: GetUserByEmailOrPhone :one
+SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, account_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, push_notification_enabled, sms_notification_enabled, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, trust_score, reports_submitted, reports_verified, created_at, updated_at, deleted_at, linked_device_id FROM users WHERE (email = $1 OR phone = $1) AND deleted_at IS NULL LIMIT 1
+`
+
+func (q *Queries) GetUserByEmailOrPhone(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmailOrPhone, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.Phone,
+		&i.Latitude,
+		&i.Longitude,
+		&i.AlertRadiusMeters,
+		&i.EmailVerified,
+		&i.AccountVerified,
 		&i.EmailVerificationCode,
 		&i.EmailVerificationExpiresAt,
 		&i.Nif,
@@ -113,7 +167,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, push_notification_enabled, sms_notification_enabled, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, trust_score, reports_submitted, reports_verified, created_at, updated_at, deleted_at, linked_device_id FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1
+SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, account_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, push_notification_enabled, sms_notification_enabled, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, trust_score, reports_submitted, reports_verified, created_at, updated_at, deleted_at, linked_device_id FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
@@ -129,6 +183,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Longitude,
 		&i.AlertRadiusMeters,
 		&i.EmailVerified,
+		&i.AccountVerified,
 		&i.EmailVerificationCode,
 		&i.EmailVerificationExpiresAt,
 		&i.Nif,
@@ -200,6 +255,164 @@ func (q *Queries) ListAllDeviceTokensExceptUser(ctx context.Context, id uuid.UUI
 	return items, nil
 }
 
+const listAnonymousTokensForAlertNotification = `-- name: ListAnonymousTokensForAlertNotification :many
+SELECT DISTINCT a.device_fcm_token, a.device_id
+FROM anonymous_sessions a
+LEFT JOIN user_safety_settings s ON s.device_id = a.device_id
+WHERE a.device_fcm_token IS NOT NULL
+  AND a.latitude IS NOT NULL
+  AND a.longitude IS NOT NULL
+  AND (s.id IS NULL OR s.notifications_enabled = true)
+  AND (
+    6371000 * acos(
+      cos(radians($1::DOUBLE PRECISION)) * cos(radians(a.latitude)) *
+      cos(radians(a.longitude) - radians($2::DOUBLE PRECISION)) +
+      sin(radians($1::DOUBLE PRECISION)) * sin(radians(a.latitude))
+    )
+  ) <= a.alert_radius_meters
+  AND (
+    6371000 * acos(
+      cos(radians($1::DOUBLE PRECISION)) * cos(radians(a.latitude)) *
+      cos(radians(a.longitude) - radians($2::DOUBLE PRECISION)) +
+      sin(radians($1::DOUBLE PRECISION)) * sin(radians(a.latitude))
+    )
+  ) <= $3::DOUBLE PRECISION
+  AND (
+    s.id IS NULL OR
+    $4::TEXT = ANY(s.notification_alert_types) OR
+    'all' = ANY(s.notification_alert_types)
+  )
+  AND (
+    s.id IS NULL OR
+    s.notification_alert_radius_mins >= CAST((
+      6371000 * acos(
+        cos(radians($1::DOUBLE PRECISION)) * cos(radians(a.latitude)) *
+        cos(radians(a.longitude) - radians($2::DOUBLE PRECISION)) +
+        sin(radians($1::DOUBLE PRECISION)) * sin(radians(a.latitude))
+      )
+    ) AS INT)
+  )
+`
+
+type ListAnonymousTokensForAlertNotificationParams struct {
+	Latitude      float64 `json:"latitude"`
+	Longitude     float64 `json:"longitude"`
+	RadiusMeters  float64 `json:"radius_meters"`
+	SeverityLevel string  `json:"severity_level"`
+}
+
+type ListAnonymousTokensForAlertNotificationRow struct {
+	DeviceFcmToken sql.NullString `json:"device_fcm_token"`
+	DeviceID       string         `json:"device_id"`
+}
+
+func (q *Queries) ListAnonymousTokensForAlertNotification(ctx context.Context, arg ListAnonymousTokensForAlertNotificationParams) ([]ListAnonymousTokensForAlertNotificationRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAnonymousTokensForAlertNotification,
+		arg.Latitude,
+		arg.Longitude,
+		arg.RadiusMeters,
+		arg.SeverityLevel,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListAnonymousTokensForAlertNotificationRow{}
+	for rows.Next() {
+		var i ListAnonymousTokensForAlertNotificationRow
+		if err := rows.Scan(&i.DeviceFcmToken, &i.DeviceID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAnonymousTokensForReportNotification = `-- name: ListAnonymousTokensForReportNotification :many
+SELECT DISTINCT a.device_fcm_token, a.device_id
+FROM anonymous_sessions a
+LEFT JOIN user_safety_settings s ON s.device_id = a.device_id
+WHERE a.device_fcm_token IS NOT NULL
+  AND a.latitude IS NOT NULL
+  AND a.longitude IS NOT NULL
+  AND (s.id IS NULL OR s.notifications_enabled = true)
+  AND (
+    6371000 * acos(
+      cos(radians($1::DOUBLE PRECISION)) * cos(radians(a.latitude)) *
+      cos(radians(a.longitude) - radians($2::DOUBLE PRECISION)) +
+      sin(radians($1::DOUBLE PRECISION)) * sin(radians(a.latitude))
+    )
+  ) <= a.alert_radius_meters
+  AND (
+    6371000 * acos(
+      cos(radians($1::DOUBLE PRECISION)) * cos(radians(a.latitude)) *
+      cos(radians(a.longitude) - radians($2::DOUBLE PRECISION)) +
+      sin(radians($1::DOUBLE PRECISION)) * sin(radians(a.latitude))
+    )
+  ) <= $3::DOUBLE PRECISION
+  AND (
+    s.id IS NULL OR
+    'all' = ANY(s.notification_report_types) OR
+    ($4::BOOLEAN = true AND 'verified' = ANY(s.notification_report_types))
+  )
+  AND (
+    s.id IS NULL OR
+    s.notification_report_radius_mins >= CAST((
+      6371000 * acos(
+        cos(radians($1::DOUBLE PRECISION)) * cos(radians(a.latitude)) *
+        cos(radians(a.longitude) - radians($2::DOUBLE PRECISION)) +
+        sin(radians($1::DOUBLE PRECISION)) * sin(radians(a.latitude))
+      )
+    ) AS INT)
+  )
+`
+
+type ListAnonymousTokensForReportNotificationParams struct {
+	Latitude     float64 `json:"latitude"`
+	Longitude    float64 `json:"longitude"`
+	RadiusMeters float64 `json:"radius_meters"`
+	IsVerified   bool    `json:"is_verified"`
+}
+
+type ListAnonymousTokensForReportNotificationRow struct {
+	DeviceFcmToken sql.NullString `json:"device_fcm_token"`
+	DeviceID       string         `json:"device_id"`
+}
+
+func (q *Queries) ListAnonymousTokensForReportNotification(ctx context.Context, arg ListAnonymousTokensForReportNotificationParams) ([]ListAnonymousTokensForReportNotificationRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAnonymousTokensForReportNotification,
+		arg.Latitude,
+		arg.Longitude,
+		arg.RadiusMeters,
+		arg.IsVerified,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListAnonymousTokensForReportNotificationRow{}
+	for rows.Next() {
+		var i ListAnonymousTokensForReportNotificationRow
+		if err := rows.Scan(&i.DeviceFcmToken, &i.DeviceID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listDeviceTokensByUserIDs = `-- name: ListDeviceTokensByUserIDs :many
 SELECT device_fcm_token, device_language
 FROM users
@@ -236,8 +449,116 @@ func (q *Queries) ListDeviceTokensByUserIDs(ctx context.Context, dollar_1 []uuid
 	return items, nil
 }
 
+const listDeviceTokensForAlertNotification = `-- name: ListDeviceTokensForAlertNotification :many
+SELECT DISTINCT u.device_fcm_token, u.device_language, u.id as user_id
+FROM users u
+LEFT JOIN user_safety_settings s ON s.user_id = u.id
+WHERE u.deleted_at IS NULL
+  AND u.device_fcm_token IS NOT NULL
+  AND u.id IN (SELECT UNNEST($1::uuid[]))
+  AND (s.id IS NULL OR s.notifications_enabled = true)
+  AND (
+    s.id IS NULL OR
+    $2::TEXT = ANY(s.notification_alert_types) OR
+    'all' = ANY(s.notification_alert_types)
+  )
+  AND (
+    s.id IS NULL OR
+    s.notification_alert_radius_mins >= $3::INT
+  )
+`
+
+type ListDeviceTokensForAlertNotificationParams struct {
+	UserIds        []uuid.UUID `json:"user_ids"`
+	SeverityLevel  string      `json:"severity_level"`
+	DistanceMeters int32       `json:"distance_meters"`
+}
+
+type ListDeviceTokensForAlertNotificationRow struct {
+	DeviceFcmToken sql.NullString `json:"device_fcm_token"`
+	DeviceLanguage sql.NullString `json:"device_language"`
+	UserID         uuid.UUID      `json:"user_id"`
+}
+
+func (q *Queries) ListDeviceTokensForAlertNotification(ctx context.Context, arg ListDeviceTokensForAlertNotificationParams) ([]ListDeviceTokensForAlertNotificationRow, error) {
+	rows, err := q.db.QueryContext(ctx, listDeviceTokensForAlertNotification, pq.Array(arg.UserIds), arg.SeverityLevel, arg.DistanceMeters)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListDeviceTokensForAlertNotificationRow{}
+	for rows.Next() {
+		var i ListDeviceTokensForAlertNotificationRow
+		if err := rows.Scan(&i.DeviceFcmToken, &i.DeviceLanguage, &i.UserID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDeviceTokensForReportNotification = `-- name: ListDeviceTokensForReportNotification :many
+SELECT DISTINCT u.device_fcm_token, u.device_language, u.id as user_id
+FROM users u
+LEFT JOIN user_safety_settings s ON s.user_id = u.id
+WHERE u.deleted_at IS NULL
+  AND u.device_fcm_token IS NOT NULL
+  AND u.id IN (SELECT UNNEST($1::uuid[]))
+  AND (s.id IS NULL OR s.notifications_enabled = true)
+  AND (
+    s.id IS NULL OR
+    'all' = ANY(s.notification_report_types) OR
+    ($2::BOOLEAN = true AND 'verified' = ANY(s.notification_report_types))
+  )
+  AND (
+    s.id IS NULL OR
+    s.notification_report_radius_mins >= $3::INT
+  )
+`
+
+type ListDeviceTokensForReportNotificationParams struct {
+	UserIds        []uuid.UUID `json:"user_ids"`
+	IsVerified     bool        `json:"is_verified"`
+	DistanceMeters int32       `json:"distance_meters"`
+}
+
+type ListDeviceTokensForReportNotificationRow struct {
+	DeviceFcmToken sql.NullString `json:"device_fcm_token"`
+	DeviceLanguage sql.NullString `json:"device_language"`
+	UserID         uuid.UUID      `json:"user_id"`
+}
+
+func (q *Queries) ListDeviceTokensForReportNotification(ctx context.Context, arg ListDeviceTokensForReportNotificationParams) ([]ListDeviceTokensForReportNotificationRow, error) {
+	rows, err := q.db.QueryContext(ctx, listDeviceTokensForReportNotification, pq.Array(arg.UserIds), arg.IsVerified, arg.DistanceMeters)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListDeviceTokensForReportNotificationRow{}
+	for rows.Next() {
+		var i ListDeviceTokensForReportNotificationRow
+		if err := rows.Scan(&i.DeviceFcmToken, &i.DeviceLanguage, &i.UserID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listNearbyUsers = `-- name: ListNearbyUsers :many
-SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, push_notification_enabled, sms_notification_enabled, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, trust_score, reports_submitted, reports_verified, created_at, updated_at, deleted_at, linked_device_id
+SELECT id, name, email, password, phone, latitude, longitude, alert_radius_meters, email_verified, account_verified, email_verification_code, email_verification_expires_at, nif, province, municipality, neighborhood, address, zip_code, country, push_notification_enabled, sms_notification_enabled, last_login, home_address_name, home_address_address, home_address_lat, home_address_lon, work_address_name, work_address_address, work_address_lat, work_address_lon, failed_attempts, locked_until, device_fcm_token, device_language, trust_score, reports_submitted, reports_verified, created_at, updated_at, deleted_at, linked_device_id
 FROM users
 WHERE deleted_at IS NULL
   AND (latitude IS NOT NULL AND longitude IS NOT NULL)
@@ -262,6 +583,7 @@ func (q *Queries) ListNearbyUsers(ctx context.Context) ([]User, error) {
 			&i.Longitude,
 			&i.AlertRadiusMeters,
 			&i.EmailVerified,
+			&i.AccountVerified,
 			&i.EmailVerificationCode,
 			&i.EmailVerificationExpiresAt,
 			&i.Nif,
@@ -307,12 +629,12 @@ func (q *Queries) ListNearbyUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
-const markEmailVerified = `-- name: MarkEmailVerified :exec
-UPDATE users SET email_verified = TRUE, email_verification_code = NULL WHERE id = $1
+const markAccountVerified = `-- name: MarkAccountVerified :exec
+UPDATE users SET account_verified = TRUE, email_verification_code = NULL WHERE id = $1
 `
 
-func (q *Queries) MarkEmailVerified(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, markEmailVerified, id)
+func (q *Queries) MarkAccountVerified(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, markAccountVerified, id)
 	return err
 }
 

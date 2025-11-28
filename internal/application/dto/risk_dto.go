@@ -13,6 +13,7 @@ type RiskTypeResponse struct {
 	Description   string    `json:"description"`
 	IconURL       *string   `json:"icon_url,omitempty"`
 	DefaultRadius int       `json:"default_radius"`
+	IsEnabled     bool      `json:"is_enabled"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }

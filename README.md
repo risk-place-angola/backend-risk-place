@@ -338,7 +338,17 @@ Once the server is running locally, access the interactive API documentation:
 
 **Swagger UI**: `http://localhost:8000/docs/index.html`
 
-The API follows RESTful principles with the following main endpoints:
+### Mobile Integration Guides
+
+For mobile developers, comprehensive integration guides are available:
+
+| Guide | Description |
+|-------|-------------|
+| [Mobile API Integration](./docs/MOBILE_API_INTEGRATION.md) | Complete API endpoints reference |
+| [WebSocket Guide](./docs/WEBSOCKET_GUIDE.md) | Real-time notifications |
+| [Anonymous Users](./docs/ANONYMOUS_USER_GUIDE.md) | Anonymous user flow |
+
+### Core Endpoints
 
 | Endpoint | Description | Auth Required |
 |----------|-------------|---------------|

@@ -155,7 +155,7 @@ SELECT
 FROM alerts a
 LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
-WHERE a.id = $1 
+WHERE a.id = $1 AND rt.is_enabled = TRUE
 LIMIT 1
 `
 
@@ -226,7 +226,7 @@ SELECT
 FROM alerts a
 LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
-WHERE a.anonymous_session_id = $1 AND a.device_id = $2
+WHERE a.anonymous_session_id = $1 AND a.device_id = $2 AND rt.is_enabled = TRUE
 ORDER BY a.created_at DESC
 `
 
@@ -318,7 +318,7 @@ SELECT
 FROM alerts a
 LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
-WHERE a.created_by = $1
+WHERE a.created_by = $1 AND rt.is_enabled = TRUE
 ORDER BY a.created_at DESC
 `
 
@@ -406,7 +406,7 @@ FROM alerts a
 INNER JOIN alert_subscriptions s ON a.id = s.alert_id
 LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
-WHERE s.user_id = $1
+WHERE s.user_id = $1 AND rt.is_enabled = TRUE
 ORDER BY s.subscribed_at DESC
 `
 
@@ -486,7 +486,8 @@ func (q *Queries) GetSubscribedAlerts(ctx context.Context, userID uuid.NullUUID)
 const getSubscribedAlertsAnonymous = `-- name: GetSubscribedAlertsAnonymous :many
 SELECT a.id, a.created_by, a.anonymous_session_id, a.device_id, a.risk_type_id, a.risk_topic_id, a.message, a.latitude, a.longitude, a.province, a.municipality, a.neighborhood, a.address, a.radius_meters, a.severity, a.status, a.created_at, a.expires_at, a.resolved_at FROM alerts a
 INNER JOIN alert_subscriptions s ON a.id = s.alert_id
-WHERE s.anonymous_session_id = $1 AND s.device_id = $2
+LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
+WHERE s.anonymous_session_id = $1 AND s.device_id = $2 AND rt.is_enabled = TRUE
 ORDER BY s.subscribed_at DESC
 `
 
@@ -558,6 +559,25 @@ func (q *Queries) IsAnonymousSubscribed(ctx context.Context, arg IsAnonymousSubs
 	return is_subscribed, err
 }
 
+const isAnonymousSubscribedToAlert = `-- name: IsAnonymousSubscribedToAlert :one
+SELECT EXISTS (
+    SELECT 1 FROM alert_subscriptions 
+    WHERE alert_id = $1 AND device_id = $2
+) AS subscribed
+`
+
+type IsAnonymousSubscribedToAlertParams struct {
+	AlertID  uuid.UUID      `json:"alert_id"`
+	DeviceID sql.NullString `json:"device_id"`
+}
+
+func (q *Queries) IsAnonymousSubscribedToAlert(ctx context.Context, arg IsAnonymousSubscribedToAlertParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isAnonymousSubscribedToAlert, arg.AlertID, arg.DeviceID)
+	var subscribed bool
+	err := row.Scan(&subscribed)
+	return subscribed, err
+}
+
 const isUserSubscribed = `-- name: IsUserSubscribed :one
 SELECT EXISTS(
     SELECT 1 FROM alert_subscriptions
@@ -577,6 +597,25 @@ func (q *Queries) IsUserSubscribed(ctx context.Context, arg IsUserSubscribedPara
 	return is_subscribed, err
 }
 
+const isUserSubscribedToAlert = `-- name: IsUserSubscribedToAlert :one
+SELECT EXISTS (
+    SELECT 1 FROM alert_subscriptions 
+    WHERE alert_id = $1 AND user_id = $2
+) AS subscribed
+`
+
+type IsUserSubscribedToAlertParams struct {
+	AlertID uuid.UUID     `json:"alert_id"`
+	UserID  uuid.NullUUID `json:"user_id"`
+}
+
+func (q *Queries) IsUserSubscribedToAlert(ctx context.Context, arg IsUserSubscribedToAlertParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isUserSubscribedToAlert, arg.AlertID, arg.UserID)
+	var subscribed bool
+	err := row.Scan(&subscribed)
+	return subscribed, err
+}
+
 const listActiveAlerts = `-- name: ListActiveAlerts :many
 SELECT 
     a.id, a.created_by, a.anonymous_session_id, a.device_id, a.risk_type_id, a.risk_topic_id, a.message, a.latitude, a.longitude, a.province, a.municipality, a.neighborhood, a.address, a.radius_meters, a.severity, a.status, a.created_at, a.expires_at, a.resolved_at,
@@ -587,7 +626,7 @@ SELECT
 FROM alerts a
 LEFT JOIN risk_types rt ON a.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON a.risk_topic_id = rtopic.id
-WHERE a.status = 'active' AND (a.expires_at IS NULL OR a.expires_at > NOW())
+WHERE a.status = 'active' AND (a.expires_at IS NULL OR a.expires_at > NOW()) AND rt.is_enabled = TRUE
 ORDER BY a.created_at DESC
 `
 
@@ -678,7 +717,6 @@ func (q *Queries) ResolveAlert(ctx context.Context, id uuid.UUID) error {
 const subscribeAnonymousToAlert = `-- name: SubscribeAnonymousToAlert :exec
 INSERT INTO alert_subscriptions (id, alert_id, anonymous_session_id, device_id, subscribed_at)
 VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (alert_id, device_id) DO NOTHING
 `
 
 type SubscribeAnonymousToAlertParams struct {
@@ -703,7 +741,6 @@ func (q *Queries) SubscribeAnonymousToAlert(ctx context.Context, arg SubscribeAn
 const subscribeToAlert = `-- name: SubscribeToAlert :exec
 INSERT INTO alert_subscriptions (id, alert_id, user_id, subscribed_at)
 VALUES ($1, $2, $3, $4)
-ON CONFLICT (alert_id, user_id) DO NOTHING
 `
 
 type SubscribeToAlertParams struct {

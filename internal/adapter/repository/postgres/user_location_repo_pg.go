@@ -99,26 +99,27 @@ func (r *userLocationRepoPG) FindByUserID(ctx context.Context, userID uuid.UUID)
 
 func (r *userLocationRepoPG) FindNearbyUsers(ctx context.Context, lat, lon, radiusMeters float64, limit int) ([]*model.UserLocation, error) {
 	query := `
-		SELECT id, user_id, device_id, latitude, longitude, speed, heading,
-		       avatar_id, color, is_anonymous, last_update, created_at
-		FROM user_locations
-		WHERE ST_DWithin(
-			location,
-			ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
-			$3
-		)
-		AND last_update > NOW() - INTERVAL '30 seconds'
-		ORDER BY location <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+		SELECT DISTINCT ul.id, ul.user_id, ul.device_id, ul.latitude, ul.longitude, ul.speed, ul.heading,
+		       ul.avatar_id, ul.color, ul.is_anonymous, ul.last_update, ul.created_at,
+		       earth_distance(
+		           ll_to_earth(ul.latitude, ul.longitude),
+		           ll_to_earth($1, $2)
+		       )::int AS distance_meters
+		FROM user_locations ul
+		LEFT JOIN user_safety_settings s ON (s.user_id = ul.user_id OR s.device_id = ul.device_id)
+		WHERE ll_to_earth(ul.latitude, ul.longitude) <@
+		      earth_box(ll_to_earth($1, $2), $3)
+		AND ul.last_update > NOW() - INTERVAL '30 seconds'
+		AND (s.id IS NULL OR s.location_sharing_enabled = true)
+		AND (s.id IS NULL OR s.show_online_status = true)
+		ORDER BY earth_distance(
+		    ll_to_earth(ul.latitude, ul.longitude),
+		    ll_to_earth($1, $2)
+		) ASC
 		LIMIT $4
 	`
 
-	slog.Debug("finding nearby users",
-		slog.Float64("lat", lat),
-		slog.Float64("lon", lon),
-		slog.Float64("radius", radiusMeters),
-		slog.Int("limit", limit))
-
-	rows, err := r.db.QueryContext(ctx, query, lon, lat, radiusMeters, limit)
+	rows, err := r.db.QueryContext(ctx, query, lat, lon, radiusMeters, limit)
 	if err != nil {
 		slog.Error("failed to query nearby users", slog.Any("error", err))
 		return nil, err
@@ -133,6 +134,7 @@ func (r *userLocationRepoPG) FindNearbyUsers(ctx context.Context, lat, lon, radi
 	for rows.Next() {
 		var loc model.UserLocation
 		var deviceID sql.NullString
+		var distanceMeters int // Distância calculada pela query
 
 		err := rows.Scan(
 			&loc.ID,
@@ -147,10 +149,15 @@ func (r *userLocationRepoPG) FindNearbyUsers(ctx context.Context, lat, lon, radi
 			&loc.IsAnonymous,
 			&loc.LastUpdate,
 			&loc.CreatedAt,
+			&distanceMeters, // Scan da distância
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		slog.Debug("nearby user found",
+			slog.String("user_id", loc.UserID.String()),
+			slog.Int("distance_meters", distanceMeters))
 
 		if deviceID.Valid {
 			loc.DeviceID = deviceID.String
@@ -162,8 +169,6 @@ func (r *userLocationRepoPG) FindNearbyUsers(ctx context.Context, lat, lon, radi
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-
-	slog.Debug("found nearby users", slog.Int("count", len(locations)))
 
 	return locations, nil
 }
@@ -194,13 +199,4 @@ func (r *userLocationRepoPG) Delete(ctx context.Context, userID uuid.UUID) error
 	}
 
 	return nil
-}
-
-func (r *userLocationRepoPG) SaveHistory(ctx context.Context, userID uuid.UUID, lat, lon, speed, heading float64, deviceID string) error {
-	query := `
-		INSERT INTO user_location_history (user_id, device_id, latitude, longitude, speed, heading)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`
-	_, err := r.db.ExecContext(ctx, query, userID, deviceID, lat, lon, speed, heading)
-	return err
 }

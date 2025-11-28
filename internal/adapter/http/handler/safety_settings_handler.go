@@ -8,19 +8,24 @@ import (
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/http/util"
 	"github.com/risk-place-angola/backend-risk-place/internal/application"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/dto"
+	"github.com/risk-place-angola/backend-risk-place/internal/domain/repository"
 )
 
 type SafetySettingsHandler struct {
-	app *application.Application
+	app                  *application.Application
+	anonymousSessionRepo repository.AnonymousSessionRepository
 }
 
-func NewSafetySettingsHandler(app *application.Application) *SafetySettingsHandler {
-	return &SafetySettingsHandler{app: app}
+func NewSafetySettingsHandler(app *application.Application, anonymousSessionRepo repository.AnonymousSessionRepository) *SafetySettingsHandler {
+	return &SafetySettingsHandler{
+		app:                  app,
+		anonymousSessionRepo: anonymousSessionRepo,
+	}
 }
 
 // GetSettings godoc
 // @Summary Get user safety settings
-// @Description Retrieve safety settings for the authenticated user. Creates default settings if none exist.
+// @Description Retrieve safety settings for the authenticated user or anonymous user. Creates default settings if none exist.
 // @Tags safety-settings
 // @Security BearerAuth
 // @Produce json
@@ -29,14 +34,27 @@ func NewSafetySettingsHandler(app *application.Application) *SafetySettingsHandl
 // @Failure 500 {object} util.ErrorResponse
 // @Router /users/me/settings [get]
 func (h *SafetySettingsHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
-	uid, ok := util.ExtractAndValidateUserID(w, r)
+	identifier, ok := util.ExtractUserIdentifierOrError(w, r)
 	if !ok {
 		return
 	}
 
-	settings, err := h.app.SafetySettingsUseCase.GetSettings(r.Context(), uid)
+	var settings *dto.SafetySettingsResponse
+	var err error
+
+	if identifier.IsAuthenticated {
+		uid, parseErr := dto.ParseUUID(identifier.UserID)
+		if parseErr != nil {
+			util.Error(w, "invalid user ID", http.StatusBadRequest)
+			return
+		}
+		settings, err = h.app.SafetySettingsUseCase.GetSettings(r.Context(), uid)
+	} else {
+		settings, err = h.app.SafetySettingsUseCase.GetSettingsByDeviceID(r.Context(), identifier.DeviceID, h.anonymousSessionRepo)
+	}
+
 	if err != nil {
-		slog.Error("error fetching safety settings", "user_id", uid, "error", err)
+		slog.Error("error fetching safety settings", "identifier", identifier, "error", err)
 		util.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -46,7 +64,7 @@ func (h *SafetySettingsHandler) GetSettings(w http.ResponseWriter, r *http.Reque
 
 // UpdateSettings godoc
 // @Summary Update user safety settings
-// @Description Update safety settings for the authenticated user. All fields are optional.
+// @Description Update safety settings for the authenticated user or anonymous user. All fields are optional.
 // @Tags safety-settings
 // @Security BearerAuth
 // @Accept json
@@ -58,7 +76,7 @@ func (h *SafetySettingsHandler) GetSettings(w http.ResponseWriter, r *http.Reque
 // @Failure 500 {object} util.ErrorResponse
 // @Router /users/me/settings [put]
 func (h *SafetySettingsHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
-	uid, ok := util.ExtractAndValidateUserID(w, r)
+	identifier, ok := util.ExtractUserIdentifierOrError(w, r)
 	if !ok {
 		return
 	}
@@ -69,9 +87,21 @@ func (h *SafetySettingsHandler) UpdateSettings(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	settings, err := h.app.SafetySettingsUseCase.UpdateSettings(r.Context(), uid, input)
+	var settings *dto.SafetySettingsResponse
+	var err error
+
+	if identifier.IsAuthenticated {
+		uid, parseErr := dto.ParseUUID(identifier.UserID)
+		if parseErr != nil {
+			util.Error(w, "invalid user ID", http.StatusBadRequest)
+			return
+		}
+		settings, err = h.app.SafetySettingsUseCase.UpdateSettings(r.Context(), uid, input)
+	} else {
+		settings, err = h.app.SafetySettingsUseCase.UpdateSettingsByDeviceID(r.Context(), identifier.DeviceID, input, h.anonymousSessionRepo)
+	}
 	if err != nil {
-		slog.Error("error updating safety settings", "user_id", uid, "error", err)
+		slog.Error("error updating safety settings", "identifier", identifier, "error", err)
 		statusCode := http.StatusInternalServerError
 		if err.Error() == "invalid profile_visibility value" ||
 			err.Error() == "notification_alert_radius_mins must be between 100 and 10000" ||

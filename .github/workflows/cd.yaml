@@ -74,7 +74,28 @@ jobs:
       - name: Create .env file from base64 secret
         run: |
           echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 --decode > .env
-          echo "✅ .env file created successfully"
+          
+          # Validate .env file format
+          if [ ! -s .env ]; then
+            echo "❌ .env file is empty or invalid"
+            exit 1
+          fi
+          
+          # Check for null bytes or corruption
+          if ! cat .env | tr -d '\0' | diff -q - .env >/dev/null 2>&1; then
+            echo "❌ .env file contains null bytes (corrupted)"
+            exit 1
+          fi
+          
+          # Verify file has valid environment variables
+          VAR_COUNT=$(grep -c "=" .env 2>/dev/null || echo "0")
+          if [ "$VAR_COUNT" -lt 10 ]; then
+            echo "❌ .env file has too few variables ($VAR_COUNT found, expected at least 10)"
+            exit 1
+          fi
+          
+          echo "✅ .env file created and validated successfully"
+          echo "   Variables found: $VAR_COUNT"
 
       - name: Copy files to server
         uses: appleboy/scp-action@v0.1.7
@@ -107,10 +128,12 @@ jobs:
             # Run deployment with specific version and replicas (includes .env cleanup)
             ./scripts/deploy.sh "main-$IMAGE_TAG" "$REPLICAS"
             
-            # Double-check .env is removed
+            # Verify .env was removed by deploy.sh
             if [ -f .env ]; then
-              echo "⚠️  Warning: .env still exists, force removing..."
-              shred -vfz -n 3 .env 2>/dev/null || rm -f .env
+              echo "⚠️  Warning: .env still exists after deploy, removing..."
+              rm -f .env
+            else
+              echo "✅ .env file properly cleaned up"
             fi
 
       - name: Verify deployment
@@ -123,11 +146,36 @@ jobs:
             # Wait a bit for containers to stabilize
             sleep 15
             
-            # Check all backend_core containers
+            # First, let's see what containers exist
+            echo "All running containers:"
+            docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+            
+            echo ""
+            echo "All containers (including stopped):"
+            docker ps -a --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+            
+            # Check all backend_core containers (substring match)
             TOTAL=$(docker ps --filter "name=backend_core" --format "{{.Names}}" | wc -l | tr -d ' ')
             HEALTHY=$(docker ps --filter "name=backend_core" --filter "health=healthy" --format "{{.Names}}" | wc -l | tr -d ' ')
             
+            echo ""
             echo "📊 Deployment status: $HEALTHY/$TOTAL containers healthy"
+            
+            # If no containers found, check if deployment failed
+            if [ "$TOTAL" -eq 0 ]; then
+              echo "❌ No backend_core containers found!"
+              echo ""
+              echo "Checking docker-compose status:"
+              cd ~/backend-risk-place
+              docker compose -f docker-compose.prod.yml ps || docker-compose -f docker-compose.prod.yml ps
+              echo ""
+              echo "Checking if docker-compose.prod.yml exists:"
+              ls -la docker-compose.prod.yml
+              echo ""
+              echo "Recent docker events:"
+              docker events --since 5m --until 0s | grep backend || echo "No backend events found"
+              exit 1
+            fi
             
             if [ "$HEALTHY" -ge 3 ]; then
               echo "✅ Deployment successful - $HEALTHY instances running"

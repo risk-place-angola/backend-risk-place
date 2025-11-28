@@ -234,13 +234,15 @@ type RiskTopic struct {
 }
 
 type RiskType struct {
-	ID                  uuid.UUID      `json:"id"`
-	Name                string         `json:"name"`
-	Description         sql.NullString `json:"description"`
-	IconPath            sql.NullString `json:"icon_path"`
-	DefaultRadiusMeters sql.NullInt32  `json:"default_radius_meters"`
-	CreatedAt           sql.NullTime   `json:"created_at"`
-	UpdatedAt           sql.NullTime   `json:"updated_at"`
+	ID          uuid.UUID      `json:"id"`
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
+	IconPath    sql.NullString `json:"icon_path"`
+	// Controls visibility of risk types in mobile app. When false, all associated reports are also hidden.
+	IsEnabled           bool          `json:"is_enabled"`
+	DefaultRadiusMeters sql.NullInt32 `json:"default_radius_meters"`
+	CreatedAt           sql.NullTime  `json:"created_at"`
+	UpdatedAt           sql.NullTime  `json:"updated_at"`
 }
 
 type Role struct {
@@ -266,6 +268,7 @@ type User struct {
 	Longitude                  sql.NullFloat64 `json:"longitude"`
 	AlertRadiusMeters          sql.NullInt32   `json:"alert_radius_meters"`
 	EmailVerified              sql.NullBool    `json:"email_verified"`
+	AccountVerified            sql.NullBool    `json:"account_verified"`
 	EmailVerificationCode      sql.NullString  `json:"email_verification_code"`
 	EmailVerificationExpiresAt sql.NullTime    `json:"email_verification_expires_at"`
 	Nif                        sql.NullString  `json:"nif"`
@@ -305,7 +308,6 @@ type UserLocation struct {
 	DeviceID    sql.NullString  `json:"device_id"`
 	Latitude    float64         `json:"latitude"`
 	Longitude   float64         `json:"longitude"`
-	Location    interface{}     `json:"location"`
 	Speed       sql.NullFloat64 `json:"speed"`
 	Heading     sql.NullFloat64 `json:"heading"`
 	AvatarID    int32           `json:"avatar_id"`
@@ -313,17 +315,6 @@ type UserLocation struct {
 	IsAnonymous sql.NullBool    `json:"is_anonymous"`
 	LastUpdate  sql.NullTime    `json:"last_update"`
 	CreatedAt   sql.NullTime    `json:"created_at"`
-}
-
-type UserLocationHistory struct {
-	ID        uuid.UUID       `json:"id"`
-	UserID    uuid.UUID       `json:"user_id"`
-	DeviceID  sql.NullString  `json:"device_id"`
-	Latitude  float64         `json:"latitude"`
-	Longitude float64         `json:"longitude"`
-	Speed     sql.NullFloat64 `json:"speed"`
-	Heading   sql.NullFloat64 `json:"heading"`
-	CreatedAt sql.NullTime    `json:"created_at"`
 }
 
 type UserRole struct {

@@ -12,13 +12,14 @@ func (r ReportVerifiedEvent) Name() string {
 }
 
 type ReportCreatedEvent struct {
-	ReportID  uuid.UUID
-	UserID    []uuid.UUID
-	Message   string
-	Latitude  float64
-	Longitude float64
-	Radius    float64
-	RiskType  string
+	ReportID   uuid.UUID
+	UserID     []uuid.UUID
+	Message    string
+	Latitude   float64
+	Longitude  float64
+	Radius     float64
+	RiskType   string
+	IsVerified bool
 }
 
 func (e ReportCreatedEvent) Name() string { return "ReportCreated" }

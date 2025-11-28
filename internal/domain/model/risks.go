@@ -12,6 +12,7 @@ type RiskType struct {
 	Description         string
 	IconPath            *string
 	DefaultRadiusMeters int
+	IsEnabled           bool
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 }

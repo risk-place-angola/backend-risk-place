@@ -15,6 +15,7 @@ func RunAll(ctx context.Context, db *sql.DB) error {
 		SeedRiskTopics,
 		SeedEntities,
 		SeedPermissions,
+		SeedRolePermissions,
 		SeedUsers,
 	}
 	for i, step := range steps {

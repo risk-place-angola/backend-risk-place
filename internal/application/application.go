@@ -3,6 +3,7 @@ package application
 import (
 	"github.com/risk-place-angola/backend-risk-place/internal/application/port"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/alert"
+	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/dangerzone"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/emergencycontact"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/locationsharing"
 	"github.com/risk-place-angola/backend-risk-place/internal/application/usecase/myalerts"
@@ -27,6 +28,7 @@ type Application struct {
 	EmergencyAlertUseCase     *emergencycontact.EmergencyAlertUseCase
 	MyAlertsUseCase           *myalerts.MyAlertsUseCase
 	SafetySettingsUseCase     *safetysettings.SafetySettingsUseCase
+	DangerZoneUseCase         *dangerzone.DangerZoneUseCase
 	ReportVerificationService domainService.ReportVerificationService
 }
 
@@ -54,11 +56,13 @@ func NewUserApplication(
 	migrationService domainService.AnonymousMigrationService,
 	verificationService domainService.VerificationService,
 	storageService port.StorageService,
+	dangerZoneService domainService.DangerZoneService,
 ) *Application {
 	return &Application{
 		UserUseCase: user.NewUserUseCase(
 			userRepo,
 			roleRepo,
+			anonymousSessionRepo,
 			token,
 			hasher,
 			config,
@@ -78,6 +82,7 @@ func NewUserApplication(
 			geoService,
 			riskTypeRepo,
 			riskTopicRepo,
+			safetySettingsRepo,
 			locationStore,
 		),
 		RiskUseCase: risk.NewRiskUseCase(
@@ -111,6 +116,9 @@ func NewUserApplication(
 		),
 		SafetySettingsUseCase: safetysettings.NewSafetySettingsUseCase(
 			safetySettingsRepo,
+		),
+		DangerZoneUseCase: dangerzone.NewDangerZoneUseCase(
+			dangerZoneService,
 		),
 	}
 }

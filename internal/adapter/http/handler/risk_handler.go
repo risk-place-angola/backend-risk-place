@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -122,4 +123,33 @@ func (h *RiskHandler) GetRiskTopic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	util.Response(w, riskTopic, http.StatusOK)
+}
+
+func (h *RiskHandler) UpdateRiskTypeIsEnabled(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		util.Error(w, "risk type ID is required", http.StatusBadRequest)
+		return
+	}
+
+	var req struct {
+		IsEnabled bool `json:"is_enabled"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		util.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.app.RiskUseCase.UpdateRiskTypeIsEnabled(r.Context(), id, req.IsEnabled); err != nil {
+		slog.Error("failed to update risk type enabled status", "risk_type_id", id, "error", err)
+		util.Error(w, "failed to update risk type", http.StatusInternalServerError)
+		return
+	}
+
+	slog.Info("risk type status updated", "risk_type_id", id, "is_enabled", req.IsEnabled)
+	util.Response(w, map[string]interface{}{
+		"message":    "risk type status updated successfully",
+		"is_enabled": req.IsEnabled,
+	}, http.StatusOK)
 }

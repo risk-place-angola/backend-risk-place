@@ -37,17 +37,17 @@ SELECT
     latitude,
     longitude,
     is_anonymous,
-    ST_Distance(
-        location,
-        ST_SetSRID(ST_MakePoint(13.2344, -8.8383), 4326)::geography
-    ) as distance_meters,
+    earth_distance(
+        ll_to_earth(latitude, longitude),
+        ll_to_earth(-8.8383, 13.2344)
+    )::int as distance_meters,
     last_update,
     EXTRACT(EPOCH FROM (NOW() - last_update)) as seconds_ago
 FROM user_locations
-WHERE ST_DWithin(
-    location,
-    ST_SetSRID(ST_MakePoint(13.2344, -8.8383), 4326)::geography,
-    5000
-)
+WHERE ll_to_earth(latitude, longitude) <@
+      earth_box(ll_to_earth(-8.8383, 13.2344), 5000)
 AND last_update > NOW() - INTERVAL '30 seconds'
-ORDER BY location <-> ST_SetSRID(ST_MakePoint(13.2344, -8.8383), 4326)::geography;
+ORDER BY earth_distance(
+    ll_to_earth(latitude, longitude),
+    ll_to_earth(-8.8383, 13.2344)
+) ASC;

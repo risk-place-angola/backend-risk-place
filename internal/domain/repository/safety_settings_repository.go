@@ -10,4 +10,6 @@ import (
 type SafetySettingsRepository interface {
 	GetByUserID(ctx context.Context, userID uuid.UUID) (*model.SafetySettings, error)
 	Upsert(ctx context.Context, settings *model.SafetySettings) error
+	GetByDeviceID(ctx context.Context, deviceID string) (*model.SafetySettings, error)
+	UpsertAnonymous(ctx context.Context, settings *model.SafetySettings) error
 }

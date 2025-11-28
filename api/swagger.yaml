@@ -79,6 +79,25 @@ definitions:
     - latitude
     - longitude
     type: object
+  dto.DangerZoneDTO:
+    properties:
+      calculated_at:
+        type: string
+      grid_cell_id:
+        type: string
+      id:
+        type: string
+      incident_count:
+        type: integer
+      latitude:
+        type: number
+      longitude:
+        type: number
+      risk_level:
+        type: string
+      risk_score:
+        type: number
+    type: object
   dto.DeviceResponse:
     properties:
       alert_radius_meters:
@@ -140,6 +159,30 @@ definitions:
       user_id:
         type: string
     type: object
+  dto.GetDangerZonesRequest:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+      radius_meters:
+        maximum: 10000
+        minimum: 100
+        type: number
+    required:
+    - latitude
+    - longitude
+    - radius_meters
+    type: object
+  dto.GetDangerZonesResponse:
+    properties:
+      total_count:
+        type: integer
+      zones:
+        items:
+          $ref: '#/definitions/dto.DangerZoneDTO'
+        type: array
+    type: object
   dto.IncidentDTO:
     properties:
       created_at:
@@ -187,7 +230,7 @@ definitions:
         type: string
       device_language:
         type: string
-      email:
+      identifier:
         type: string
       password:
         type: string
@@ -515,6 +558,8 @@ definitions:
         type: string
       id:
         type: string
+      is_enabled:
+        type: boolean
       name:
         type: string
       updated_at:
@@ -962,6 +1007,8 @@ definitions:
         properties:
           code:
             type: integer
+          error_code:
+            type: string
           message: {}
         type: object
       success:
@@ -988,8 +1035,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new alert.
+      description: Create a new alert (supports both authenticated and anonymous users).
       parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-Id
+        type: string
       - description: Alert
         in: body
         name: alert
@@ -1002,7 +1053,9 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/dto.Alert'
+            additionalProperties:
+              type: string
+            type: object
         "400":
           description: Bad Request
           schema:
@@ -1012,7 +1065,7 @@ paths:
           schema:
             $ref: '#/definitions/util.ErrorResponse'
       security:
-      - BearerAuth: []
+      - OptionalAuth: []
       summary: Create a new alert.
       tags:
       - alerts
@@ -1177,277 +1230,6 @@ paths:
       summary: Unsubscribe from an alert
       tags:
       - my-alerts
-  /api/v1/devices/location:
-    put:
-      consumes:
-      - application/json
-      description: Update the location of an anonymous device for proximity-based
-        notifications
-      parameters:
-      - description: Location update data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdateDeviceLocationRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-      summary: Update device location
-      tags:
-      - devices
-  /api/v1/devices/register:
-    post:
-      consumes:
-      - application/json
-      description: Register or update an anonymous device for receiving notifications
-        without authentication
-      parameters:
-      - description: Device registration data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.RegisterDeviceRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.DeviceResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-      summary: Register anonymous device
-      tags:
-      - devices
-  /api/v1/location-sharing:
-    post:
-      consumes:
-      - application/json
-      description: Create a new location sharing session with expiration time (supports
-        both authenticated and anonymous users)
-      parameters:
-      - description: Device ID for anonymous users
-        in: header
-        name: X-Device-ID
-        type: string
-      - description: Location Sharing Request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.CreateLocationSharingRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/dto.LocationSharingResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Create location sharing session
-      tags:
-      - location-sharing
-  /api/v1/location-sharing/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Deactivate an active location sharing session (supports both authenticated
-        and anonymous users)
-      parameters:
-      - description: Device ID for anonymous users
-        in: header
-        name: X-Device-ID
-        type: string
-      - description: Location Sharing ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Stop location sharing
-      tags:
-      - location-sharing
-  /api/v1/location-sharing/{id}/location:
-    put:
-      consumes:
-      - application/json
-      description: Update the current coordinates of an active location sharing session
-        (supports both authenticated and anonymous users)
-      parameters:
-      - description: Device ID for anonymous users
-        in: header
-        name: X-Device-ID
-        type: string
-      - description: Location Sharing ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Location Update Request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdateLocationRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Update shared location coordinates
-      tags:
-      - location-sharing
-  /api/v1/users/location:
-    post:
-      consumes:
-      - application/json
-      description: Update current user location to be visible on the map for nearby
-        users
-      parameters:
-      - description: Device ID for anonymous users
-        in: header
-        name: X-Device-ID
-        type: string
-      - description: Location data with optional speed and heading
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.UpdateLocationRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Update user location for nearby users feature
-      tags:
-      - nearby-users
-  /api/v1/users/nearby:
-    post:
-      consumes:
-      - application/json
-      description: Retrieve list of nearby users with their anonymous avatars within
-        specified radius
-      parameters:
-      - description: Device ID for anonymous users
-        in: header
-        name: X-Device-ID
-        type: string
-      - description: Location and radius for searching nearby users
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.GetNearbyUsersRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handler.NearbyUsersResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-        "429":
-          description: Rate limit exceeded (max 1 request per 3 seconds)
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Get nearby users on the map
-      tags:
-      - nearby-users
   /auth/confirm:
     post:
       consumes:
@@ -1462,7 +1244,7 @@ paths:
           properties:
             code:
               type: string
-            email:
+            identifier:
               type: string
           type: object
       produces:
@@ -1476,10 +1258,6 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/util.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
       summary: Confirm user signup
       tags:
       - auth
@@ -1487,8 +1265,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Login a user. If X-Device-ID header is provided, anonymous user
-        data will be migrated to the authenticated account.
+      description: Login a user with email or phone. If X-Device-ID header is provided,
+        anonymous user data will be migrated to the authenticated account.
       parameters:
       - description: Device ID for anonymous data migration
         in: header
@@ -1511,8 +1289,8 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/util.ErrorResponse'
-        "401":
-          description: Unauthorized
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/util.ErrorResponse'
       summary: Login a user
@@ -1539,15 +1317,15 @@ paths:
     post:
       consumes:
       - application/json
-      description: Send a password reset code to the user's email
+      description: Send a password reset code to the user's email or phone
       parameters:
-      - description: User email
+      - description: User email or phone
         in: body
-        name: email
+        name: identifier
         required: true
         schema:
           properties:
-            email:
+            identifier:
               type: string
           type: object
       produces:
@@ -1559,10 +1337,6 @@ paths:
             type: string
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-        "404":
-          description: Not Found
           schema:
             $ref: '#/definitions/util.ErrorResponse'
       summary: Initiate password reset
@@ -1580,7 +1354,9 @@ paths:
         required: true
         schema:
           properties:
-            email:
+            code:
+              type: string
+            identifier:
               type: string
             password:
               type: string
@@ -1594,10 +1370,6 @@ paths:
             type: string
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/util.ErrorResponse'
-        "404":
-          description: Not Found
           schema:
             $ref: '#/definitions/util.ErrorResponse'
       summary: Reset user password
@@ -1633,6 +1405,10 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/util.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
       summary: Refresh access token
       tags:
       - auth
@@ -1642,13 +1418,13 @@ paths:
       - application/json
       description: Resend verification code to user's phone (SMS) or email
       parameters:
-      - description: Email
+      - description: Email or phone
         in: body
         name: request
         required: true
         schema:
           properties:
-            email:
+            identifier:
               type: string
           type: object
       produces:
@@ -1698,6 +1474,107 @@ paths:
       summary: Register a new user
       tags:
       - auth
+  /danger-zones/nearby:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves danger zones near a specific location based on incident
+        density and risk score.
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-Id
+        type: string
+      - description: Location and radius
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GetDangerZonesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetDangerZonesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - OptionalAuth: []
+      summary: Get nearby danger zones.
+      tags:
+      - danger-zones
+  /devices/location:
+    put:
+      consumes:
+      - application/json
+      description: Update the location of an anonymous device for proximity-based
+        notifications
+      parameters:
+      - description: Location update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateDeviceLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Update device location
+      tags:
+      - devices
+  /devices/register:
+    post:
+      consumes:
+      - application/json
+      description: Register or update an anonymous device for receiving notifications
+        without authentication
+      parameters:
+      - description: Device registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterDeviceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DeviceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      summary: Register anonymous device
+      tags:
+      - devices
   /emergency/alert:
     post:
       consumes:
@@ -1735,6 +1612,133 @@ paths:
       summary: Send emergency alert to all priority contacts
       tags:
       - emergency
+  /location-sharing:
+    post:
+      consumes:
+      - application/json
+      description: Create a new location sharing session with expiration time (supports
+        both authenticated and anonymous users)
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location Sharing Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateLocationSharingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.LocationSharingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create location sharing session
+      tags:
+      - location-sharing
+  /location-sharing/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deactivate an active location sharing session (supports both authenticated
+        and anonymous users)
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location Sharing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Stop location sharing
+      tags:
+      - location-sharing
+  /location-sharing/{id}/location:
+    put:
+      consumes:
+      - application/json
+      description: Update the current coordinates of an active location sharing session
+        (supports both authenticated and anonymous users)
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location Sharing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Location Update Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update shared location coordinates
+      tags:
+      - location-sharing
   /reports:
     get:
       consumes:
@@ -2251,6 +2255,45 @@ paths:
       summary: Get shared location by token
       tags:
       - location-sharing
+  /users/location:
+    post:
+      consumes:
+      - application/json
+      description: Update current user location to be visible on the map for nearby
+        users
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location data with optional speed and heading
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user location for nearby users feature
+      tags:
+      - nearby-users
   /users/me:
     get:
       consumes:
@@ -2570,8 +2613,8 @@ paths:
       - notifications
   /users/me/settings:
     get:
-      description: Retrieve safety settings for the authenticated user. Creates default
-        settings if none exist.
+      description: Retrieve safety settings for the authenticated user or anonymous
+        user. Creates default settings if none exist.
       produces:
       - application/json
       responses:
@@ -2595,8 +2638,8 @@ paths:
     put:
       consumes:
       - application/json
-      description: Update safety settings for the authenticated user. All fields are
-        optional.
+      description: Update safety settings for the authenticated user or anonymous
+        user. All fields are optional.
       parameters:
       - description: Updated settings
         in: body
@@ -2628,6 +2671,47 @@ paths:
       summary: Update user safety settings
       tags:
       - safety-settings
+  /users/nearby:
+    post:
+      consumes:
+      - application/json
+      description: Retrieve list of nearby users with their anonymous avatars within
+        specified radius
+      parameters:
+      - description: Device ID for anonymous users
+        in: header
+        name: X-Device-ID
+        type: string
+      - description: Location and radius for searching nearby users
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.GetNearbyUsersRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.NearbyUsersResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "429":
+          description: Rate limit exceeded (max 1 request per 3 seconds)
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get nearby users on the map
+      tags:
+      - nearby-users
   /users/profile:
     put:
       consumes:

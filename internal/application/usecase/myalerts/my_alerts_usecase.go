@@ -100,6 +100,20 @@ func (uc *MyAlertsUseCase) DeleteAlert(ctx context.Context, userID, alertID uuid
 }
 
 func (uc *MyAlertsUseCase) SubscribeToAlert(ctx context.Context, userID, alertID uuid.UUID) (*dto.AlertSubscriptionResponse, error) {
+	// Check if already subscribed
+	isSubscribed, err := uc.alertRepo.IsUserSubscribed(ctx, alertID, userID)
+	if err != nil {
+		slog.Error("Error checking subscription", "alert_id", alertID, "user_id", userID, "error", err)
+		return nil, errors.New("failed to check subscription")
+	}
+
+	if isSubscribed {
+		return &dto.AlertSubscriptionResponse{
+			Success: true,
+			Message: "Already subscribed to alert",
+		}, nil
+	}
+
 	alert, err := uc.alertRepo.GetByID(ctx, alertID)
 	if err != nil {
 		slog.Error("Error fetching alert for subscription", "alert_id", alertID, "error", err)

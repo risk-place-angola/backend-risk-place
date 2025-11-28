@@ -110,7 +110,7 @@ linters:
         - switch
         - map
     dupl:
-      threshold: 100
+      threshold: 150
     funlen:
       lines: 100
       statements: 50

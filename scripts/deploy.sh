@@ -63,12 +63,19 @@ ELAPSED=0
 HEALTHY_COUNT=0
 
 while [ $ELAPSED -lt $TIMEOUT ]; do
-    # Count healthy containers
+    # Count healthy containers (matches backend-risk-place-backend_core-1, etc)
     HEALTHY_COUNT=$(docker ps --filter "name=backend_core" --filter "health=healthy" --format "{{.Names}}" 2>/dev/null | wc -l | tr -d ' ')
     TOTAL_COUNT=$(docker ps --filter "name=backend_core" --format "{{.Names}}" 2>/dev/null | wc -l | tr -d ' ')
+    EXITED_COUNT=$(docker ps -a --filter "name=backend_core" --filter "status=exited" --format "{{.Names}}" 2>/dev/null | wc -l | tr -d ' ')
     
     if [ "$HEALTHY_COUNT" -eq "$REPLICAS" ]; then
         echo -e "${GREEN}✅ All $REPLICAS instances are healthy!${NC}"
+        break
+    fi
+    
+    # Early exit if containers are crashing
+    if [ "$EXITED_COUNT" -gt 0 ] && [ $ELAPSED -gt 10 ]; then
+        echo -e "${RED}💥 Detected $EXITED_COUNT crashed container(s) - stopping early${NC}"
         break
     fi
     
@@ -88,14 +95,27 @@ if [ "$HEALTHY_COUNT" -lt "$REPLICAS" ]; then
     echo -e "${RED}❌ Deployment failed: Only $HEALTHY_COUNT/$REPLICAS instances became healthy${NC}"
     echo -e "${YELLOW}Container status:${NC}"
     docker ps -a --filter "name=backend_core" --format "table {{.Names}}\t{{.Status}}" || true
-    echo -e "\n${YELLOW}Recent logs from unhealthy containers:${NC}"
-    docker ps --filter "name=backend_core" --format "{{.Names}}" | while read container; do
-        HEALTH=$(docker inspect --format='{{.State.Health.Status}}' "$container" 2>/dev/null || echo "no-health")
-        if [ "$HEALTH" != "healthy" ]; then
-            echo -e "\n${YELLOW}Logs from $container:${NC}"
-            docker logs --tail 30 "$container" 2>&1 || true
+    
+    echo -e "\n${YELLOW}📋 Recent logs from ALL containers (running and exited):${NC}"
+    # Use docker ps -a to get ALL containers including exited ones
+    docker ps -a --filter "name=backend_core" --format "{{.Names}}" | while read container; do
+        if [ -n "$container" ]; then
+            STATE=$(docker inspect --format='{{.State.Status}}' "$container" 2>/dev/null || echo "unknown")
+            EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' "$container" 2>/dev/null || echo "?")
+            echo -e "\n${BLUE}━━━ $container (state: $STATE, exit: $EXIT_CODE) ━━━${NC}"
+            docker logs --tail 50 "$container" 2>&1 || echo "  (no logs available)"
         fi
     done
+    
+    # Check if .env file exists (might be missing)
+    if [ ! -f ".env" ]; then
+        echo -e "\n${RED}⚠️  WARNING: .env file not found! Containers cannot load environment variables.${NC}"
+        echo -e "${YELLOW}   This is likely why containers are crashing.${NC}"
+    else
+        echo -e "\n${GREEN}✅ .env file exists${NC}"
+        echo -e "${YELLOW}   Variables count: $(grep -c "=" .env 2>/dev/null || echo 0)${NC}"
+    fi
+    
     exit 1
 fi
 
@@ -154,19 +174,12 @@ echo -e "\n${YELLOW}🧹 Cleaning up old images...${NC}"
 docker images | grep backend-core | tail -n +4 | awk '{print $3}' | xargs docker rmi -f 2>/dev/null || true
 echo -e "${GREEN}✅ Cleanup complete${NC}"
 
-# Security: Remove .env file after container is running
+# Security: Remove .env file after containers are running
 echo -e "\n${YELLOW}🔒 Securing environment file...${NC}"
 if [ -f ".env" ]; then
-    # Shred the file (overwrite with random data before deleting)
-    if command -v shred &> /dev/null; then
-        shred -vfz -n 3 .env
-        echo -e "${GREEN}✅ .env file securely deleted (shredded)${NC}"
-    else
-        # Fallback: overwrite and delete
-        dd if=/dev/urandom of=.env bs=1k count=10 2>/dev/null
-        rm -f .env
-        echo -e "${GREEN}✅ .env file securely deleted${NC}"
-    fi
+    # Simply remove the file - shred can corrupt it before docker-compose reads it
+    rm -f .env
+    echo -e "${GREEN}✅ .env file securely deleted${NC}"
 else
     echo -e "${YELLOW}ℹ️  No .env file found (already cleaned)${NC}"
 fi

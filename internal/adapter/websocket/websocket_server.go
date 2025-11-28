@@ -10,13 +10,6 @@ import (
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/http/util"
 )
 
-type contextKey string
-
-const (
-	maxWebSocketMessageSize            = 256
-	websocketContextKey     contextKey = "websocket"
-)
-
 type WSHandler struct {
 	Hub                *Hub
 	AuthMiddleware     middleware.AuthMiddleware
@@ -64,9 +57,10 @@ func (h *WSHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		UserID:          identifier,
 		IsAuthenticated: isAuthenticated,
 		Conn:            conn,
-		Send:            make(chan []byte, maxWebSocketMessageSize),
+		Send:            make(chan []byte, clientSendBufferSize),
 		Hub:             h.Hub,
 	}
+	client.closed.Store(false)
 
 	clientType := "anonymous"
 	if isAuthenticated {

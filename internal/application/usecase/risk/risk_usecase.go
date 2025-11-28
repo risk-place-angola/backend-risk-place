@@ -49,6 +49,7 @@ func (uc *RiskUseCase) ListRiskTypes(ctx context.Context) (*dto.RiskTypesListRes
 			Description:   rt.Description,
 			IconURL:       iconURL,
 			DefaultRadius: rt.DefaultRadiusMeters,
+			IsEnabled:     rt.IsEnabled,
 			CreatedAt:     rt.CreatedAt,
 			UpdatedAt:     rt.UpdatedAt,
 		})
@@ -76,6 +77,7 @@ func (uc *RiskUseCase) GetRiskType(ctx context.Context, id string) (*dto.RiskTyp
 		Description:   riskType.Description,
 		IconURL:       iconURL,
 		DefaultRadius: riskType.DefaultRadiusMeters,
+		IsEnabled:     riskType.IsEnabled,
 		CreatedAt:     riskType.CreatedAt,
 		UpdatedAt:     riskType.UpdatedAt,
 	}
@@ -146,4 +148,8 @@ func (uc *RiskUseCase) UpdateRiskTypeIcon(ctx context.Context, id string, iconPa
 
 func (uc *RiskUseCase) UpdateRiskTopicIcon(ctx context.Context, id string, iconPath string) error {
 	return uc.riskTopicsRepo.UpdateRiskTopicIcon(ctx, id, iconPath)
+}
+
+func (uc *RiskUseCase) UpdateRiskTypeIsEnabled(ctx context.Context, id string, isEnabled bool) error {
+	return uc.riskTypesRepo.UpdateRiskTypeIsEnabled(ctx, id, isEnabled)
 }

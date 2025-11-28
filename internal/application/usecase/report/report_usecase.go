@@ -18,6 +18,7 @@ type ReportUseCase struct {
 	repo            repository.ReportRepository
 	riskTypesRepo   repository.RiskTypesRepository
 	riskTopicsRepo  repository.RiskTopicsRepository
+	settingsRepo    repository.SafetySettingsRepository
 	locationStore   port.LocationStore
 	geoService      port.GeolocationService
 	eventDispatcher port.EventDispatcher
@@ -29,6 +30,7 @@ func NewReportUseCase(
 	geoService port.GeolocationService,
 	riskTypesRepo repository.RiskTypesRepository,
 	riskTopicsRepo repository.RiskTopicsRepository,
+	settingsRepo repository.SafetySettingsRepository,
 	locationStore port.LocationStore,
 ) *ReportUseCase {
 	return &ReportUseCase{
@@ -37,6 +39,7 @@ func NewReportUseCase(
 		geoService:      geoService,
 		riskTypesRepo:   riskTypesRepo,
 		riskTopicsRepo:  riskTopicsRepo,
+		settingsRepo:    settingsRepo,
 		locationStore:   locationStore,
 	}
 }
@@ -61,6 +64,14 @@ func (uc *ReportUseCase) Create(ctx context.Context, dto dto.ReportCreate) (*mod
 		return nil, err
 	}
 
+	userUUID := uuid.MustParse(dto.UserID)
+	isPrivate := riskTopic.IsSensitive
+
+	settings, err := uc.settingsRepo.GetByUserID(ctx, userUUID)
+	if err == nil && settings != nil && settings.AnonymousReports {
+		isPrivate = true
+	}
+
 	report := &model.Report{
 		ID:           uuid.New(),
 		RiskTypeID:   uuid.MustParse(dto.RiskTypeID),
@@ -71,11 +82,11 @@ func (uc *ReportUseCase) Create(ctx context.Context, dto dto.ReportCreate) (*mod
 		Neighborhood: dto.Neighborhood,
 		Address:      dto.Address,
 		ImageURL:     dto.ImageURL,
-		UserID:       uuid.MustParse(dto.UserID),
+		UserID:       userUUID,
 		Latitude:     dto.Latitude,
 		Longitude:    dto.Longitude,
 		Status:       model.ReportStatusPending,
-		IsPrivate:    riskTopic.IsSensitive,
+		IsPrivate:    isPrivate,
 		CreatedAt:    time.Now(),
 	}
 
@@ -105,13 +116,14 @@ func (uc *ReportUseCase) Create(ctx context.Context, dto dto.ReportCreate) (*mod
 	}
 
 	uc.eventDispatcher.Dispatch(event.ReportCreatedEvent{
-		ReportID:  report.ID,
-		UserID:    uuidUserIDs,
-		Message:   report.Description,
-		Latitude:  report.Latitude,
-		Longitude: report.Longitude,
-		Radius:    float64(riskType.DefaultRadiusMeters),
-		RiskType:  riskType.Name,
+		ReportID:   report.ID,
+		UserID:     uuidUserIDs,
+		Message:    report.Description,
+		Latitude:   report.Latitude,
+		Longitude:  report.Longitude,
+		Radius:     float64(riskType.DefaultRadiusMeters),
+		RiskType:   riskType.Name,
+		IsVerified: report.Status == model.ReportStatusVerified,
 	})
 
 	return report, nil

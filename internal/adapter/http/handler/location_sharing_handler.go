@@ -37,7 +37,7 @@ func NewLocationSharingHandler(app *application.Application) *LocationSharingHan
 // @Success 201 {object} dto.LocationSharingResponse
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 401 {object} util.ErrorResponse
-// @Router /api/v1/location-sharing [post]
+// @Router /location-sharing [post]
 func (h *LocationSharingHandler) CreateLocationSharing(w http.ResponseWriter, r *http.Request) {
 	identifier, isAuthenticated := util.GetIdentifierFromContext(r.Context())
 	if identifier == "" {
@@ -124,7 +124,7 @@ func (h *LocationSharingHandler) GetPublicLocationSharing(w http.ResponseWriter,
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 401 {object} util.ErrorResponse
 // @Failure 404 {object} util.ErrorResponse
-// @Router /api/v1/location-sharing/{id}/location [put]
+// @Router /location-sharing/{id}/location [put]
 func (h *LocationSharingHandler) UpdateLocationSharing(w http.ResponseWriter, r *http.Request) {
 	identifier, isAuthenticated := util.GetIdentifierFromContext(r.Context())
 	if identifier == "" {
@@ -196,7 +196,7 @@ func (h *LocationSharingHandler) UpdateLocationSharing(w http.ResponseWriter, r 
 // @Failure 400 {object} util.ErrorResponse
 // @Failure 401 {object} util.ErrorResponse
 // @Failure 404 {object} util.ErrorResponse
-// @Router /api/v1/location-sharing/{id} [delete]
+// @Router /location-sharing/{id} [delete]
 func (h *LocationSharingHandler) DeleteLocationSharing(w http.ResponseWriter, r *http.Request) {
 	identifier, isAuthenticated := util.GetIdentifierFromContext(r.Context())
 	if identifier == "" {

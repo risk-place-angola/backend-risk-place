@@ -100,6 +100,7 @@ func (uc *AlertUseCase) TriggerAlert(ctx context.Context, alert dto.Alert) error
 		Longitude: alert.Longitude,
 		Radius:    alert.Radius,
 		RiskType:  riskType.Name,
+		Severity:  string(alrt.Severity),
 	})
 
 	return nil

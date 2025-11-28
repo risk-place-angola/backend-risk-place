@@ -496,11 +496,11 @@ func (r *ReportPG) UpdateVerificationCounts(ctx context.Context, reportID uuid.U
 
 func (r *ReportPG) FindDuplicates(ctx context.Context, lat, lon float64, riskTypeID uuid.UUID, radiusMeters float64, since time.Time) ([]*model.Report, error) {
 	items, err := r.q.FindDuplicateReports(ctx, sqlc.FindDuplicateReportsParams{
-		RiskTypeID:    riskTypeID,
-		CreatedAt:     sql.NullTime{Time: since, Valid: true},
-		StMakepoint:   lat,
-		StMakepoint_2: lon,
-		StDwithin:     radiusMeters,
+		RiskTypeID:  riskTypeID,
+		CreatedAt:   sql.NullTime{Time: since, Valid: true},
+		LlToEarth:   lat,
+		LlToEarth_2: lon,
+		EarthBox:    radiusMeters,
 	})
 	if err != nil {
 		return nil, err

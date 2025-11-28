@@ -32,8 +32,17 @@ func NewEmergencyContactHandler(app *application.Application) *EmergencyContactH
 // @Failure 500 {object} util.ErrorResponse
 // @Router /users/me/emergency-contacts [get]
 func (h *EmergencyContactHandler) GetEmergencyContacts(w http.ResponseWriter, r *http.Request) {
-	uid, ok := util.ExtractAndValidateUserID(w, r)
+	userIDStr, ok := util.GetUserIDFromContext(r.Context())
 	if !ok {
+		slog.Error("failed to get user ID from context")
+		util.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	uid, err := dto.ParseUUID(userIDStr)
+	if err != nil {
+		slog.Error("invalid user ID in context", "error", err)
+		util.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -61,15 +70,17 @@ func (h *EmergencyContactHandler) GetEmergencyContacts(w http.ResponseWriter, r 
 // @Failure 500 {object} util.ErrorResponse
 // @Router /users/me/emergency-contacts [post]
 func (h *EmergencyContactHandler) CreateEmergencyContact(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value("user_id").(string)
-	if !ok || userID == "" {
+	userIDStr, ok := util.GetUserIDFromContext(r.Context())
+	if !ok {
+		slog.Error("failed to get user ID from context")
 		util.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	uid, err := uuid.Parse(userID)
+	uid, err := dto.ParseUUID(userIDStr)
 	if err != nil {
-		util.Error(w, "invalid user ID", http.StatusBadRequest)
+		slog.Error("invalid user ID in context", "error", err)
+		util.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -81,7 +92,7 @@ func (h *EmergencyContactHandler) CreateEmergencyContact(w http.ResponseWriter, 
 
 	contact, err := h.app.EmergencyContactUseCase.Create(r.Context(), uid, input)
 	if err != nil {
-		slog.Error("error creating emergency contact", "user_id", userID, "error", err)
+		slog.Error("error creating emergency contact", "user_id", userIDStr, "error", err)
 		util.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -105,15 +116,17 @@ func (h *EmergencyContactHandler) CreateEmergencyContact(w http.ResponseWriter, 
 // @Failure 500 {object} util.ErrorResponse
 // @Router /users/me/emergency-contacts/{id} [put]
 func (h *EmergencyContactHandler) UpdateEmergencyContact(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value("user_id").(string)
-	if !ok || userID == "" {
+	userIDStr, ok := util.GetUserIDFromContext(r.Context())
+	if !ok {
+		slog.Error("failed to get user ID from context")
 		util.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	uid, err := uuid.Parse(userID)
+	uid, err := dto.ParseUUID(userIDStr)
 	if err != nil {
-		util.Error(w, "invalid user ID", http.StatusBadRequest)
+		slog.Error("invalid user ID in context", "error", err)
+		util.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -137,7 +150,7 @@ func (h *EmergencyContactHandler) UpdateEmergencyContact(w http.ResponseWriter, 
 
 	contact, err := h.app.EmergencyContactUseCase.Update(r.Context(), uid, cid, input)
 	if err != nil {
-		slog.Error("error updating emergency contact", "user_id", userID, "contact_id", contactID, "error", err)
+		slog.Error("error updating emergency contact", "user_id", userIDStr, "contact_id", contactID, "error", err)
 		if err.Error() == "emergency contact not found" {
 			util.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -163,15 +176,17 @@ func (h *EmergencyContactHandler) UpdateEmergencyContact(w http.ResponseWriter, 
 // @Failure 500 {object} util.ErrorResponse
 // @Router /users/me/emergency-contacts/{id} [delete]
 func (h *EmergencyContactHandler) DeleteEmergencyContact(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value("user_id").(string)
-	if !ok || userID == "" {
+	userIDStr, ok := util.GetUserIDFromContext(r.Context())
+	if !ok {
+		slog.Error("failed to get user ID from context")
 		util.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	uid, err := uuid.Parse(userID)
+	uid, err := dto.ParseUUID(userIDStr)
 	if err != nil {
-		util.Error(w, "invalid user ID", http.StatusBadRequest)
+		slog.Error("invalid user ID in context", "error", err)
+		util.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -188,7 +203,7 @@ func (h *EmergencyContactHandler) DeleteEmergencyContact(w http.ResponseWriter, 
 	}
 
 	if err := h.app.EmergencyContactUseCase.Delete(r.Context(), uid, cid); err != nil {
-		slog.Error("error deleting emergency contact", "user_id", userID, "contact_id", contactID, "error", err)
+		slog.Error("error deleting emergency contact", "user_id", userIDStr, "contact_id", contactID, "error", err)
 		if err.Error() == "emergency contact not found" {
 			util.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -214,15 +229,17 @@ func (h *EmergencyContactHandler) DeleteEmergencyContact(w http.ResponseWriter, 
 // @Failure 500 {object} util.ErrorResponse
 // @Router /emergency/alert [post]
 func (h *EmergencyContactHandler) SendEmergencyAlert(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value("user_id").(string)
-	if !ok || userID == "" {
+	userIDStr, ok := util.GetUserIDFromContext(r.Context())
+	if !ok {
+		slog.Error("failed to get user ID from context")
 		util.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	uid, err := uuid.Parse(userID)
+	uid, err := dto.ParseUUID(userIDStr)
 	if err != nil {
-		util.Error(w, "invalid user ID", http.StatusBadRequest)
+		slog.Error("invalid user ID in context", "error", err)
+		util.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -239,7 +256,7 @@ func (h *EmergencyContactHandler) SendEmergencyAlert(w http.ResponseWriter, r *h
 
 	result, err := h.app.EmergencyAlertUseCase.SendEmergencyAlert(r.Context(), uid, input)
 	if err != nil {
-		slog.Error("error sending emergency alert", "user_id", userID, "error", err)
+		slog.Error("error sending emergency alert", "user_id", userIDStr, "error", err)
 		util.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

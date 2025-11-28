@@ -12,15 +12,13 @@ import (
 type MWSet struct {
 	Logging middleware.Middleware
 
-	// JWT: Validates JWT token (Authorization: Bearer <token>) - REQUIRED
-	JWT middleware.Middleware
-
-	// OptionalAuth: Validates JWT OR Device-Id OR allows anonymous
-	// Priority: JWT > Device-Id > Anonymous
+	JWT          middleware.Middleware
 	OptionalAuth middleware.Middleware
 
 	APIKey          middleware.Middleware
 	APIKeyWithLimit middleware.Middleware
+
+	RequirePermission func(resource, action string) middleware.Middleware
 }
 
 func NewMWSet(c *bootstrap.Container) MWSet {
@@ -31,6 +29,11 @@ func NewMWSet(c *bootstrap.Container) MWSet {
 		},
 		OptionalAuth: func(next http.Handler) http.Handler {
 			return c.OptionalAuthMiddleware.ValidateOptional(next)
+		},
+		RequirePermission: func(resource, action string) middleware.Middleware {
+			return func(next http.Handler) http.Handler {
+				return c.AuthorizationMiddleware.RequirePermission(resource, action)(next)
+			}
 		},
 	}
 }

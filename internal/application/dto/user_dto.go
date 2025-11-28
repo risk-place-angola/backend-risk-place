@@ -67,7 +67,7 @@ type NavigateToSavedLocationRequest struct {
 }
 
 type LoginInput struct {
-	Email          string `json:"email"`
+	Identifier     string `json:"identifier"`
 	Password       string `json:"password"`
 	DeviceFCMToken string `json:"device_fcm_token,omitempty"`
 	DeviceLanguage string `json:"device_language,omitempty"`

@@ -155,21 +155,19 @@ LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
 WHERE r.risk_type_id = $1
   AND r.status = 'pending'
   AND r.is_private = FALSE
+  AND rt.is_enabled = TRUE
   AND r.created_at > $2
-  AND ST_DWithin(
-    ST_MakePoint(r.longitude, r.latitude)::geography,
-    ST_MakePoint($4, $3)::geography,
-    $5
-  )
+  AND ll_to_earth(r.latitude, r.longitude) <@
+      earth_box(ll_to_earth($3, $4), $5)
 ORDER BY r.created_at DESC
 `
 
 type FindDuplicateReportsParams struct {
-	RiskTypeID    uuid.UUID    `json:"risk_type_id"`
-	CreatedAt     sql.NullTime `json:"created_at"`
-	StMakepoint   interface{}  `json:"st_makepoint"`
-	StMakepoint_2 interface{}  `json:"st_makepoint_2"`
-	StDwithin     interface{}  `json:"st_dwithin"`
+	RiskTypeID  uuid.UUID    `json:"risk_type_id"`
+	CreatedAt   sql.NullTime `json:"created_at"`
+	LlToEarth   float64      `json:"ll_to_earth"`
+	LlToEarth_2 float64      `json:"ll_to_earth_2"`
+	EarthBox    float64      `json:"earth_box"`
 }
 
 type FindDuplicateReportsRow struct {
@@ -204,9 +202,9 @@ func (q *Queries) FindDuplicateReports(ctx context.Context, arg FindDuplicateRep
 	rows, err := q.db.QueryContext(ctx, findDuplicateReports,
 		arg.RiskTypeID,
 		arg.CreatedAt,
-		arg.StMakepoint,
-		arg.StMakepoint_2,
-		arg.StDwithin,
+		arg.LlToEarth,
+		arg.LlToEarth_2,
+		arg.EarthBox,
 	)
 	if err != nil {
 		return nil, err
@@ -288,7 +286,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE r.id = $1
+WHERE r.id = $1 AND rt.is_enabled = TRUE
 `
 
 type GetReportByIDRow struct {
@@ -407,7 +405,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE r.id = ANY($1::uuid[]) AND r.is_private = FALSE
+WHERE r.id = ANY($1::uuid[]) AND r.is_private = FALSE AND rt.is_enabled = TRUE
 ORDER BY r.created_at DESC
 `
 
@@ -498,7 +496,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE r.status = $1 AND r.is_private = FALSE
+WHERE r.status = $1 AND r.is_private = FALSE AND rt.is_enabled = TRUE
 ORDER BY r.created_at DESC
 `
 
@@ -684,7 +682,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE ($4::text IS NULL OR r.status = $4::report_status) AND r.is_private = FALSE
+WHERE ($4::text IS NULL OR r.status = $4::report_status) AND r.is_private = FALSE AND rt.is_enabled = TRUE
 ORDER BY
     CASE WHEN $1 = 'desc' THEN r.created_at END DESC,
     CASE WHEN $1 = 'asc' THEN r.created_at END ASC

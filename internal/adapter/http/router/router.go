@@ -32,6 +32,9 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	g.OptionalAuth.HandleFunc("GET /api/v1/risks/topics", container.RiskHandler.ListRiskTopics)
 	g.OptionalAuth.HandleFunc("GET /api/v1/risks/topics/{id}", container.RiskHandler.GetRiskTopic)
 
+	adminRiskTypeGroup := NewRouteGroup(mux, mw.Logging, mw.JWT, mw.RequirePermission("risk_type", "manage"))
+	adminRiskTypeGroup.HandleFunc("PUT /api/v1/risks/types/{id}/enabled", container.RiskHandler.UpdateRiskTypeIsEnabled)
+
 	g.ProtectedJWT.HandleFunc("GET /api/v1/users/me", container.UserHandler.Me)
 	g.ProtectedJWT.HandleFunc("PUT /api/v1/users/profile", container.UserHandler.UpdateProfile)
 	g.ProtectedJWT.HandleFunc("PUT /api/v1/users/me/device", container.NotificationHandler.UpdateDeviceInfo)
@@ -50,8 +53,8 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 	g.OptionalAuth.HandleFunc("POST /api/v1/alerts", container.AlertHandler.CreateAlert)
 	g.OptionalAuth.HandleFunc("POST /api/v1/alerts/{id}/subscribe", container.MyAlertsHandler.SubscribeToAlert)
 	g.OptionalAuth.HandleFunc("DELETE /api/v1/alerts/{id}/unsubscribe", container.MyAlertsHandler.UnsubscribeFromAlert)
-	g.OptionalAuth.HandleFunc("GET /api/v1/users/me/alerts/created", container.MyAlertsHandler.GetMyCreatedAlerts)
-	g.OptionalAuth.HandleFunc("GET /api/v1/users/me/alerts/subscribed", container.MyAlertsHandler.GetMySubscribedAlerts)
+	g.ProtectedJWT.HandleFunc("GET /api/v1/users/me/alerts/created", container.MyAlertsHandler.GetMyCreatedAlerts)
+	g.ProtectedJWT.HandleFunc("GET /api/v1/users/me/alerts/subscribed", container.MyAlertsHandler.GetMySubscribedAlerts)
 	g.ProtectedJWT.HandleFunc("PUT /api/v1/alerts/{id}", container.MyAlertsHandler.UpdateAlert)
 	g.ProtectedJWT.HandleFunc("DELETE /api/v1/alerts/{id}", container.MyAlertsHandler.DeleteAlert)
 
@@ -79,6 +82,8 @@ func SetupRoutes(container *bootstrap.Container) *http.ServeMux {
 
 	g.OptionalAuth.HandleFunc("POST /api/v1/users/location", container.NearbyUsersHandler.UpdateLocation)
 	g.OptionalAuth.HandleFunc("POST /api/v1/users/nearby", container.NearbyUsersHandler.GetNearbyUsers)
+
+	g.OptionalAuth.HandleFunc("POST /api/v1/danger-zones/nearby", container.DangerZoneHandler.GetDangerZonesNearby)
 
 	mux.HandleFunc("/ws/alerts", container.WSHandler.HandleWebSocket)
 	mux.HandleFunc("/docs/", httpSwagger.WrapHandler)

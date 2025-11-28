@@ -19,7 +19,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE r.status = $1 AND r.is_private = FALSE
+WHERE r.status = $1 AND r.is_private = FALSE AND rt.is_enabled = TRUE
 ORDER BY r.created_at DESC;
 
 -- name: ListReportsByUser :many
@@ -45,7 +45,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE r.id = $1;
+WHERE r.id = $1 AND rt.is_enabled = TRUE;
 
 -- name: VerifyReport :exec
 UPDATE reports
@@ -101,7 +101,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE r.id = ANY($1::uuid[]) AND r.is_private = FALSE
+WHERE r.id = ANY($1::uuid[]) AND r.is_private = FALSE AND rt.is_enabled = TRUE
 ORDER BY r.created_at DESC;
 
 -- name: CreateReportNotification :exec
@@ -122,7 +122,7 @@ SELECT
 FROM reports r
 LEFT JOIN risk_types rt ON r.risk_type_id = rt.id
 LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
-WHERE (sqlc.narg('status')::text IS NULL OR r.status = sqlc.narg('status')::report_status) AND r.is_private = FALSE
+WHERE (sqlc.narg('status')::text IS NULL OR r.status = sqlc.narg('status')::report_status) AND r.is_private = FALSE AND rt.is_enabled = TRUE
 ORDER BY
     CASE WHEN $1 = 'desc' THEN r.created_at END DESC,
     CASE WHEN $1 = 'asc' THEN r.created_at END ASC
@@ -172,12 +172,10 @@ LEFT JOIN risk_topics rtopic ON r.risk_topic_id = rtopic.id
 WHERE r.risk_type_id = $1
   AND r.status = 'pending'
   AND r.is_private = FALSE
+  AND rt.is_enabled = TRUE
   AND r.created_at > $2
-  AND ST_DWithin(
-    ST_MakePoint(r.longitude, r.latitude)::geography,
-    ST_MakePoint($4, $3)::geography,
-    $5
-  )
+  AND ll_to_earth(r.latitude, r.longitude) <@
+      earth_box(ll_to_earth($3, $4), $5)
 ORDER BY r.created_at DESC;
 
 -- name: ExpireOldReports :exec

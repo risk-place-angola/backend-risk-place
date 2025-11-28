@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"log/slog"
+	"strings"
 
 	"github.com/risk-place-angola/backend-risk-place/internal/config"
 	"github.com/twilio/twilio-go"
@@ -30,13 +31,31 @@ func (s *SMSNotifier) NotifySMS(ctx context.Context, phone string, message strin
 
 	_, err := s.Client.Api.CreateMessage(params)
 	if err != nil {
-		slog.Error("Error sending SMS via Twilio", "error", err)
+		// Check for authentication errors (20003)
+		errMsg := err.Error()
+		if containsAny(errMsg, "20003", "Authenticate") {
+			slog.Error("Twilio authentication failed - Check your credentials",
+				slog.String("error", errMsg),
+				slog.String("account_sid", s.Config.AccountSID[:10]+"..."),
+				slog.String("help", "Verify TWILIO_ACCOUNT_SID starts with 'AC' at https://console.twilio.com/"))
+		} else {
+			slog.Error("Error sending SMS via Twilio", "error", err)
+		}
 		return err
 	}
 
 	return nil
 }
 
+// containsAny checks if the string contains any of the substrings
+func containsAny(s string, substrs ...string) bool {
+	for _, substr := range substrs {
+		if strings.Contains(s, substr) {
+			return true
+		}
+	}
+	return false
+}
 // NotifySMSMulti sends SMS messages to multiple recipients via Twilio
 func (s *SMSNotifier) NotifySMSMulti(ctx context.Context, phones []string, message string) error {
 	// perfomance can be improved by using goroutines for concurrent sending

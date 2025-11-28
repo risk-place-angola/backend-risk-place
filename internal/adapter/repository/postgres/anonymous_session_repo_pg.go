@@ -6,15 +6,20 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/risk-place-angola/backend-risk-place/internal/adapter/repository/postgres/sqlc"
 	"github.com/risk-place-angola/backend-risk-place/internal/domain/model"
 )
 
 type anonymousSessionRepoPG struct {
 	db *sql.DB
+	q  sqlc.Querier
 }
 
 func NewAnonymousSessionRepository(db *sql.DB) *anonymousSessionRepoPG {
-	return &anonymousSessionRepoPG{db: db}
+	return &anonymousSessionRepoPG{
+		db: db,
+		q:  sqlc.New(db),
+	}
 }
 
 func (r *anonymousSessionRepoPG) Create(ctx context.Context, session *model.AnonymousSession) error {
@@ -342,4 +347,52 @@ func (r *anonymousSessionRepoPG) GetNotificationPreferences(ctx context.Context,
 		return false, false, fmt.Errorf("failed to get notification preferences: %w", err)
 	}
 	return
+}
+
+func (r *anonymousSessionRepoPG) GetFCMTokensForAlertNotification(ctx context.Context, lat, lon, radiusMeters float64, severityLevel string) ([]model.DeviceToken, error) {
+	rows, err := r.q.ListAnonymousTokensForAlertNotification(ctx, sqlc.ListAnonymousTokensForAlertNotificationParams{
+		Latitude:      lat,
+		Longitude:     lon,
+		RadiusMeters:  radiusMeters,
+		SeverityLevel: severityLevel,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	tokens := make([]model.DeviceToken, 0, len(rows))
+	for _, row := range rows {
+		if row.DeviceFcmToken.Valid {
+			tokens = append(tokens, model.DeviceToken{
+				FCMToken: row.DeviceFcmToken.String,
+				DeviceID: row.DeviceID,
+			})
+		}
+	}
+
+	return tokens, nil
+}
+
+func (r *anonymousSessionRepoPG) GetFCMTokensForReportNotification(ctx context.Context, lat, lon, radiusMeters float64, isVerified bool) ([]model.DeviceToken, error) {
+	rows, err := r.q.ListAnonymousTokensForReportNotification(ctx, sqlc.ListAnonymousTokensForReportNotificationParams{
+		Latitude:     lat,
+		Longitude:    lon,
+		RadiusMeters: radiusMeters,
+		IsVerified:   isVerified,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	tokens := make([]model.DeviceToken, 0, len(rows))
+	for _, row := range rows {
+		if row.DeviceFcmToken.Valid {
+			tokens = append(tokens, model.DeviceToken{
+				FCMToken: row.DeviceFcmToken.String,
+				DeviceID: row.DeviceID,
+			})
+		}
+	}
+
+	return tokens, nil
 }

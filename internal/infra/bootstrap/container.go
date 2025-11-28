@@ -4,11 +4,13 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/risk-place-angola/backend-risk-place/internal/adapter/cache"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/eventlistener"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/http/handler"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/http/middleware"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/notifier"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/repository/postgres"
+	"github.com/risk-place-angola/backend-risk-place/internal/adapter/repository/postgres/sqlc"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/service"
 	"github.com/risk-place-angola/backend-risk-place/internal/adapter/websocket"
 	"github.com/risk-place-angola/backend-risk-place/internal/application"
@@ -44,12 +46,14 @@ type Container struct {
 	NotificationHandler     *handler.NotificationHandler
 	StorageHandler          *handler.StorageHandler
 	NearbyUsersHandler      *handler.NearbyUsersHandler
+	DangerZoneHandler       *handler.DangerZoneHandler
 
 	UserApp *application.Application
 
-	Hub                    *websocket.Hub
-	AuthMiddleware         *middleware.AuthMiddleware
-	OptionalAuthMiddleware *middleware.OptionalAuthMiddleware
+	Hub                     *websocket.Hub
+	AuthMiddleware          *middleware.AuthMiddleware
+	OptionalAuthMiddleware  *middleware.OptionalAuthMiddleware
+	AuthorizationMiddleware *middleware.AuthorizationMiddleware
 }
 
 func NewContainer() (*Container, error) {
@@ -75,6 +79,7 @@ func NewContainer() (*Container, error) {
 
 	userRepoPG := postgres.NewUserRepoPG(database)
 	roleRepoPG := postgres.NewRoleRepoPG(database)
+	permissionRepoPG := postgres.NewPermissionRepoPG(database)
 	alertRepoPG := postgres.NewAlertRepoPG(database)
 	riskTypeRepoPG := postgres.NewRiskTypeRepoPG(database)
 	riskTopicRepoPG := postgres.NewRiskTopicRepoPG(database)
@@ -87,12 +92,30 @@ func NewContainer() (*Container, error) {
 	deviceMappingRepoPG := postgres.NewDeviceUserMappingRepository(database)
 	migrationRepoPG := postgres.NewAnonymousMigrationRepository(database)
 	userLocationRepoPG := postgres.NewUserLocationRepository(database)
+	dangerZoneRepoPG := postgres.NewDangerZoneRepoPG(database)
 
 	emailService := notifier.NewSmtpEmailService(cfg)
 	tokenService := service.NewJwtTokenService(cfg)
 	hashService := service.NewBcryptHasher()
-	geoService := domainService.NewGeolocationService()
-	nearbyUsersDomainService := domainService.NewNearbyUsersService(userLocationRepoPG)
+	geoDomainService := domainService.NewGeolocationService()
+	geoService := service.NewGeolocationAdapter(geoDomainService)
+	cacheAdapter := cache.NewRedisCacheAdapter(rdb)
+	locationHistoryCacheAdapter := cache.NewLocationHistoryCacheAdapter(rdb)
+
+	const locationHistoryRetentionDays = 7
+	locationHistoryService := service.NewLocationHistoryService(locationHistoryCacheAdapter, true, locationHistoryRetentionDays)
+	settingsCheckerService := domainService.NewSettingsChecker(safetySettingsRepoPG, anonymousSessionRepoPG)
+	dangerZoneService := service.NewDangerZoneService(dangerZoneRepoPG, cacheAdapter)
+
+	nearbyUsersDomainService := domainService.NewNearbyUsersServiceV2(
+		userLocationRepoPG,
+		safetySettingsRepoPG,
+		cacheAdapter,
+		locationHistoryService,
+		settingsCheckerService,
+		dangerZoneService,
+		true,
+	)
 	nearbyUsersService := service.NewNearbyUsersAdapter(nearbyUsersDomainService)
 
 	migrationService := service.NewAnonymousMigrationService(
@@ -106,20 +129,22 @@ func NewContainer() (*Container, error) {
 
 	dispatcher := event.NewEventDispatcher()
 
-	hub := websocket.NewHub(locationStore, geoService, nearbyUsersService)
+	hub := websocket.NewHub(locationStore, geoService, nearbyUsersService, settingsCheckerService)
 	go hub.Run()
 
 	notifierFCM := notifier.NewFCMNotifier(firebaseApp)
 	notifierSMS := notifier.NewSMSNotifier(twilioSMS, cfg.TwilioConfig)
+
+	translationService := service.NewTranslationService()
 
 	verificationService := service.NewVerificationService(
 		rdb,
 		notifierSMS,
 		emailService,
 		cfg.FrontendURL,
+		translationService,
+		userRepoPG,
 	)
-
-	translationService := service.NewTranslationService()
 	reportVerificationService := service.NewReportVerificationService(reportRepoPG)
 
 	eventlistener.RegisterEventListeners(
@@ -127,6 +152,7 @@ func NewContainer() (*Container, error) {
 		hub,
 		userRepoPG,
 		anonymousSessionRepoPG,
+		safetySettingsRepoPG,
 		notifierFCM,
 		notifierSMS,
 		translationService,
@@ -155,38 +181,46 @@ func NewContainer() (*Container, error) {
 		migrationService,
 		verificationService,
 		storageService,
+		dangerZoneService,
 	)
 
+	authzService := domainService.NewAuthorizationService(permissionRepoPG)
 	authMW := middleware.NewAuthMiddleware(cfg)
 	optionalAuthMW := middleware.NewOptionalAuthMiddleware(authMW)
+	authzMW := middleware.NewAuthorizationMiddleware(authzService)
 
 	registerDeviceUC := device.NewRegisterDeviceUseCase(anonymousSessionRepoPG)
 	updateDeviceLocationUC := device.NewUpdateDeviceLocationUseCase(anonymousSessionRepoPG, locationStore)
 
 	userApp.ReportVerificationService = reportVerificationService
 
+	queries := sqlc.New(database)
 	userHandler := handler.NewUserHandler(userApp)
-	alertHandler := handler.NewAlertHandler(userApp)
+	alertHandler := handler.NewAlertHandler(userApp, anonymousSessionRepoPG, queries)
 	wsHandler := websocket.NewWSHandler(hub, *authMW, optionalAuthMW)
 	reportHandler := handler.NewReportHandler(userApp, reportRepoPG, anonymousSessionRepoPG)
+
 	riskHandler := handler.NewRiskHandler(userApp)
 	deviceHandler := handler.NewDeviceHandler(registerDeviceUC, updateDeviceLocationUC)
 	locationSharingHandler := handler.NewLocationSharingHandler(userApp)
 	safeRouteHandler := handler.NewSafeRouteHandler(userApp)
 	emergencyContactHandler := handler.NewEmergencyContactHandler(userApp)
-	myAlertsHandler := handler.NewMyAlertsHandler(userApp)
-	safetySettingsHandler := handler.NewSafetySettingsHandler(userApp)
+	myAlertsHandler := handler.NewMyAlertsHandler(userApp, anonymousSessionRepoPG, queries)
+	safetySettingsHandler := handler.NewSafetySettingsHandler(userApp, anonymousSessionRepoPG)
 	notificationHandler := handler.NewNotificationHandler(userApp)
 	storageHandler := handler.NewStorageHandler(storageService, userApp)
 	nearbyUsersHandler := handler.NewNearbyUsersHandler(nearbyUsersService)
+	dangerZoneHandler := handler.NewDangerZoneHandler(userApp)
 
 	handler.StartCleanupJob(context.Background(), nearbyUsersService)
+	handler.StartDangerZoneCalculationJob(context.Background(), dangerZoneService)
 
 	return &Container{
 		UserApp:                 userApp,
 		UserHandler:             userHandler,
 		AuthMiddleware:          authMW,
 		OptionalAuthMiddleware:  optionalAuthMW,
+		AuthorizationMiddleware: authzMW,
 		WSHandler:               wsHandler,
 		Hub:                     hub,
 		Cfg:                     &cfg,
@@ -202,5 +236,6 @@ func NewContainer() (*Container, error) {
 		NotificationHandler:     notificationHandler,
 		StorageHandler:          storageHandler,
 		NearbyUsersHandler:      nearbyUsersHandler,
+		DangerZoneHandler:       dangerZoneHandler,
 	}, nil
 }
