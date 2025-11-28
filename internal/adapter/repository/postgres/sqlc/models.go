@@ -308,7 +308,6 @@ type UserLocation struct {
 	DeviceID    sql.NullString  `json:"device_id"`
 	Latitude    float64         `json:"latitude"`
 	Longitude   float64         `json:"longitude"`
-	Location    interface{}     `json:"location"`
 	Speed       sql.NullFloat64 `json:"speed"`
 	Heading     sql.NullFloat64 `json:"heading"`
 	AvatarID    int32           `json:"avatar_id"`
